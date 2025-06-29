@@ -1,0 +1,93 @@
+import { Sidebar, SidebarHeader, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, LogoutButton } from "@/components/ui/sidebar";
+import Link from "next/link";
+import { Award, FileText, Users, Bell, Settings } from "lucide-react";
+
+export default function AdminSidebar({ active }: { active: string }) {
+  return (
+    <Sidebar>
+      <SidebarHeader className="border-b">
+        <div className="flex items-center space-x-3 p-2">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <Award className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="font-semibold">Grant Portal</h2>
+            <p className="text-xs text-muted-foreground">Admin</p>
+          </div>
+        </div>
+      </SidebarHeader>
+      <SidebarContent>
+        <div className="flex flex-col h-full justify-between min-h-[60vh]">
+          <div>
+            <SidebarGroup>
+              <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={active === "dashboard"}>
+                      <Link href="/admin">
+                        <Settings className="w-4 h-4" />
+                        <span>Dashboard</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={active === "grants"}>
+                      <Link href="/admin/grants">
+                        <Award className="w-4 h-4" />
+                        <span>Grants</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={active === "proposals"}>
+                      <Link href="/admin/proposals">
+                        <FileText className="w-4 h-4" />
+                        <span>Proposals</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  {/* <SidebarMenuItem> */}
+                    {/* <SidebarMenuButton asChild isActive={active === "assign-reviewers"}>
+                      <Link href="/admin/assign-reviewers">
+                        <Users className="w-4 h-4" />
+                        <span>Assign Reviewers</span>
+                      </Link> */}
+                    {/* </SidebarMenuButton>
+                  </SidebarMenuItem> */}
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={active === "users"}>
+                      <Link href="/admin/users">
+                        <Users className="w-4 h-4" />
+                        <span>Users</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={active === "reports"}>
+                      <Link href="/admin/reports">
+                        <FileText className="w-4 h-4" />
+                        <span>Reports</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={active === "notifications"}>
+                      <Link href="/admin/notifications">
+                        <Bell className="w-4 h-4" />
+                        <span>Notifications</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </div>
+          <div className="mb-4">
+            <LogoutButton />
+          </div>
+        </div>
+      </SidebarContent>
+    </Sidebar>
+  );
+} 
