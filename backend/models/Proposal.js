@@ -93,6 +93,13 @@ const ProposalSchema = new mongoose.Schema({
     ref: 'Grant',
     required: true,
   },
+  // Recommendation fields
+  recommendedScore: {
+    type: Number,
+  },
+  recommendation: {
+    type: String,
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Proposal', ProposalSchema);

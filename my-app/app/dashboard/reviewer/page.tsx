@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { FileText, User, History, Eye, Award, Star, CheckCircle, XCircle, Clock, AlertCircle, TrendingUp, DollarSign } from "lucide-react"
+import { FileText, User, History, Eye, Award, Star, CheckCircle, XCircle, Clock, AlertCircle, TrendingUp, DollarSign, Download } from "lucide-react"
 import ReviewerLayout from "@/components/layouts/ReviewerLayout"
 
 function ReviewModal({ review, onClose, onSubmit }: { review: any; onClose: () => void; onSubmit: (reviewData: any) => void }) {
@@ -227,11 +227,192 @@ function ReviewModal({ review, onClose, onSubmit }: { review: any; onClose: () =
   )
 }
 
+// Add ProposalViewModal for reviewers (copied from admin, with recommendation section)
+function ProposalViewModal({ proposal, onClose }: { proposal: any; onClose: () => void }) {
+  return (
+    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle>{proposal.title}</DialogTitle>
+        <DialogDescription>
+          Submitted by {proposal.researcher?.firstName} {proposal.researcher?.lastName} from {proposal.researcher?.institution}
+        </DialogDescription>
+      </DialogHeader>
+      <div className="space-y-6">
+        {/* Basic Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Proposal Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="font-medium">Status</Label>
+                <Badge className="mt-1">{proposal.status}</Badge>
+              </div>
+              <div>
+                <Label className="font-medium">Category</Label>
+                <p className="mt-1">{proposal.category}</p>
+              </div>
+              <div>
+                <Label className="font-medium">Funding Requested</Label>
+                <p className="mt-1 text-lg font-semibold text-blue-600">${proposal.funding?.toLocaleString()}</p>
+              </div>
+              <div>
+                <Label className="font-medium">Grant</Label>
+                <p className="mt-1">{proposal.grantTitle}</p>
+              </div>
+              <div>
+                <Label className="font-medium">Submission Date</Label>
+                <p className="mt-1">{proposal.dateSubmitted ? new Date(proposal.dateSubmitted).toLocaleDateString() : 'N/A'}</p>
+              </div>
+              <div>
+                <Label className="font-medium">Deadline</Label>
+                <p className="mt-1">{proposal.deadline ? new Date(proposal.deadline).toLocaleDateString() : 'N/A'}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        {/* Abstract */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Abstract</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-700 leading-relaxed">{proposal.abstract}</p>
+          </CardContent>
+        </Card>
+        {/* Budget Breakdown */}
+        {(proposal.personnelCosts || proposal.equipmentCosts || proposal.materialsCosts || proposal.travelCosts || proposal.otherCosts) && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Budget Breakdown</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="font-medium">Personnel Costs</Label>
+                  <p className="mt-1">${proposal.personnelCosts?.toLocaleString() || "0"}</p>
+                </div>
+                <div>
+                  <Label className="font-medium">Equipment</Label>
+                  <p className="mt-1">${proposal.equipmentCosts?.toLocaleString() || "0"}</p>
+                </div>
+                <div>
+                  <Label className="font-medium">Materials & Supplies</Label>
+                  <p className="mt-1">${proposal.materialsCosts?.toLocaleString() || "0"}</p>
+                </div>
+                <div>
+                  <Label className="font-medium">Travel</Label>
+                  <p className="mt-1">${proposal.travelCosts?.toLocaleString() || "0"}</p>
+                </div>
+                <div>
+                  <Label className="font-medium">Other Costs</Label>
+                  <p className="mt-1">${proposal.otherCosts?.toLocaleString() || "0"}</p>
+                </div>
+                <div className="font-medium text-blue-600">
+                  <Label>Total Budget</Label>
+                  <p className="mt-1 text-lg">${proposal.funding?.toLocaleString()}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        {/* Uploaded Documents */}
+        {(proposal.proposalDocument || proposal.cvResume || (proposal.additionalDocuments && proposal.additionalDocuments.length > 0)) && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Uploaded Documents</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {proposal.proposalDocument && (
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <FileText className="w-5 h-5 text-blue-600" />
+                      <span className="font-medium">Proposal Document</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => window.open(`http://localhost:5000/uploads/${proposal.proposalDocument}`, '_blank')}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
+                )}
+                {proposal.cvResume && (
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <FileText className="w-5 h-5 text-green-600" />
+                      <span className="font-medium">CV/Resume</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => window.open(`http://localhost:5000/uploads/${proposal.cvResume}`, '_blank')}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
+                )}
+                {proposal.additionalDocuments && proposal.additionalDocuments.length > 0 && (
+                  proposal.additionalDocuments.map((doc: string, index: number) => (
+                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <FileText className="w-5 h-5 text-purple-600" />
+                        <span className="font-medium">Additional Document {index + 1}</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => window.open(`http://localhost:5000/uploads/${doc}`, '_blank')}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        {/* System Recommendation Section */}
+        {(typeof proposal.recommendedScore === 'number' && proposal.recommendation) && (
+          <Card className="border-2 border-blue-400 bg-blue-50 my-6">
+            <CardHeader>
+              <CardTitle className="text-blue-900">System Recommendation</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-2">
+                <span className="text-blue-800">
+                  System Recommended Score: <span className="font-bold">{proposal.recommendedScore}/100</span>
+                </span>
+                <span className="text-blue-800">
+                  System Recommendation: <span className="font-bold">{proposal.recommendation}</span>
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      </div>
+    </DialogContent>
+  )
+}
+
 export default function ReviewerDashboard() {
   const [assignedReviews, setAssignedReviews] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [selectedReview, setSelectedReview] = useState<any | null>(null)
+  const [viewProposal, setViewProposal] = useState<any | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -392,25 +573,45 @@ export default function ReviewerDashboard() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button 
-                                  size="sm" 
-                                  variant="default"
-                                  onClick={() => setSelectedReview(review)}
-                                >
-                                  <Eye className="w-4 h-4 mr-1" />
-                                  Review
-                                </Button>
-                              </DialogTrigger>
-                              {selectedReview && selectedReview._id === review._id && (
-                                <ReviewModal
-                                  review={selectedReview}
-                                  onClose={() => setSelectedReview(null)}
-                                  onSubmit={handleSubmitReview}
-                                />
-                              )}
-                            </Dialog>
+                            <div className="flex space-x-2">
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => setViewProposal(review.proposal)}
+                                  >
+                                    <Eye className="w-4 h-4 mr-1" />
+                                    View
+                                  </Button>
+                                </DialogTrigger>
+                                {viewProposal && viewProposal._id === review.proposal._id && (
+                                  <ProposalViewModal
+                                    proposal={viewProposal}
+                                    onClose={() => setViewProposal(null)}
+                                  />
+                                )}
+                              </Dialog>
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button 
+                                    size="sm" 
+                                    variant="default"
+                                    onClick={() => setSelectedReview(review)}
+                                  >
+                                    <Eye className="w-4 h-4 mr-1" />
+                                    Review
+                                  </Button>
+                                </DialogTrigger>
+                                {selectedReview && selectedReview._id === review._id && (
+                                  <ReviewModal
+                                    review={selectedReview}
+                                    onClose={() => setSelectedReview(null)}
+                                    onSubmit={handleSubmitReview}
+                                  />
+                                )}
+                              </Dialog>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -436,6 +637,7 @@ export default function ReviewerDashboard() {
                         <TableHead>Decision</TableHead>
                         <TableHead>Score</TableHead>
                         <TableHead>Review Date</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -462,6 +664,28 @@ export default function ReviewerDashboard() {
                           </TableCell>
                           <TableCell>
                             {review.reviewDate ? new Date(review.reviewDate).toLocaleDateString() : 'N/A'}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => setViewProposal(review.proposal)}
+                                  >
+                                    <Eye className="w-4 h-4 mr-1" />
+                                    View
+                                  </Button>
+                                </DialogTrigger>
+                                {viewProposal && viewProposal._id === review.proposal._id && (
+                                  <ProposalViewModal
+                                    proposal={viewProposal}
+                                    onClose={() => setViewProposal(null)}
+                                  />
+                                )}
+                              </Dialog>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}

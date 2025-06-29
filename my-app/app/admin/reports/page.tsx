@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -62,99 +62,6 @@ import {
   Clock,
 } from "lucide-react"
 import AdminLayout from "@/components/layouts/AdminLayout"
-
-const evaluationReports = [
-  {
-    id: 1,
-    title: "Q1 2024 Grant Evaluation Report",
-    period: "January - March 2024",
-    totalProposals: 45,
-    approved: 12,
-    rejected: 28,
-    pending: 5,
-    totalFunding: "$1,250,000",
-    averageScore: 6.8,
-    generatedDate: "2024-04-01",
-    status: "Final",
-  },
-  {
-    id: 2,
-    title: "Technology Grants Analysis 2024",
-    period: "January - December 2024",
-    totalProposals: 78,
-    approved: 23,
-    rejected: 45,
-    pending: 10,
-    totalFunding: "$2,100,000",
-    averageScore: 7.2,
-    generatedDate: "2024-01-15",
-    status: "Draft",
-  },
-  {
-    id: 3,
-    title: "Healthcare Research Funding Report",
-    period: "2023 Annual",
-    totalProposals: 32,
-    approved: 18,
-    rejected: 14,
-    pending: 0,
-    totalFunding: "$1,800,000",
-    averageScore: 7.9,
-    generatedDate: "2024-01-05",
-    status: "Final",
-  },
-]
-
-const monthlyData = [
-  { month: "Jan", proposals: 15, approved: 4, funding: 420000 },
-  { month: "Feb", proposals: 18, approved: 5, funding: 380000 },
-  { month: "Mar", proposals: 12, approved: 3, funding: 450000 },
-  { month: "Apr", proposals: 22, approved: 7, funding: 620000 },
-  { month: "May", proposals: 19, approved: 6, funding: 540000 },
-  { month: "Jun", proposals: 16, approved: 4, funding: 480000 },
-]
-
-const categoryData = [
-  { name: "Technology", value: 35, funding: 1200000, color: "#3B82F6" },
-  { name: "Healthcare", value: 28, funding: 980000, color: "#10B981" },
-  { name: "Environment", value: 22, funding: 750000, color: "#F59E0B" },
-  { name: "Social Sciences", value: 15, funding: 420000, color: "#EF4444" },
-]
-
-const reviewerPerformance = [
-  {
-    id: 1,
-    name: "Prof. David Martinez",
-    reviewsCompleted: 12,
-    averageScore: 7.8,
-    onTimeRate: 95,
-    expertise: "AI & Machine Learning",
-  },
-  {
-    id: 2,
-    name: "Dr. Lisa Zhang",
-    reviewsCompleted: 18,
-    averageScore: 7.2,
-    onTimeRate: 88,
-    expertise: "Computer Science",
-  },
-  {
-    id: 3,
-    name: "Prof. Robert Kim",
-    reviewsCompleted: 8,
-    averageScore: 8.1,
-    onTimeRate: 100,
-    expertise: "Environmental Science",
-  },
-  {
-    id: 4,
-    name: "Dr. Maria Santos",
-    reviewsCompleted: 15,
-    averageScore: 7.5,
-    onTimeRate: 92,
-    expertise: "Healthcare Technology",
-  },
-]
 
 function ReportDetailsModal({ report, onClose }: { report: any; onClose: () => void }) {
   return (
@@ -247,6 +154,53 @@ export default function AdminReportsPage() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedReport, setSelectedReport] = useState(null)
 
+  // Dynamic data states
+  const [evaluationReports, setEvaluationReports] = useState<any[]>([])
+  const [monthlyData, setMonthlyData] = useState<any[]>([])
+  const [categoryData, setCategoryData] = useState<any[]>([])
+  const [reviewerPerformance, setReviewerPerformance] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      setError("")
+      try {
+        const token = localStorage.getItem("token")
+        // Fetch evaluation reports
+        const evalRes = await fetch("http://localhost:5000/api/reports/evaluation", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!evalRes.ok) throw new Error("Failed to fetch evaluation reports")
+        const evalData = await evalRes.json()
+        setEvaluationReports(evalData)
+
+        // Fetch analytics
+        const analyticsRes = await fetch("http://localhost:5000/api/reports/analytics", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!analyticsRes.ok) throw new Error("Failed to fetch analytics")
+        const analyticsData = await analyticsRes.json()
+        setMonthlyData(analyticsData.monthlyData)
+        setCategoryData(analyticsData.categoryData)
+
+        // Fetch reviewer performance
+        const perfRes = await fetch("http://localhost:5000/api/reports/reviewer-performance", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!perfRes.ok) throw new Error("Failed to fetch reviewer performance")
+        const perfData = await perfRes.json()
+        setReviewerPerformance(perfData)
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
+
   const filteredReports = evaluationReports.filter((report) => {
     const matchesSearch = report.title.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || report.status === statusFilter
@@ -263,6 +217,9 @@ export default function AdminReportsPage() {
         return "bg-gray-100 text-gray-800"
     }
   }
+
+  if (loading) return <div className="p-8 text-center text-lg">Loading reports...</div>
+  if (error) return <div className="p-8 text-center text-red-600">{error}</div>
 
   return (
     <AdminLayout active="reports">
@@ -401,7 +358,7 @@ export default function AdminReportsPage() {
                     </CardHeader>
                     <CardContent>
                       <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={monthlyData}>
+                        <BarChart data={monthlyData} margin={{ top: 16, right: 16, left: 0, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="month" />
                           <YAxis />
@@ -412,113 +369,60 @@ export default function AdminReportsPage() {
                       </ResponsiveContainer>
                     </CardContent>
                   </Card>
-
                   <Card>
                     <CardHeader>
                       <CardTitle>Funding by Category</CardTitle>
-                      <CardDescription>Distribution of funding across research categories</CardDescription>
+                      <CardDescription>Distribution of funding across categories</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <ResponsiveContainer width="100%" height={300}>
                         <PieChart>
                           <Pie
                             data={categoryData}
+                            dataKey="funding"
+                            nameKey="name"
                             cx="50%"
                             cy="50%"
                             outerRadius={100}
-                            fill="#8884d8"
-                            dataKey="funding"
-                            label={({ name, value }) => `${name}: $${(value / 1000000).toFixed(1)}M`}
+                            label
                           >
                             {categoryData.map((entry, index) => (
                               <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
                           </Pie>
-                          <Tooltip formatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
+                          <Tooltip />
                         </PieChart>
                       </ResponsiveContainer>
                     </CardContent>
                   </Card>
                 </div>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Funding Trends</CardTitle>
-                    <CardDescription>Monthly funding allocation trends</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={monthlyData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => `$${(value / 1000).toLocaleString()}K`} />
-                        <Line type="monotone" dataKey="funding" stroke="#10B981" strokeWidth={2} name="Funding" />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
               </TabsContent>
 
               <TabsContent value="performance" className="space-y-6">
-                {/* Reviewer Performance */}
                 <Card>
                   <CardHeader>
                     <CardTitle>Reviewer Performance</CardTitle>
-                    <CardDescription>Performance metrics for active reviewers</CardDescription>
+                    <CardDescription>Reviewer activity and performance metrics</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Reviewer</TableHead>
-                          <TableHead>Expertise</TableHead>
+                          <TableHead>Name</TableHead>
                           <TableHead>Reviews Completed</TableHead>
-                          <TableHead>Average Score</TableHead>
+                          <TableHead>Avg. Score</TableHead>
                           <TableHead>On-Time Rate</TableHead>
-                          <TableHead>Performance</TableHead>
+                          <TableHead>Expertise</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {reviewerPerformance.map((reviewer) => (
                           <TableRow key={reviewer.id}>
-                            <TableCell className="font-medium">{reviewer.name}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{reviewer.expertise}</Badge>
-                            </TableCell>
+                            <TableCell>{reviewer.name}</TableCell>
                             <TableCell>{reviewer.reviewsCompleted}</TableCell>
-                            <TableCell>
-                              <div className="text-lg font-bold text-blue-600">{reviewer.averageScore}</div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center">
-                                <span className="font-semibold">{reviewer.onTimeRate}%</span>
-                                {reviewer.onTimeRate >= 95 ? (
-                                  <CheckCircle className="w-4 h-4 ml-1 text-green-600" />
-                                ) : reviewer.onTimeRate >= 85 ? (
-                                  <Clock className="w-4 h-4 ml-1 text-yellow-600" />
-                                ) : (
-                                  <XCircle className="w-4 h-4 ml-1 text-red-600" />
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                className={
-                                  reviewer.onTimeRate >= 95 && reviewer.averageScore >= 7.5
-                                    ? "bg-green-100 text-green-800"
-                                    : reviewer.onTimeRate >= 85 && reviewer.averageScore >= 7.0
-                                      ? "bg-yellow-100 text-yellow-800"
-                                      : "bg-red-100 text-red-800"
-                                }
-                              >
-                                {reviewer.onTimeRate >= 95 && reviewer.averageScore >= 7.5
-                                  ? "Excellent"
-                                  : reviewer.onTimeRate >= 85 && reviewer.averageScore >= 7.0
-                                    ? "Good"
-                                    : "Needs Improvement"}
-                              </Badge>
-                            </TableCell>
+                            <TableCell>{reviewer.averageScore}</TableCell>
+                            <TableCell>{reviewer.onTimeRate}%</TableCell>
+                            <TableCell>{reviewer.expertise}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -528,82 +432,52 @@ export default function AdminReportsPage() {
               </TabsContent>
 
               <TabsContent value="trends" className="space-y-6">
-                {/* Key Statistics */}
-                <div className="grid md:grid-cols-4 gap-6">
+                <div className="grid lg:grid-cols-2 gap-6">
                   <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Total Proposals</CardTitle>
-                      <FileText className="h-4 w-4 text-muted-foreground" />
+                    <CardHeader>
+                      <CardTitle>Proposal & Approval Trends</CardTitle>
+                      <CardDescription>Monthly trends for proposals and approvals</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">156</div>
-                      <p className="text-xs text-muted-foreground">+12% from last quarter</p>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <LineChart data={monthlyData} margin={{ top: 16, right: 16, left: 0, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="month" />
+                          <YAxis />
+                          <Tooltip />
+                          <Line type="monotone" dataKey="proposals" stroke="#3B82F6" name="Proposals" />
+                          <Line type="monotone" dataKey="approved" stroke="#10B981" name="Approved" />
+                        </LineChart>
+                      </ResponsiveContainer>
                     </CardContent>
                   </Card>
                   <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Approval Rate</CardTitle>
-                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    <CardHeader>
+                      <CardTitle>Funding by Category</CardTitle>
+                      <CardDescription>Trends in funding allocation</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">27%</div>
-                      <p className="text-xs text-muted-foreground">+3% from last quarter</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Average Score</CardTitle>
-                      <Award className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">7.2</div>
-                      <p className="text-xs text-muted-foreground">+0.3 from last quarter</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Total Funding</CardTitle>
-                      <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">$3.2M</div>
-                      <p className="text-xs text-muted-foreground">+18% from last quarter</p>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={categoryData}
+                            dataKey="funding"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={100}
+                            label
+                          >
+                            {categoryData.map((entry, index) => (
+                              <Cell key={`cell-trend-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
                     </CardContent>
                   </Card>
                 </div>
-
-                {/* Trend Analysis */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Quarterly Trends Analysis</CardTitle>
-                    <CardDescription>Key performance indicators over the past year</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="p-4 border rounded-lg">
-                        <h3 className="font-semibold mb-2">Proposal Quality Improvement</h3>
-                        <p className="text-sm text-gray-600">
-                          Average proposal scores have increased by 0.8 points over the past year, indicating improved
-                          quality of submissions and better researcher preparation.
-                        </p>
-                      </div>
-                      <div className="p-4 border rounded-lg">
-                        <h3 className="font-semibold mb-2">Funding Efficiency</h3>
-                        <p className="text-sm text-gray-600">
-                          The approval rate has stabilized at 27%, with more strategic funding allocation leading to
-                          higher impact research projects.
-                        </p>
-                      </div>
-                      <div className="p-4 border rounded-lg">
-                        <h3 className="font-semibold mb-2">Review Process Optimization</h3>
-                        <p className="text-sm text-gray-600">
-                          Average review completion time has decreased by 15%, with 92% of reviews completed on time
-                          thanks to improved reviewer management.
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
               </TabsContent>
             </Tabs>
           </main>

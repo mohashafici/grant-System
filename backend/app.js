@@ -28,6 +28,7 @@ app.use('/api/grants', require('./routes/grantRoutes'));
 app.use('/api/proposals', require('./routes/proposalRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/reports', require('./routes/reportRoutes'));
 // Future: app.use('/api/reviews', require('./routes/reviewRoutes'));
 
 // Error handler

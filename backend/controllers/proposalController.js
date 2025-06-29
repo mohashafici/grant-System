@@ -2,6 +2,7 @@ const Proposal = require('../models/Proposal');
 const Review = require('../models/Review');
 const path = require('path');
 const fs = require('fs');
+const Grant = require('../models/Grant');
 
 // POST /api/proposals - Submit new proposal
 exports.submitProposal = async (req, res, next) => {
@@ -97,6 +98,37 @@ exports.submitProposal = async (req, res, next) => {
       ...filePaths
     });
 
+    // --- Recommendation Algorithm ---
+    let recommendedScore = 0;
+    const keywords = ["innovation", "impact", "feasibility"];
+    const abstractLower = abstract.toLowerCase();
+    for (const keyword of keywords) {
+      if (abstractLower.includes(keyword)) {
+        recommendedScore += 10;
+      }
+    }
+    // Get the grant's funding amount
+    let grantDoc;
+    try {
+      grantDoc = await Grant.findById(grant);
+    } catch (e) {
+      return res.status(500).json({ message: 'Error fetching grant for recommendation.' });
+    }
+    if (grantDoc && parseInt(funding) <= grantDoc.funding) {
+      recommendedScore += 20;
+    }
+    // Count words in abstract
+    const wordCount = abstract.trim().split(/\s+/).length;
+    if (wordCount >= 200) {
+      recommendedScore += 10;
+    }
+    // Recommendation text
+    const recommendation = recommendedScore >= 40 ? "Recommended for Acceptance" : "Not Recommended for Acceptance";
+    // Update proposal with recommendation fields
+    proposal.recommendedScore = recommendedScore;
+    proposal.recommendation = recommendation;
+    await proposal.save();
+    // Return proposal with recommendation fields
     res.status(201).json(proposal);
   } catch (err) {
     next(err);
