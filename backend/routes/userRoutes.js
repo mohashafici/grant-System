@@ -14,4 +14,8 @@ router.get('/:id', auth, authorizeRoles('admin'), userController.getUserById);
 // PUT /api/users/:id - Update user (admin only)
 router.put('/:id', auth, authorizeRoles('admin'), userController.updateUser);
 
+// Add profile routes for current user
+router.get('/me', auth, userController.getProfile);
+router.put('/me', auth, userController.updateProfile);
+
 module.exports = router; 

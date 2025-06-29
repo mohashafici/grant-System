@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -28,62 +28,6 @@ import {
   UserPlus,
 } from "lucide-react"
 import AdminLayout from "@/components/layouts/AdminLayout"
-
-const submissionsData = [
-  { month: "Jan", submissions: 45, approved: 12 },
-  { month: "Feb", submissions: 52, approved: 15 },
-  { month: "Mar", submissions: 38, approved: 10 },
-  { month: "Apr", submissions: 61, approved: 18 },
-  { month: "May", submissions: 55, approved: 16 },
-  { month: "Jun", submissions: 48, approved: 14 },
-]
-
-const categoryData = [
-  { name: "Technology", value: 35, color: "#3B82F6" },
-  { name: "Healthcare", value: 28, color: "#10B981" },
-  { name: "Environment", value: 22, color: "#F59E0B" },
-  { name: "Social Sciences", value: 15, color: "#EF4444" },
-]
-
-const allSubmissions = [
-  {
-    id: 1,
-    title: "AI-Powered Medical Diagnosis System",
-    researcher: "Dr. Sarah Johnson",
-    institution: "Stanford University",
-    submissionDate: "2024-01-15",
-    funding: "$75,000",
-    status: "Under Review",
-    reviewer: "Prof. David Martinez",
-  },
-  {
-    id: 2,
-    title: "Sustainable Energy Storage Solutions",
-    researcher: "Prof. Michael Chen",
-    institution: "MIT",
-    submissionDate: "2024-01-20",
-    funding: "$50,000",
-    status: "Pending Assignment",
-    reviewer: null,
-  },
-  {
-    id: 3,
-    title: "Quantum Computing Applications",
-    researcher: "Dr. Emily Rodriguez",
-    institution: "Caltech",
-    submissionDate: "2024-01-10",
-    funding: "$100,000",
-    status: "Approved",
-    reviewer: "Dr. Lisa Zhang",
-  },
-]
-
-const reviewers = [
-  { id: 1, name: "Prof. David Martinez", expertise: "AI & Machine Learning", workload: 3 },
-  { id: 2, name: "Dr. Lisa Zhang", expertise: "Computer Science", workload: 2 },
-  { id: 3, name: "Prof. Robert Kim", expertise: "Environmental Science", workload: 1 },
-  { id: 4, name: "Dr. Maria Santos", expertise: "Healthcare Technology", workload: 4 },
-]
 
 function AssignReviewerModal({ submission, onClose }: { submission: any; onClose: () => void }) {
   const [selectedReviewer, setSelectedReviewer] = useState("")
@@ -136,11 +80,14 @@ function AssignReviewerModal({ submission, onClose }: { submission: any; onClose
               <SelectValue placeholder="Choose a reviewer" />
             </SelectTrigger>
             <SelectContent>
-              {reviewers.map((reviewer) => (
+              {/* Reviewers should be fetched from the backend */}
+              {/* For now, we'll use a static list */}
+              {/* Replace this with actual reviewer data */}
+              {/* {reviewers.map((reviewer) => (
                 <SelectItem key={reviewer.id} value={reviewer.id.toString()}>
                   {reviewer.name} - {reviewer.expertise} (Workload: {reviewer.workload})
                 </SelectItem>
-              ))}
+              ))} */}
             </SelectContent>
           </Select>
         </div>
@@ -168,9 +115,145 @@ function AssignReviewerModal({ submission, onClose }: { submission: any; onClose
   )
 }
 
+function ProposalViewModal({ proposal, onClose, reviewer }: { proposal: any; onClose: () => void; reviewer?: any }) {
+  return (
+    <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle>{proposal.title}</DialogTitle>
+        <DialogDescription>
+          Submitted by {proposal.researcher?.firstName} {proposal.researcher?.lastName} from {proposal.researcher?.institution}
+        </DialogDescription>
+      </DialogHeader>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Proposal Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="font-medium">Status</Label>
+                <Badge className="mt-1">{proposal.status}</Badge>
+              </div>
+              <div>
+                <Label className="font-medium">Category</Label>
+                <p className="mt-1">{proposal.category}</p>
+              </div>
+              <div>
+                <Label className="font-medium">Funding Requested</Label>
+                <p className="mt-1 text-lg font-semibold text-blue-600">${proposal.funding?.toLocaleString()}</p>
+              </div>
+              <div>
+                <Label className="font-medium">Grant</Label>
+                <p className="mt-1">{proposal.grantTitle}</p>
+              </div>
+              <div>
+                <Label className="font-medium">Submission Date</Label>
+                <p className="mt-1">{proposal.dateSubmitted ? new Date(proposal.dateSubmitted).toLocaleDateString() : 'N/A'}</p>
+              </div>
+              <div>
+                <Label className="font-medium">Deadline</Label>
+                <p className="mt-1">{proposal.deadline ? new Date(proposal.deadline).toLocaleDateString() : 'N/A'}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Abstract</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-700 leading-relaxed">{proposal.abstract}</p>
+          </CardContent>
+        </Card>
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={onClose}>Close</Button>
+        </div>
+      </div>
+    </DialogContent>
+  );
+}
+
 export default function AdminDashboard() {
   const [selectedSubmission, setSelectedSubmission] = useState<any | null>(null)
+  const [viewProposal, setViewProposal] = useState<any | null>(null)
+  const [proposals, setProposals] = useState<any[]>([])
+  const [reviewers, setReviewers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const { toast } = useToast()
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      const token = localStorage.getItem("token")
+      // Fetch all grants
+      const grantsRes = await fetch("http://localhost:5000/api/grants", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const grants = await grantsRes.json()
+      // Fetch all proposals for each grant
+      let allProposals: any[] = []
+      for (const grant of grants) {
+        const proposalsRes = await fetch(`http://localhost:5000/api/proposals/grant/${grant._id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (proposalsRes.ok) {
+          const proposals = await proposalsRes.json()
+          for (const proposal of proposals) {
+            allProposals.push({ ...proposal, grantTitle: grant.title })
+          }
+        }
+      }
+      setProposals(allProposals)
+      // Fetch reviewers
+      const reviewersRes = await fetch("http://localhost:5000/api/users/reviewers", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (reviewersRes.ok) {
+        setReviewers(await reviewersRes.json())
+      }
+      setLoading(false)
+    }
+    fetchData()
+  }, [])
+
+  // Stats
+  const totalProposals = proposals.length
+  const approvedProposals = proposals.filter((p) => p.status === "Approved").length
+  const pendingProposals = proposals.filter((p) => p.status === "Under Review" || p.status === "Pending Assignment").length
+  const rejectedProposals = proposals.filter((p) => p.status === "Rejected").length
+  const totalFunding = proposals.reduce((sum, p) => sum + (parseFloat(p.funding) || 0), 0)
+
+  // Chart data
+  const submissionsByMonth: Record<string, { submissions: number, approved: number }> = {}
+  const categoryMap: Record<string, number> = {}
+  proposals.forEach((p) => {
+    // Submissions by month
+    const date = p.dateSubmitted ? new Date(p.dateSubmitted) : null
+    if (date) {
+      const month = date.toLocaleString('default', { month: 'short' })
+      if (!submissionsByMonth[month]) submissionsByMonth[month] = { submissions: 0, approved: 0 }
+      submissionsByMonth[month].submissions++
+      if (p.status === "Approved") submissionsByMonth[month].approved++
+    }
+    // Category data
+    if (p.category) {
+      categoryMap[p.category] = (categoryMap[p.category] || 0) + 1
+    }
+  })
+  const submissionsData = Object.keys(submissionsByMonth).map(month => ({
+    month,
+    submissions: submissionsByMonth[month].submissions,
+    approved: submissionsByMonth[month].approved,
+  }))
+  const categoryColors = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#6366F1", "#E11D48"]
+  const categoryData = Object.keys(categoryMap).map((cat, i) => ({
+    name: cat,
+    value: categoryMap[cat],
+    color: categoryColors[i % categoryColors.length],
+  }))
+
+  if (loading) return <div className="p-8 text-center text-gray-500">Loading dashboard...</div>
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -180,6 +263,8 @@ export default function AdminDashboard() {
         return "bg-yellow-100 text-yellow-800"
       case "Pending Assignment":
         return "bg-red-100 text-red-800"
+      case "Rejected":
+        return "bg-gray-300 text-gray-700"
       default:
         return "bg-gray-100 text-gray-800"
     }
@@ -197,15 +282,15 @@ export default function AdminDashboard() {
     <AdminLayout active="dashboard">
       <main className="p-6">
         {/* Stats Cards */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
+        <div className="grid md:grid-cols-5 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Proposals</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">156</div>
-              <p className="text-xs text-muted-foreground">+12% from last month</p>
+              <div className="text-2xl font-bold">{totalProposals}</div>
+              <p className="text-xs text-muted-foreground">Total proposals submitted</p>
             </CardContent>
           </Card>
           <Card>
@@ -214,8 +299,8 @@ export default function AdminDashboard() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">42</div>
-              <p className="text-xs text-muted-foreground">27% approval rate</p>
+              <div className="text-2xl font-bold">{approvedProposals}</div>
+              <p className="text-xs text-muted-foreground">Total approved proposals</p>
             </CardContent>
           </Card>
           <Card>
@@ -224,8 +309,18 @@ export default function AdminDashboard() {
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">23</div>
-              <p className="text-xs text-muted-foreground">Awaiting assignment</p>
+              <div className="text-2xl font-bold">{pendingProposals}</div>
+              <p className="text-xs text-muted-foreground">Awaiting assignment or review</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Rejected</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{rejectedProposals}</div>
+              <p className="text-xs text-muted-foreground">Total rejected proposals</p>
             </CardContent>
           </Card>
           <Card>
@@ -234,7 +329,7 @@ export default function AdminDashboard() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$2.1M</div>
+              <div className="text-2xl font-bold">${totalFunding.toLocaleString()}</div>
               <p className="text-xs text-muted-foreground">Awarded this year</p>
             </CardContent>
           </Card>
@@ -276,7 +371,7 @@ export default function AdminDashboard() {
                     outerRadius={100}
                     fill="#8884d8"
                     dataKey="value"
-                    label={({ name, value }) => `${name}: ${value}%`}
+                    label={({ name, value }) => `${name}: ${value}`}
                   >
                     {categoryData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -310,27 +405,44 @@ export default function AdminDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {allSubmissions.map((submission) => (
-                  <TableRow key={submission.id}>
+                {proposals.map((submission) => (
+                  <TableRow key={submission._id}>
                     <TableCell className="font-medium">{submission.title}</TableCell>
-                    <TableCell>{submission.researcher}</TableCell>
-                    <TableCell>{submission.institution}</TableCell>
-                    <TableCell>{submission.submissionDate}</TableCell>
-                    <TableCell className="font-semibold text-blue-600">{submission.funding}</TableCell>
+                    <TableCell>
+                      {submission.researcher?.firstName} {submission.researcher?.lastName}
+                    </TableCell>
+                    <TableCell>{submission.researcher?.institution}</TableCell>
+                    <TableCell>{submission.dateSubmitted ? new Date(submission.dateSubmitted).toLocaleDateString() : ''}</TableCell>
+                    <TableCell className="font-semibold text-blue-600">${submission.funding?.toLocaleString()}</TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(submission.status)}>{submission.status}</Badge>
                     </TableCell>
-                    <TableCell>{submission.reviewer || "Not assigned"}</TableCell>
+                    <TableCell>
+                      {submission.reviewer
+                        ? reviewers.find((r) => r._id === submission.reviewer)?.firstName + ' ' + reviewers.find((r) => r._id === submission.reviewer)?.lastName
+                        : "Not assigned"}
+                    </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleViewProposal(submission)}
-                        >
-                          <Eye className="w-4 h-4 mr-1" />
-                          View
-                        </Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => setViewProposal(submission)}
+                            >
+                              <Eye className="w-4 h-4 mr-1" />
+                              View
+                            </Button>
+                          </DialogTrigger>
+                          {viewProposal && viewProposal._id === submission._id && (
+                            <ProposalViewModal
+                              proposal={viewProposal}
+                              reviewer={reviewers.find((r) => r._id === viewProposal.reviewer)}
+                              onClose={() => setViewProposal(null)}
+                            />
+                          )}
+                        </Dialog>
                         {submission.status === "Pending Assignment" && (
                           <Dialog>
                             <DialogTrigger asChild>

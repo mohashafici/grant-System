@@ -38,6 +38,9 @@ const UserSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  profileImage: {
+    type: String, // File path or URL
+  },
 }, { timestamps: true });
 
 UserSchema.pre('save', async function (next) {

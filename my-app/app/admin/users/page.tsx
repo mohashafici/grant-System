@@ -406,9 +406,9 @@ export default function ManageUsersPage() {
           status: "Active", // Placeholder, backend does not have status
           joinDate: u.createdAt ? u.createdAt.slice(0, 10) : "",
           lastLogin: u.updatedAt ? u.updatedAt.slice(0, 10) : "",
-          proposals: u.proposals || 0,
-          approved: u.approved || 0,
-          reviews: u.reviews || 0,
+          proposals: u.activity?.proposals || 0,
+          approved: u.activity?.approved || 0,
+          reviews: u.activity?.reviews || 0,
           avatar: "/placeholder-user.jpg",
         }))
         setUsers(mapped)

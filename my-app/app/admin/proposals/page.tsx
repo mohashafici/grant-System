@@ -176,6 +176,25 @@ function ProposalViewModal({ proposal, onClose }: { proposal: any; onClose: () =
           </Card>
         )}
 
+        {/* System Recommendation Section */}
+        {(typeof proposal.recommendedScore === 'number' && proposal.recommendation) && (
+          <Card className="border-2 border-blue-400 bg-blue-50 my-6">
+            <CardHeader>
+              <CardTitle className="text-blue-900">System Recommendation</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-2">
+                <span className="text-blue-800">
+                  System Recommended Score: <span className="font-bold">{proposal.recommendedScore}/100</span>
+                </span>
+                <span className="text-blue-800">
+                  System Recommendation: <span className="font-bold">{proposal.recommendation}</span>
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="flex justify-end">
           <Button variant="outline" onClick={onClose}>
             Close

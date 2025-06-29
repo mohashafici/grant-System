@@ -47,14 +47,7 @@ export default function AdminSidebar({ active }: { active: string }) {
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  {/* <SidebarMenuItem> */}
-                    {/* <SidebarMenuButton asChild isActive={active === "assign-reviewers"}>
-                      <Link href="/admin/assign-reviewers">
-                        <Users className="w-4 h-4" />
-                        <span>Assign Reviewers</span>
-                      </Link> */}
-                    {/* </SidebarMenuButton>
-                  </SidebarMenuItem> */}
+                  
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={active === "users"}>
                       <Link href="/admin/users">
@@ -73,10 +66,10 @@ export default function AdminSidebar({ active }: { active: string }) {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={active === "notifications"}>
-                      <Link href="/admin/notifications">
+                      {/* <Link href="/admin/notifications">
                         <Bell className="w-4 h-4" />
                         <span>Notifications</span>
-                      </Link>
+                      </Link> */}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 </SidebarMenu>
@@ -84,7 +77,7 @@ export default function AdminSidebar({ active }: { active: string }) {
             </SidebarGroup>
           </div>
           <div className="mb-4">
-            <LogoutButton />
+            {/* <LogoutButton /> */}
           </div>
         </div>
       </SidebarContent>
