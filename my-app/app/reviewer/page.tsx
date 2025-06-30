@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast"
 import { FileText, User, History, Eye, Award, Star, CheckCircle, XCircle, Clock, AlertCircle, TrendingUp, DollarSign, Download } from "lucide-react"
 import ReviewerLayout from "@/components/layouts/ReviewerLayout"
+import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 
 function ReviewModal({ review, onClose, onSubmit }: { review: any; onClose: () => void; onSubmit: (reviewData: any) => void }) {
   const [reviewData, setReviewData] = useState({
@@ -465,6 +466,7 @@ function ProposalViewModal({ proposal, onClose }: { proposal: any; onClose: () =
 }
 
 export default function ReviewerDashboardPage() {
+  useAuthRedirect(["reviewer"]);
   const [assignedReviews, setAssignedReviews] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")

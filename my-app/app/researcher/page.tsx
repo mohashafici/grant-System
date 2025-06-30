@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Home, FileText, Plus, Bell, User, Eye, Edit, Trash2, Award, Settings } from "lucide-react"
 import ResearcherLayout from "@/components/layouts/ResearcherLayout"
+import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 
 const proposals = [
   {
@@ -181,6 +182,7 @@ function ResearcherSidebar() {
 }
 
 export default function ResearcherDashboardPage() {
+  useAuthRedirect(["researcher"])
   return (
     <ResearcherLayout active="dashboard">
       {/* Place all dashboard content here, excluding any sidebar/topbar duplication */}
