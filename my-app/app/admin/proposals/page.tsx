@@ -178,18 +178,75 @@ function ProposalViewModal({ proposal, onClose }: { proposal: any; onClose: () =
 
         {/* System Recommendation Section */}
         {(typeof proposal.recommendedScore === 'number' && proposal.recommendation) && (
-          <Card className="border-2 border-blue-400 bg-blue-50 my-6">
+          <Card className="border-2 border-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50 my-6">
             <CardHeader>
-              <CardTitle className="text-blue-900">System Recommendation</CardTitle>
+              <CardTitle className="text-blue-900 flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                AI-Powered Recommendation Analysis
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex flex-col gap-2">
-                <span className="text-blue-800">
-                  System Recommended Score: <span className="font-bold">{proposal.recommendedScore}/100</span>
-                </span>
-                <span className="text-blue-800">
-                  System Recommendation: <span className="font-bold">{proposal.recommendation}</span>
-                </span>
+            <CardContent className="space-y-4">
+              {/* Overall Score */}
+              <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                <div>
+                  <h4 className="font-semibold text-gray-800">Overall Recommendation Score</h4>
+                  <p className="text-sm text-gray-600">Based on comprehensive analysis of multiple criteria</p>
+                </div>
+                <div className="text-right">
+                  <div className={`text-3xl font-bold ${
+                    proposal.recommendedScore >= 80 ? 'text-green-600' :
+                    proposal.recommendedScore >= 60 ? 'text-yellow-600' :
+                    'text-red-600'
+                  }`}>
+                    {proposal.recommendedScore}/100
+                  </div>
+                  <div className={`text-sm font-medium ${
+                    proposal.recommendedScore >= 80 ? 'text-green-700' :
+                    proposal.recommendedScore >= 60 ? 'text-yellow-700' :
+                    'text-red-700'
+                  }`}>
+                    {proposal.recommendedScore >= 80 ? 'Excellent' :
+                     proposal.recommendedScore >= 60 ? 'Good' :
+                     proposal.recommendedScore >= 40 ? 'Fair' : 'Poor'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Score Progress Bar */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium text-gray-700">Score Breakdown</span>
+                  <span className="text-gray-500">{proposal.recommendedScore}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div 
+                    className={`h-3 rounded-full transition-all duration-500 ${
+                      proposal.recommendedScore >= 80 ? 'bg-gradient-to-r from-green-400 to-green-600' :
+                      proposal.recommendedScore >= 60 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
+                      'bg-gradient-to-r from-red-400 to-red-600'
+                    }`}
+                    style={{ width: `${proposal.recommendedScore}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* Recommendation Summary */}
+              <div className="p-4 bg-white rounded-lg border">
+                <h4 className="font-semibold text-gray-800 mb-2">AI Recommendation</h4>
+                <p className="text-gray-700 leading-relaxed">{proposal.recommendation}</p>
+              </div>
+
+              {/* Scoring Criteria Info */}
+              <div className="p-4 bg-blue-100 rounded-lg">
+                <h4 className="font-semibold text-blue-900 mb-2">Scoring Criteria</h4>
+                <div className="grid grid-cols-2 gap-2 text-sm text-blue-800">
+                  <div>• Keyword Relevance</div>
+                  <div>• Budget Feasibility</div>
+                  <div>• Content Quality</div>
+                  <div>• Structure & Format</div>
+                  <div>• Domain Alignment</div>
+                  <div>• Technical Accuracy</div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -215,6 +272,9 @@ export default function AdminProposalsPage() {
   const [selectedProposal, setSelectedProposal] = useState<any | null>(null);
   const [selectedReviewer, setSelectedReviewer] = useState("");
   const [viewProposal, setViewProposal] = useState<any | null>(null);
+  const [sortBy, setSortBy] = useState("dateSubmitted");
+  const [sortOrder, setSortOrder] = useState("desc");
+  const [scoreFilter, setScoreFilter] = useState("all");
 
   // Fetch proposals and reviewers
   useEffect(() => {
@@ -265,6 +325,56 @@ export default function AdminProposalsPage() {
     fetchProposals();
     fetchReviewers();
   }, []);
+
+  // Sort and filter proposals
+  const getSortedAndFilteredProposals = () => {
+    let filtered = proposals;
+
+    // Apply score filter
+    if (scoreFilter !== "all") {
+      filtered = filtered.filter(proposal => {
+        if (typeof proposal.recommendedScore !== 'number') return false;
+        switch (scoreFilter) {
+          case "excellent": return proposal.recommendedScore >= 80;
+          case "good": return proposal.recommendedScore >= 60 && proposal.recommendedScore < 80;
+          case "fair": return proposal.recommendedScore >= 40 && proposal.recommendedScore < 60;
+          case "poor": return proposal.recommendedScore < 40;
+          default: return true;
+        }
+      });
+    }
+
+    // Apply sorting
+    return filtered.sort((a, b) => {
+      let aValue, bValue;
+      
+      switch (sortBy) {
+        case "recommendedScore":
+          aValue = typeof a.recommendedScore === 'number' ? a.recommendedScore : -1;
+          bValue = typeof b.recommendedScore === 'number' ? b.recommendedScore : -1;
+          break;
+        case "title":
+          aValue = a.title?.toLowerCase() || '';
+          bValue = b.title?.toLowerCase() || '';
+          break;
+        case "status":
+          aValue = a.status?.toLowerCase() || '';
+          bValue = b.status?.toLowerCase() || '';
+          break;
+        case "dateSubmitted":
+        default:
+          aValue = new Date(a.dateSubmitted || 0).getTime();
+          bValue = new Date(b.dateSubmitted || 0).getTime();
+          break;
+      }
+
+      if (sortOrder === "asc") {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+  };
 
   // Assign reviewer handler
   const handleAssignReviewer = async () => {
@@ -331,140 +441,208 @@ export default function AdminProposalsPage() {
           ) : error ? (
             <div className="py-8 text-center text-red-500">{error}</div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Researcher</TableHead>
-                  <TableHead>Grant</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Reviewer</TableHead>
-                  <TableHead>Submission Date</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {proposals.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center text-gray-500">No proposals found.</TableCell>
-                  </TableRow>
-                ) : (
-                  proposals.map((proposal) => (
-                    <TableRow key={proposal._id}>
-                      <TableCell className="font-medium">{proposal.title}</TableCell>
-                      <TableCell>{proposal.researcher && (proposal.researcher.firstName || proposal.researcher.lastName)
-                        ? `${proposal.researcher.firstName || ''} ${proposal.researcher.lastName || ''}`.trim()
-                        : proposal.researcher && proposal.researcher.email
-                          ? proposal.researcher.email
-                          : proposal.researcher}</TableCell>
-                      <TableCell>{proposal.grantTitle}</TableCell>
-                      <TableCell>
-                        <Badge className={
-                          proposal.status === "Approved" ? "bg-green-100 text-green-800" :
-                          proposal.status === "Rejected" ? "bg-red-100 text-red-800" :
-                          proposal.status === "Needs Revision" ? "bg-orange-100 text-orange-800" :
-                          "bg-blue-100 text-blue-800"
-                        }>
-                          {proposal.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {proposal.reviewer ? (
-                          <span className="text-sm text-gray-600">{getReviewerName(proposal.reviewer)}</span>
-                        ) : (
-                          <span className="text-sm text-gray-400">Not assigned</span>
-                        )}
-                      </TableCell>
-                      <TableCell>{proposal.dateSubmitted ? new Date(proposal.dateSubmitted).toLocaleDateString() : "-"}</TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => setViewProposal(proposal)}
-                              >
-                                <Eye className="w-4 h-4 mr-1" />
-                                View
-                              </Button>
-                            </DialogTrigger>
-                            {viewProposal && viewProposal._id === proposal._id && (
-                              <ProposalViewModal
-                                proposal={viewProposal}
-                                onClose={() => setViewProposal(null)}
-                              />
-                            )}
-                          </Dialog>
+            <>
+              {/* Sorting and Filtering Controls */}
+              <div className="flex flex-wrap gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <Label className="text-sm font-medium">Sort by:</Label>
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="dateSubmitted">Submission Date</SelectItem>
+                      <SelectItem value="recommendedScore">Recommendation Score</SelectItem>
+                      <SelectItem value="title">Title</SelectItem>
+                      <SelectItem value="status">Status</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+                  >
+                    {sortOrder === "asc" ? "↑" : "↓"}
+                  </Button>
+                </div>
 
-                          {!proposal.reviewer && proposal.status === "Under Review" && (
+                <div className="flex items-center space-x-2">
+                  <Label className="text-sm font-medium">Filter by score:</Label>
+                  <Select value={scoreFilter} onValueChange={setScoreFilter}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Scores</SelectItem>
+                      <SelectItem value="excellent">Excellent (80-100)</SelectItem>
+                      <SelectItem value="good">Good (60-79)</SelectItem>
+                      <SelectItem value="fair">Fair (40-59)</SelectItem>
+                      <SelectItem value="poor">Poor (0-39)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <span>Showing {getSortedAndFilteredProposals().length} of {proposals.length} proposals</span>
+                </div>
+              </div>
+
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Researcher</TableHead>
+                    <TableHead>Grant</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Recommendation</TableHead>
+                    <TableHead>Reviewer</TableHead>
+                    <TableHead>Submission Date</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {proposals.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center text-gray-500">No proposals found.</TableCell>
+                    </TableRow>
+                  ) : (
+                    getSortedAndFilteredProposals().map((proposal) => (
+                      <TableRow key={proposal._id}>
+                        <TableCell className="font-medium">{proposal.title}</TableCell>
+                        <TableCell>{proposal.researcher && (proposal.researcher.firstName || proposal.researcher.lastName)
+                          ? `${proposal.researcher.firstName || ''} ${proposal.researcher.lastName || ''}`.trim()
+                          : proposal.researcher && proposal.researcher.email
+                            ? proposal.researcher.email
+                            : proposal.researcher}</TableCell>
+                        <TableCell>{proposal.grantTitle}</TableCell>
+                        <TableCell>
+                          <Badge className={
+                            proposal.status === "Approved" ? "bg-green-100 text-green-800" :
+                            proposal.status === "Rejected" ? "bg-red-100 text-red-800" :
+                            proposal.status === "Needs Revision" ? "bg-orange-100 text-orange-800" :
+                            "bg-blue-100 text-blue-800"
+                          }>
+                            {proposal.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {typeof proposal.recommendedScore === 'number' ? (
+                            <div className="flex items-center space-x-2">
+                              <div className={`w-3 h-3 rounded-full ${
+                                proposal.recommendedScore >= 80 ? 'bg-green-500' :
+                                proposal.recommendedScore >= 60 ? 'bg-yellow-500' :
+                                'bg-red-500'
+                              }`}></div>
+                              <span className={`font-semibold ${
+                                proposal.recommendedScore >= 80 ? 'text-green-700' :
+                                proposal.recommendedScore >= 60 ? 'text-yellow-700' :
+                                'text-red-700'
+                              }`}>
+                                {proposal.recommendedScore}/100
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-sm">Not scored</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {proposal.reviewer ? (
+                            <span className="text-sm text-gray-600">{getReviewerName(proposal.reviewer)}</span>
+                          ) : (
+                            <span className="text-sm text-gray-400">Not assigned</span>
+                          )}
+                        </TableCell>
+                        <TableCell>{proposal.dateSubmitted ? new Date(proposal.dateSubmitted).toLocaleDateString() : "-"}</TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
                             <Dialog>
                               <DialogTrigger asChild>
                                 <Button 
                                   size="sm" 
-                                  variant="default" 
-                                  onClick={() => { setSelectedProposal(proposal); setSelectedReviewer(""); }}
+                                  variant="outline"
+                                  onClick={() => setViewProposal(proposal)}
                                 >
-                                  <UserPlus className="w-4 h-4 mr-1" />
-                                  Assign Reviewer
+                                  <Eye className="w-4 h-4 mr-1" />
+                                  View
                                 </Button>
                               </DialogTrigger>
-                              {selectedProposal && selectedProposal._id === proposal._id && (
-                                <DialogContent>
-                                  <DialogHeader>
-                                    <DialogTitle>Assign Reviewer</DialogTitle>
-                                    <DialogDescription>
-                                      Assign a reviewer to: <span className="font-semibold">{proposal.title}</span>
-                                    </DialogDescription>
-                                  </DialogHeader>
-                                  <div className="space-y-4">
-                                    <div className="space-y-2">
-                                      <Label>Select Reviewer</Label>
-                                      <Select value={selectedReviewer} onValueChange={setSelectedReviewer}>
-                                        <SelectTrigger>
-                                          <SelectValue placeholder="Choose a reviewer" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {reviewers.map((reviewer) => (
-                                            <SelectItem key={reviewer._id} value={reviewer._id}>
-                                              {reviewer.firstName} {reviewer.lastName} - {reviewer.email}
-                                            </SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                    {assignError && <div className="text-red-500 text-sm">{assignError}</div>}
-                                    <div className="flex space-x-3">
-                                      <Button 
-                                        onClick={handleAssignReviewer} 
-                                        className="bg-blue-600 hover:bg-blue-700" 
-                                        disabled={assigning || !selectedReviewer}
-                                      >
-                                        {assigning ? "Assigning..." : "Assign Reviewer"}
-                                      </Button>
-                                      <Button variant="outline" onClick={() => setSelectedProposal(null)}>
-                                        Cancel
-                                      </Button>
-                                    </div>
-                                  </div>
-                                </DialogContent>
+                              {viewProposal && viewProposal._id === proposal._id && (
+                                <ProposalViewModal
+                                  proposal={viewProposal}
+                                  onClose={() => setViewProposal(null)}
+                                />
                               )}
                             </Dialog>
-                          )}
 
-                          {proposal.reviewer && (
-                            <Button size="sm" variant="outline" disabled>
-                              <UserCheck className="w-4 h-4 mr-1" />
-                              Assigned
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                            {!proposal.reviewer && proposal.status === "Under Review" && (
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button 
+                                    size="sm" 
+                                    variant="default" 
+                                    onClick={() => { setSelectedProposal(proposal); setSelectedReviewer(""); }}
+                                  >
+                                    <UserPlus className="w-4 h-4 mr-1" />
+                                    Assign Reviewer
+                                  </Button>
+                                </DialogTrigger>
+                                {selectedProposal && selectedProposal._id === proposal._id && (
+                                  <DialogContent>
+                                    <DialogHeader>
+                                      <DialogTitle>Assign Reviewer</DialogTitle>
+                                      <DialogDescription>
+                                        Assign a reviewer to: <span className="font-semibold">{proposal.title}</span>
+                                      </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                      <div className="space-y-2">
+                                        <Label>Select Reviewer</Label>
+                                        <Select value={selectedReviewer} onValueChange={setSelectedReviewer}>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Choose a reviewer" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {reviewers.map((reviewer) => (
+                                              <SelectItem key={reviewer._id} value={reviewer._id}>
+                                                {reviewer.firstName} {reviewer.lastName} - {reviewer.email}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                      {assignError && <div className="text-red-500 text-sm">{assignError}</div>}
+                                      <div className="flex space-x-3">
+                                        <Button 
+                                          onClick={handleAssignReviewer} 
+                                          className="bg-blue-600 hover:bg-blue-700" 
+                                          disabled={assigning || !selectedReviewer}
+                                        >
+                                          {assigning ? "Assigning..." : "Assign Reviewer"}
+                                        </Button>
+                                        <Button variant="outline" onClick={() => setSelectedProposal(null)}>
+                                          Cancel
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </DialogContent>
+                                )}
+                              </Dialog>
+                            )}
+
+                            {proposal.reviewer && (
+                              <Button size="sm" variant="outline" disabled>
+                                <UserCheck className="w-4 h-4 mr-1" />
+                                Assigned
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </>
           )}
         </CardContent>
       </Card>
