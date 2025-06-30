@@ -52,9 +52,9 @@ export default function RegisterPage() {
       if (data.user.role === "admin") {
         router.push("/admin")
       } else if (data.user.role === "reviewer") {
-        router.push("/dashboard/reviewer")
+        router.push("/reviewer")
       } else {
-        router.push("/dashboard/researcher")
+        router.push("/researcher")
       }
     } catch (err) {
       alert("Login error")

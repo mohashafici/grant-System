@@ -381,18 +381,75 @@ function ProposalViewModal({ proposal, onClose }: { proposal: any; onClose: () =
         )}
         {/* System Recommendation Section */}
         {(typeof proposal.recommendedScore === 'number' && proposal.recommendation) && (
-          <Card className="border-2 border-blue-400 bg-blue-50 my-6">
+          <Card className="border-2 border-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50 my-6">
             <CardHeader>
-              <CardTitle className="text-blue-900">System Recommendation</CardTitle>
+              <CardTitle className="text-blue-900 flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                AI-Powered Recommendation Analysis
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex flex-col gap-2">
-                <span className="text-blue-800">
-                  System Recommended Score: <span className="font-bold">{proposal.recommendedScore}/100</span>
-                </span>
-                <span className="text-blue-800">
-                  System Recommendation: <span className="font-bold">{proposal.recommendation}</span>
-                </span>
+            <CardContent className="space-y-4">
+              {/* Overall Score */}
+              <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                <div>
+                  <h4 className="font-semibold text-gray-800">Overall Recommendation Score</h4>
+                  <p className="text-sm text-gray-600">Based on comprehensive analysis of multiple criteria</p>
+                </div>
+                <div className="text-right">
+                  <div className={`text-3xl font-bold ${
+                    proposal.recommendedScore >= 80 ? 'text-green-600' :
+                    proposal.recommendedScore >= 60 ? 'text-yellow-600' :
+                    'text-red-600'
+                  }`}>
+                    {proposal.recommendedScore}/100
+                  </div>
+                  <div className={`text-sm font-medium ${
+                    proposal.recommendedScore >= 80 ? 'text-green-700' :
+                    proposal.recommendedScore >= 60 ? 'text-yellow-700' :
+                    'text-red-700'
+                  }`}>
+                    {proposal.recommendedScore >= 80 ? 'Excellent' :
+                     proposal.recommendedScore >= 60 ? 'Good' :
+                     proposal.recommendedScore >= 40 ? 'Fair' : 'Poor'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Score Progress Bar */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium text-gray-700">Score Breakdown</span>
+                  <span className="text-gray-500">{proposal.recommendedScore}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div 
+                    className={`h-3 rounded-full transition-all duration-500 ${
+                      proposal.recommendedScore >= 80 ? 'bg-gradient-to-r from-green-400 to-green-600' :
+                      proposal.recommendedScore >= 60 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
+                      'bg-gradient-to-r from-red-400 to-red-600'
+                    }`}
+                    style={{ width: `${proposal.recommendedScore}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* Recommendation Summary */}
+              <div className="p-4 bg-white rounded-lg border">
+                <h4 className="font-semibold text-gray-800 mb-2">AI Recommendation</h4>
+                <p className="text-gray-700 leading-relaxed">{proposal.recommendation}</p>
+              </div>
+
+              {/* Scoring Criteria Info */}
+              <div className="p-4 bg-blue-100 rounded-lg">
+                <h4 className="font-semibold text-blue-900 mb-2">Scoring Criteria</h4>
+                <div className="grid grid-cols-2 gap-2 text-sm text-blue-800">
+                  <div>• Keyword Relevance</div>
+                  <div>• Budget Feasibility</div>
+                  <div>• Content Quality</div>
+                  <div>• Structure & Format</div>
+                  <div>• Domain Alignment</div>
+                  <div>• Technical Accuracy</div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -585,7 +642,7 @@ export default function ReviewerDashboard() {
                                     View
                                   </Button>
                                 </DialogTrigger>
-                                {viewProposal && viewProposal._id === review.proposal._id && (
+                                {viewProposal && review.proposal && viewProposal._id === review.proposal._id && (
                                   <ProposalViewModal
                                     proposal={viewProposal}
                                     onClose={() => setViewProposal(null)}
@@ -678,7 +735,7 @@ export default function ReviewerDashboard() {
                                     View
                                   </Button>
                                 </DialogTrigger>
-                                {viewProposal && viewProposal._id === review.proposal._id && (
+                                {viewProposal && review.proposal && viewProposal._id === review.proposal._id && (
                                   <ProposalViewModal
                                     proposal={viewProposal}
                                     onClose={() => setViewProposal(null)}

@@ -25,7 +25,7 @@ export default function ResearcherSidebar({ active }: { active: string }) {
                 <SidebarMenu>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={active === "dashboard"}>
-                      <Link href="/dashboard/researcher">
+                      <Link href="/researcher">
                         <Home className="w-4 h-4" />
                         <span>Dashboard</span>
                       </Link>
@@ -33,7 +33,7 @@ export default function ResearcherSidebar({ active }: { active: string }) {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={active === "grants"}>
-                      <Link href="/dashboard/researcher/grants">
+                      <Link href="/researcher/grants">
                         <Award className="w-4 h-4" />
                         <span>Browse Grants</span>
                       </Link>
@@ -41,7 +41,7 @@ export default function ResearcherSidebar({ active }: { active: string }) {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={active === "proposals"}>
-                      <Link href="/dashboard/researcher/proposals">
+                      <Link href="/researcher/proposals">
                         <FileText className="w-4 h-4" />
                         <span>My Proposals</span>
                       </Link>
@@ -49,7 +49,7 @@ export default function ResearcherSidebar({ active }: { active: string }) {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={active === "submit"}>
-                      <Link href="/dashboard/researcher/submit">
+                      <Link href="/researcher/submit">
                         <Plus className="w-4 h-4" />
                         <span>Submit Proposal</span>
                       </Link>
@@ -57,7 +57,7 @@ export default function ResearcherSidebar({ active }: { active: string }) {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={active === "notifications"}>
-                      <Link href="/dashboard/researcher/notifications">
+                      <Link href="/researcher/notifications">
                         <Bell className="w-4 h-4" />
                         <span>Notifications</span>
                       </Link>
@@ -65,7 +65,7 @@ export default function ResearcherSidebar({ active }: { active: string }) {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={active === "profile"}>
-                      <Link href="/dashboard/researcher/profile">
+                      <Link href="/researcher/profile">
                         <User className="w-4 h-4" />
                         <span>Profile</span>
                       </Link>
@@ -73,7 +73,7 @@ export default function ResearcherSidebar({ active }: { active: string }) {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={active === "reports"}>
-                      <Link href="/dashboard/researcher/reports">
+                      <Link href="/researcher/reports">
                         <FileText className="w-4 h-4" />
                         <span>Progress Reports</span>
                       </Link>
@@ -81,7 +81,7 @@ export default function ResearcherSidebar({ active }: { active: string }) {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={active === "settings"}>
-                      <Link href="/dashboard/researcher/settings">
+                      <Link href="/researcher/settings">
                         <Settings className="w-4 h-4" />
                         <span>Settings</span>
                       </Link>
@@ -92,7 +92,7 @@ export default function ResearcherSidebar({ active }: { active: string }) {
             </SidebarGroup>
           </div>
           <div className="mb-4">
-            <LogoutButton />
+            {/* <LogoutButton /> */}
           </div>
         </div>
       </SidebarContent>
