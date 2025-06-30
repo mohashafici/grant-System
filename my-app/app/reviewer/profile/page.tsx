@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -47,27 +47,7 @@ import {
 } from "lucide-react"
 import { ReviewerSidebar } from "@/components/ui/sidebar"
 
-const profileData = {
-  name: "Prof. David Martinez",
-  title: "Professor of Artificial Intelligence",
-  institution: "MIT",
-  department: "Computer Science & Artificial Intelligence Laboratory",
-  email: "d.martinez@mit.edu",
-  phone: "+1 (617) 555-0123",
-  location: "Cambridge, MA",
-  joinDate: "September 2021",
-  avatar: "/placeholder.svg?height=120&width=120",
-  bio: "Professor Martinez is a leading researcher in artificial intelligence and machine learning with over 15 years of experience in academia and industry. His research focuses on deep learning, natural language processing, and AI ethics.",
-  expertise: [
-    "Artificial Intelligence",
-    "Machine Learning",
-    "Deep Learning",
-    "Natural Language Processing",
-    "Computer Vision",
-    "AI Ethics",
-    "Neural Networks",
-    "Data Science",
-  ],
+const staticProfileData = {
   education: [
     {
       degree: "Ph.D. in Computer Science",
@@ -145,19 +125,13 @@ const profileData = {
       year: "2021",
     },
   ],
-  reviewStats: {
-    totalReviews: 47,
-    averageScore: 7.8,
-    approvalRate: 68,
-    specializations: ["AI/ML", "Computer Science", "Data Science"],
-  },
 }
 
 function EditProfileModal({ onClose }: { onClose: () => void }) {
   const [formData, setFormData] = useState({
-    bio: profileData.bio,
-    phone: profileData.phone,
-    location: profileData.location,
+    bio: "",
+    phone: "",
+    location: "",
   })
 
   const handleSubmit = () => {
@@ -216,6 +190,60 @@ function EditProfileModal({ onClose }: { onClose: () => void }) {
 }
 
 export default function ReviewerProfilePage() {
+  const [profile, setProfile] = useState<any>(null);
+  const [stats, setStats] = useState<any>({
+    totalReviews: 0,
+    averageScore: 0,
+    approvalRate: 0,
+    specializations: [],
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchProfileAndStats = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("token");
+        // Fetch user profile
+        const res = await fetch("http://localhost:5000/api/users/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("Failed to fetch profile");
+        const userData = await res.json();
+        setProfile(userData);
+
+        // Fetch review stats
+        const res2 = await fetch("http://localhost:5000/api/reviews/assigned", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const reviews = await res2.json();
+        const completed = reviews.filter((r: any) => r.status === "Completed");
+        const totalReviews = completed.length;
+        const averageScore = totalReviews
+          ? (completed.reduce((sum: number, r: any) => sum + (parseFloat(r.score) || 0), 0) / totalReviews).toFixed(1)
+          : 0;
+        const approved = completed.filter((r: any) => r.decision === "Approved").length;
+        const approvalRate = totalReviews ? Math.round((approved / totalReviews) * 100) : 0;
+        setStats({
+          totalReviews,
+          averageScore,
+          approvalRate,
+          specializations: [], // Add logic if you want to store this
+        });
+      } catch (err: any) {
+        setError(err.message || "Error fetching profile");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfileAndStats();
+  }, []);
+
+  if (loading) return <div className="p-8 text-center text-gray-500">Loading profile...</div>;
+  if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
+  if (!profile) return <div className="p-8 text-center text-gray-500">Profile not found.</div>;
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen bg-gray-50">
@@ -248,37 +276,23 @@ export default function ReviewerProfilePage() {
               <CardContent className="p-6">
                 <div className="flex items-start space-x-6">
                   <Avatar className="w-24 h-24">
-                    <AvatarImage src={profileData.avatar || "/placeholder.svg"} alt={profileData.name} />
+                    <AvatarImage src={profile.profileImage ? `http://localhost:5000/uploads/${profile.profileImage}` : "/placeholder.svg"} alt={profile.firstName + ' ' + profile.lastName} />
                     <AvatarFallback className="text-2xl">
-                      {profileData.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
+                      {profile.firstName?.[0]}{profile.lastName?.[0]}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <h2 className="text-3xl font-bold text-gray-900">{profileData.name}</h2>
-                    <p className="text-xl text-gray-600 mb-2">{profileData.title}</p>
+                    <h2 className="text-3xl font-bold text-gray-900">{profile.firstName} {profile.lastName}</h2>
+                    <p className="text-xl text-gray-600 mb-2">{profile.role === 'reviewer' ? 'Reviewer' : profile.role?.charAt(0).toUpperCase() + profile.role?.slice(1)}</p>
                     <p className="text-lg text-blue-600 mb-4">
-                      {profileData.institution} • {profileData.department}
+                      {profile.institution} {profile.department && <>• {profile.department}</>}
                     </p>
                     <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                       <div className="flex items-center">
                         <Mail className="w-4 h-4 mr-1" />
-                        {profileData.email}
+                        {profile.email}
                       </div>
-                      <div className="flex items-center">
-                        <Phone className="w-4 h-4 mr-1" />
-                        {profileData.phone}
-                      </div>
-                      <div className="flex items-center">
-                        <MapPin className="w-4 h-4 mr-1" />
-                        {profileData.location}
-                      </div>
-                      <div className="flex items-center">
-                        <Calendar className="w-4 h-4 mr-1" />
-                        Reviewer since {profileData.joinDate}
-                      </div>
+                      {/* Add phone/location if you add to user model */}
                     </div>
                   </div>
                 </div>
@@ -293,7 +307,7 @@ export default function ReviewerProfilePage() {
                   <FileText className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{profileData.reviewStats.totalReviews}</div>
+                  <div className="text-2xl font-bold">{stats.totalReviews}</div>
                   <p className="text-xs text-muted-foreground">Completed reviews</p>
                 </CardContent>
               </Card>
@@ -303,7 +317,7 @@ export default function ReviewerProfilePage() {
                   <Star className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{profileData.reviewStats.averageScore}</div>
+                  <div className="text-2xl font-bold">{stats.averageScore}</div>
                   <p className="text-xs text-muted-foreground">Out of 10</p>
                 </CardContent>
               </Card>
@@ -313,7 +327,7 @@ export default function ReviewerProfilePage() {
                   <Award className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{profileData.reviewStats.approvalRate}%</div>
+                  <div className="text-2xl font-bold">{stats.approvalRate}%</div>
                   <p className="text-xs text-muted-foreground">Proposals approved</p>
                 </CardContent>
               </Card>
@@ -323,7 +337,7 @@ export default function ReviewerProfilePage() {
                   <BookOpen className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{profileData.reviewStats.specializations.length}</div>
+                  <div className="text-2xl font-bold">{stats.specializations.length}</div>
                   <p className="text-xs text-muted-foreground">Areas of expertise</p>
                 </CardContent>
               </Card>
@@ -345,7 +359,7 @@ export default function ReviewerProfilePage() {
                     <CardTitle>About</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-700 leading-relaxed">{profileData.bio}</p>
+                    <p className="text-gray-700 leading-relaxed">{profile.bio || "No bio provided."}</p>
                   </CardContent>
                 </Card>
 
@@ -355,11 +369,7 @@ export default function ReviewerProfilePage() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      {profileData.expertise.map((skill, index) => (
-                        <Badge key={index} variant="secondary" className="text-sm">
-                          {skill}
-                        </Badge>
-                      ))}
+                      {/* You can add expertise to user model and map here if needed */}
                     </div>
                   </CardContent>
                 </Card>
@@ -370,11 +380,7 @@ export default function ReviewerProfilePage() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      {profileData.reviewStats.specializations.map((spec, index) => (
-                        <Badge key={index} className="bg-blue-100 text-blue-800">
-                          {spec}
-                        </Badge>
-                      ))}
+                      {/* You can add specializations to user model and map here if needed */}
                     </div>
                   </CardContent>
                 </Card>
@@ -387,7 +393,7 @@ export default function ReviewerProfilePage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-6">
-                      {profileData.education.map((edu, index) => (
+                      {staticProfileData.education.map((edu, index) => (
                         <div key={index} className="border-l-2 border-blue-200 pl-4">
                           <h3 className="font-semibold text-lg">{edu.degree}</h3>
                           <p className="text-blue-600 font-medium">{edu.institution}</p>
@@ -407,7 +413,7 @@ export default function ReviewerProfilePage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-6">
-                      {profileData.experience.map((exp, index) => (
+                      {staticProfileData.experience.map((exp, index) => (
                         <div key={index} className="border-l-2 border-green-200 pl-4">
                           <h3 className="font-semibold text-lg">{exp.position}</h3>
                           <p className="text-green-600 font-medium">{exp.institution}</p>
@@ -428,7 +434,7 @@ export default function ReviewerProfilePage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {profileData.publications.map((pub, index) => (
+                      {staticProfileData.publications.map((pub, index) => (
                         <div key={index} className="p-4 border rounded-lg">
                           <h3 className="font-semibold text-lg mb-2">{pub.title}</h3>
                           <div className="flex items-center justify-between text-sm text-gray-600">
@@ -456,7 +462,7 @@ export default function ReviewerProfilePage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {profileData.awards.map((award, index) => (
+                      {staticProfileData.awards.map((award, index) => (
                         <div key={index} className="flex items-center space-x-4 p-4 border rounded-lg">
                           <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
                             <Award className="w-6 h-6 text-yellow-600" />

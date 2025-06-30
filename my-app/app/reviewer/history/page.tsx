@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -46,105 +46,15 @@ import {
   Settings,
 } from "lucide-react"
 import { ReviewerSidebar } from "@/components/ui/sidebar"
-
-const reviewHistory = [
-  {
-    id: 1,
-    title: "AI-Powered Medical Diagnosis System",
-    researcher: "Dr. Sarah Johnson",
-    institution: "Stanford University",
-    category: "Technology",
-    reviewDate: "2024-01-15",
-    submissionDate: "2024-01-01",
-    decision: "Approved",
-    score: 8.5,
-    funding: "$75,000",
-    comments: "Excellent research proposal with strong methodology and clear objectives.",
-    innovationScore: 9,
-    impactScore: 8,
-    feasibilityScore: 8,
-  },
-  {
-    id: 2,
-    title: "Sustainable Energy Storage Solutions",
-    researcher: "Prof. Michael Chen",
-    institution: "MIT",
-    category: "Environment",
-    reviewDate: "2024-01-10",
-    submissionDate: "2023-12-20",
-    decision: "Approved",
-    score: 7.8,
-    funding: "$50,000",
-    comments: "Solid research approach with good potential for environmental impact.",
-    innovationScore: 8,
-    impactScore: 8,
-    feasibilityScore: 7,
-  },
-  {
-    id: 3,
-    title: "Quantum Computing Applications",
-    researcher: "Dr. Emily Rodriguez",
-    institution: "Caltech",
-    category: "Technology",
-    reviewDate: "2024-01-05",
-    submissionDate: "2023-12-15",
-    decision: "Rejected",
-    score: 5.2,
-    funding: "$100,000",
-    comments: "Ambitious project but lacks sufficient preliminary data and feasibility analysis.",
-    innovationScore: 7,
-    impactScore: 6,
-    feasibilityScore: 3,
-  },
-  {
-    id: 4,
-    title: "Climate Change Modeling",
-    researcher: "Dr. James Wilson",
-    institution: "UC Berkeley",
-    category: "Environment",
-    reviewDate: "2023-12-20",
-    submissionDate: "2023-12-01",
-    decision: "Revisions Requested",
-    score: 6.8,
-    funding: "$60,000",
-    comments: "Good foundation but needs more detailed methodology and timeline.",
-    innovationScore: 7,
-    impactScore: 7,
-    feasibilityScore: 6,
-  },
-  {
-    id: 5,
-    title: "Blockchain Security Research",
-    researcher: "Prof. Lisa Zhang",
-    institution: "Harvard University",
-    category: "Technology",
-    reviewDate: "2023-12-15",
-    submissionDate: "2023-11-30",
-    decision: "Approved",
-    score: 8.2,
-    funding: "$45,000",
-    comments: "Well-structured research with clear deliverables and timeline.",
-    innovationScore: 8,
-    impactScore: 8,
-    feasibilityScore: 9,
-  },
-]
-
-const monthlyReviews = [
-  { month: "Sep", reviews: 2, avgScore: 7.5 },
-  { month: "Oct", reviews: 3, avgScore: 7.8 },
-  { month: "Nov", reviews: 1, avgScore: 8.2 },
-  { month: "Dec", reviews: 4, avgScore: 7.1 },
-  { month: "Jan", reviews: 3, avgScore: 7.5 },
-]
+import ReviewerLayout from "@/components/layouts/ReviewerLayout"
 
 function ReviewDetailsModal({ review, onClose }: { review: any; onClose: () => void }) {
   return (
     <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle>Review Details: {review.title}</DialogTitle>
+        <DialogTitle>Review Details: {review.proposal?.title}</DialogTitle>
         <DialogDescription>
-          Reviewed on {review.reviewDate} • {review.researcher} from {review.institution}
+          Reviewed on {review.reviewDate ? new Date(review.reviewDate).toLocaleDateString() : ''} • {review.proposal?.researcher?.firstName} {review.proposal?.researcher?.lastName} from {review.proposal?.researcher?.institution}
         </DialogDescription>
       </DialogHeader>
 
@@ -208,21 +118,21 @@ function ReviewDetailsModal({ review, onClose }: { review: any; onClose: () => v
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <span className="font-medium">Category:</span>
-                <Badge className="ml-2">{review.category}</Badge>
+                <Badge className="ml-2">{review.proposal?.category}</Badge>
               </div>
               <div>
                 <span className="font-medium">Funding Requested:</span>
-                <span className="ml-2 font-semibold text-blue-600">{review.funding}</span>
+                <span className="ml-2 font-semibold text-blue-600">${review.proposal?.funding?.toLocaleString()}</span>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <span className="font-medium">Submission Date:</span>
-                <span className="ml-2">{review.submissionDate}</span>
+                <span className="ml-2">{review.proposal?.dateSubmitted ? new Date(review.proposal.dateSubmitted).toLocaleDateString() : ''}</span>
               </div>
               <div>
                 <span className="font-medium">Review Date:</span>
-                <span className="ml-2">{review.reviewDate}</span>
+                <span className="ml-2">{review.reviewDate ? new Date(review.reviewDate).toLocaleDateString() : ''}</span>
               </div>
             </div>
           </CardContent>
@@ -250,15 +160,59 @@ export default function ReviewHistoryPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [decisionFilter, setDecisionFilter] = useState("all")
   const [categoryFilter, setCategoryFilter] = useState("all")
-  const [selectedReview, setSelectedReview] = useState(null)
+  const [selectedReview, setSelectedReview] = useState<any | null>(null)
+  const [reviews, setReviews] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [monthlyReviews, setMonthlyReviews] = useState<any[]>([])
 
-  const filteredReviews = reviewHistory.filter((review) => {
+  useEffect(() => {
+    const fetchReviews = async () => {
+      setLoading(true)
+      setError("")
+      try {
+        const token = localStorage.getItem("token")
+        const res = await fetch("http://localhost:5000/api/reviews/assigned", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!res.ok) throw new Error("Failed to fetch reviews")
+        const data = await res.json()
+        const completed = data.filter((r: any) => r.status === "Completed")
+        setReviews(completed)
+        // Build monthlyReviews for charts
+        const monthMap: Record<string, { reviews: number, totalScore: number }> = {}
+        completed.forEach((r: any) => {
+          const date = r.reviewDate ? new Date(r.reviewDate) : null
+          if (!date) return
+          const month = date.toLocaleString('default', { month: 'short' })
+          if (!monthMap[month]) monthMap[month] = { reviews: 0, totalScore: 0 }
+          monthMap[month].reviews++
+          monthMap[month].totalScore += parseFloat(r.score) || 0
+        })
+        const months = Object.keys(monthMap)
+        setMonthlyReviews(months.map(month => ({
+          month,
+          reviews: monthMap[month].reviews,
+          avgScore: monthMap[month].reviews ? (monthMap[month].totalScore / monthMap[month].reviews).toFixed(1) : 0
+        })))
+      } catch (err: any) {
+        setError(err.message || "Error fetching reviews")
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchReviews()
+  }, [])
+
+  const filteredReviews = reviews.filter((review) => {
+    const proposal = review.proposal || {}
     const matchesSearch =
-      review.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      review.researcher.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      review.institution.toLowerCase().includes(searchTerm.toLowerCase())
+      (proposal.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        proposal.researcher?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        proposal.researcher?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        proposal.researcher?.institution?.toLowerCase().includes(searchTerm.toLowerCase()))
     const matchesDecision = decisionFilter === "all" || review.decision === decisionFilter
-    const matchesCategory = categoryFilter === "all" || review.category === categoryFilter
+    const matchesCategory = categoryFilter === "all" || proposal.category === categoryFilter
     return matchesSearch && matchesDecision && matchesCategory
   })
 
@@ -275,14 +229,13 @@ export default function ReviewHistoryPage() {
     }
   }
 
-  const totalReviews = reviewHistory.length
-  const approvedReviews = reviewHistory.filter((r) => r.decision === "Approved").length
-  const averageScore = (reviewHistory.reduce((sum, r) => sum + r.score, 0) / totalReviews).toFixed(1)
+  const totalReviews = reviews.length
+  const approvedReviews = reviews.filter((r) => r.decision === "Approved").length
+  const averageScore = (reviews.reduce((sum, r) => sum + (parseFloat(r.score) || 0), 0) / (totalReviews || 1)).toFixed(1)
 
   return (
-    <SidebarProvider>
+    <ReviewerLayout active="history">
       <div className="flex min-h-screen bg-gray-50">
-        <ReviewerSidebar active="history" />
         <div className="flex-1">
           <header className="bg-white border-b px-6 py-4">
             <div className="flex items-center justify-between">
@@ -430,76 +383,88 @@ export default function ReviewHistoryPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Proposal Title</TableHead>
-                      <TableHead>Researcher</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Review Date</TableHead>
-                      <TableHead>Score</TableHead>
-                      <TableHead>Decision</TableHead>
-                      <TableHead>Funding</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredReviews.map((review) => (
-                      <TableRow key={review.id}>
-                        <TableCell className="font-medium">{review.title}</TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{review.researcher}</div>
-                            <div className="text-sm text-gray-500">{review.institution}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{review.category}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center text-sm">
-                            <Calendar className="w-4 h-4 mr-1 text-gray-400" />
-                            {review.reviewDate}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-lg font-bold text-blue-600">{review.score}</div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getDecisionColor(review.decision)}>
-                            {review.decision === "Approved" ? (
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                            ) : review.decision === "Rejected" ? (
-                              <XCircle className="w-3 h-3 mr-1" />
-                            ) : (
-                              <Clock className="w-3 h-3 mr-1" />
-                            )}
-                            {review.decision}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-semibold text-blue-600">{review.funding}</TableCell>
-                        <TableCell>
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button size="sm" variant="outline" onClick={() => setSelectedReview(review)}>
-                                <Eye className="w-4 h-4 mr-1" />
-                                View Details
-                              </Button>
-                            </DialogTrigger>
-                            {selectedReview && (
-                              <ReviewDetailsModal review={selectedReview} onClose={() => setSelectedReview(null)} />
-                            )}
-                          </Dialog>
-                        </TableCell>
+                {loading ? (
+                  <div className="py-8 text-center text-gray-500">Loading reviews...</div>
+                ) : error ? (
+                  <div className="py-8 text-center text-red-500">{error}</div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Proposal Title</TableHead>
+                        <TableHead>Researcher</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Review Date</TableHead>
+                        <TableHead>Score</TableHead>
+                        <TableHead>Decision</TableHead>
+                        <TableHead>Funding</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredReviews.map((review) => (
+                        <TableRow key={review.id}>
+                          <TableCell className="font-medium">{review.proposal?.title}</TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">
+                                {review.proposal?.researcher
+                                  ? `${review.proposal.researcher.firstName || ""} ${review.proposal.researcher.lastName || ""}`.trim() ||
+                                    review.proposal.researcher.email ||
+                                    "Unknown"
+                                  : "Unknown"}
+                              </div>
+                              <div className="text-sm text-gray-500">{review.proposal?.researcher?.institution}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{review.proposal?.category}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center text-sm">
+                              <Calendar className="w-4 h-4 mr-1 text-gray-400" />
+                              {review.reviewDate ? new Date(review.reviewDate).toLocaleDateString() : ''}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-lg font-bold text-blue-600">{review.score}</div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={getDecisionColor(review.decision)}>
+                              {review.decision === "Approved" ? (
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                              ) : review.decision === "Rejected" ? (
+                                <XCircle className="w-3 h-3 mr-1" />
+                              ) : (
+                                <Clock className="w-3 h-3 mr-1" />
+                              )}
+                              {review.decision}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-semibold text-blue-600">{review.funding}</TableCell>
+                          <TableCell>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button size="sm" variant="outline" onClick={() => setSelectedReview(review)}>
+                                  <Eye className="w-4 h-4 mr-1" />
+                                  View Details
+                                </Button>
+                              </DialogTrigger>
+                              {selectedReview && (
+                                <ReviewDetailsModal review={selectedReview} onClose={() => setSelectedReview(null)} />
+                              )}
+                            </Dialog>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </main>
         </div>
       </div>
-    </SidebarProvider>
+    </ReviewerLayout>
   )
 }

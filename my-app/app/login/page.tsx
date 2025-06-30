@@ -49,8 +49,8 @@ export default function LoginPage() {
       toast({ title: "Login successful!", description: "Welcome back.", duration: 3000 })
       // Redirect based on role
       if (data.user.role === "admin") router.push("/admin")
-      else if (data.user.role === "reviewer") router.push("/dashboard/reviewer")
-      else router.push("/dashboard/researcher")
+      else if (data.user.role === "reviewer") router.push("/reviewer")
+      else router.push("/researcher")
     } catch (err: any) {
       toast({ title: "Login failed", description: err.message, duration: 3000 })
     } finally {
