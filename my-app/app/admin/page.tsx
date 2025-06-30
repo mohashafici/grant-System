@@ -28,6 +28,7 @@ import {
   UserPlus,
 } from "lucide-react"
 import AdminLayout from "@/components/layouts/AdminLayout"
+import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 
 function AssignReviewerModal({ submission, onClose }: { submission: any; onClose: () => void }) {
   const [selectedReviewer, setSelectedReviewer] = useState("")
@@ -175,6 +176,7 @@ function ProposalViewModal({ proposal, onClose, reviewer }: { proposal: any; onC
 }
 
 export default function AdminDashboard() {
+  useAuthRedirect(["admin"])
   const [selectedSubmission, setSelectedSubmission] = useState<any | null>(null)
   const [viewProposal, setViewProposal] = useState<any | null>(null)
   const [proposals, setProposals] = useState<any[]>([])

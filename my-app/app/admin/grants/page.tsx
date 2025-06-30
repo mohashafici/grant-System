@@ -58,10 +58,18 @@ export default function ManageGrantsPage() {
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const { toast } = useToast()
   const [deleteGrantId, setDeleteGrantId] = useState<string | null>(null)
+  const [grantStats, setGrantStats] = useState({}) // { [grantId]: { applicants, approved, rejected } }
+  const [totalRejected, setTotalRejected] = useState(0)
 
   useEffect(() => {
     fetchGrants()
   }, [])
+
+  useEffect(() => {
+    if (grants.length > 0) {
+      fetchAllGrantStats()
+    }
+  }, [grants])
 
   const fetchGrants = async () => {
     setLoading(true)
@@ -72,6 +80,25 @@ export default function ManageGrantsPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const fetchAllGrantStats = async () => {
+    const token = localStorage.getItem("token")
+    let stats = {}
+    let rejectedSum = 0
+    await Promise.all(grants.map(async (grant) => {
+      const res = await fetch(`http://localhost:5000/api/proposals/grant/${grant._id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const proposals = await res.json()
+      const applicants = proposals.length
+      const approved = proposals.filter(p => p.status === "Approved").length
+      const rejected = proposals.filter(p => p.status === "Rejected").length
+      stats[grant._id] = { applicants, approved, rejected }
+      rejectedSum += rejected
+    }))
+    setGrantStats(stats)
+    setTotalRejected(rejectedSum)
   }
 
   const handleDelete = (id) => {
@@ -206,6 +233,7 @@ export default function ManageGrantsPage() {
                   <TableHead>Status</TableHead>
                   <TableHead>Applications</TableHead>
                   <TableHead>Approved</TableHead>
+                  <TableHead>Rejected</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -226,8 +254,9 @@ export default function ManageGrantsPage() {
                     <TableCell>
                       <Badge className={getStatusColor(grant.status)}>{grant.status}</Badge>
                     </TableCell>
-                    <TableCell>{grant.applicants}</TableCell>
-                    <TableCell>{grant.approved}</TableCell>
+                    <TableCell>{grantStats[grant._id]?.applicants ?? 0}</TableCell>
+                    <TableCell>{grantStats[grant._id]?.approved ?? 0}</TableCell>
+                    <TableCell>{grantStats[grant._id]?.rejected ?? 0}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button size="sm" variant="outline">
@@ -259,7 +288,7 @@ export default function ManageGrantsPage() {
         </Card>
 
         {/* Grant Statistics */}
-        <div className="grid md:grid-cols-4 gap-6 mt-8">
+        <div className="grid md:grid-cols-5 gap-6 mt-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Grants</CardTitle>
@@ -279,7 +308,7 @@ export default function ManageGrantsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {grants.reduce((sum, grant) => sum + grant.applicants, 0)}
+                {Object.values(grantStats).reduce((sum, stat) => sum + (stat.applicants || 0), 0)}
               </div>
               <p className="text-xs text-muted-foreground">Across all grants</p>
             </CardContent>
@@ -291,16 +320,28 @@ export default function ManageGrantsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {grants.reduce((sum, grant) => sum + grant.approved, 0)}
+                {Object.values(grantStats).reduce((sum, stat) => sum + (stat.approved || 0), 0)}
               </div>
               <p className="text-xs text-muted-foreground">
-                {Math.round(
-                  (grants.reduce((sum, grant) => sum + grant.approved, 0) /
-                    grants.reduce((sum, grant) => sum + grant.applicants, 0)) *
-                    100,
-                )}
+                {Object.values(grantStats).reduce((sum, stat) => sum + (stat.applicants || 0), 0) > 0
+                  ? Math.round(
+                      (Object.values(grantStats).reduce((sum, stat) => sum + (stat.approved || 0), 0) /
+                        Object.values(grantStats).reduce((sum, stat) => sum + (stat.applicants || 0), 0)) *
+                        100
+                    )
+                  : 0}
                 % approval rate
               </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Rejected</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalRejected}</div>
+              <p className="text-xs text-muted-foreground">Across all grants</p>
             </CardContent>
           </Card>
           <Card>
