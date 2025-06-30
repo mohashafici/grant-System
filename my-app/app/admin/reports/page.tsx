@@ -348,16 +348,18 @@ export default function AdminReportsPage() {
                 </Card>
               </TabsContent>
 
+              {/* Analytics Tab */}
               <TabsContent value="analytics" className="space-y-6">
-                {/* Analytics Charts */}
-                <div className="grid lg:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Monthly Proposal Trends</CardTitle>
-                      <CardDescription>Proposal submissions and approvals over time</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={300}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Analytics</CardTitle>
+                    <CardDescription>Visualize proposal, approval, and funding analytics</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-8">
+                    <div className="w-full">
+                      <h2 className="text-lg font-semibold mb-2">Monthly Proposal Trends</h2>
+                      <p className="text-gray-500 mb-4">Proposal submissions and approvals over time</p>
+                      <ResponsiveContainer width="100%" height={400}>
                         <BarChart data={monthlyData} margin={{ top: 16, right: 16, left: 0, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="month" />
@@ -367,15 +369,11 @@ export default function AdminReportsPage() {
                           <Bar dataKey="approved" fill="#10B981" name="Approved" />
                         </BarChart>
                       </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Funding by Category</CardTitle>
-                      <CardDescription>Distribution of funding across categories</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={300}>
+                    </div>
+                    <div className="w-full">
+                      <h2 className="text-lg font-semibold mb-2">Funding by Category</h2>
+                      <p className="text-gray-500 mb-4">Distribution of funding across categories</p>
+                      <ResponsiveContainer width="100%" height={400}>
                         <PieChart>
                           <Pie
                             data={categoryData}
@@ -383,7 +381,7 @@ export default function AdminReportsPage() {
                             nameKey="name"
                             cx="50%"
                             cy="50%"
-                            outerRadius={100}
+                            outerRadius={140}
                             label
                           >
                             {categoryData.map((entry, index) => (
@@ -393,11 +391,12 @@ export default function AdminReportsPage() {
                           <Tooltip />
                         </PieChart>
                       </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-                </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </TabsContent>
 
+              {/* Performance Tab */}
               <TabsContent value="performance" className="space-y-6">
                 <Card>
                   <CardHeader>
@@ -405,41 +404,46 @@ export default function AdminReportsPage() {
                     <CardDescription>Reviewer activity and performance metrics</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Reviews Completed</TableHead>
-                          <TableHead>Avg. Score</TableHead>
-                          <TableHead>On-Time Rate</TableHead>
-                          <TableHead>Expertise</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {reviewerPerformance.map((reviewer) => (
-                          <TableRow key={reviewer.id}>
-                            <TableCell>{reviewer.name}</TableCell>
-                            <TableCell>{reviewer.reviewsCompleted}</TableCell>
-                            <TableCell>{reviewer.averageScore}</TableCell>
-                            <TableCell>{reviewer.onTimeRate}%</TableCell>
-                            <TableCell>{reviewer.expertise}</TableCell>
+                    <div className="overflow-x-auto">
+                      <Table className="min-w-full">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Reviews Completed</TableHead>
+                            <TableHead>Avg. Score</TableHead>
+                            <TableHead>On-Time Rate</TableHead>
+                            <TableHead>Expertise</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {reviewerPerformance.map((reviewer) => (
+                            <TableRow key={reviewer.id}>
+                              <TableCell>{reviewer.name}</TableCell>
+                              <TableCell>{reviewer.reviewsCompleted}</TableCell>
+                              <TableCell>{reviewer.averageScore}</TableCell>
+                              <TableCell>{reviewer.onTimeRate}%</TableCell>
+                              <TableCell>{reviewer.expertise}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>
 
+              {/* Trends Tab (reuse analytics data) */}
               <TabsContent value="trends" className="space-y-6">
-                <div className="grid lg:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Proposal & Approval Trends</CardTitle>
-                      <CardDescription>Monthly trends for proposals and approvals</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={300}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Trends</CardTitle>
+                    <CardDescription>Trends in proposals, approvals, and funding allocation</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-8">
+                    <div className="w-full">
+                      <h2 className="text-lg font-semibold mb-2">Proposal & Approval Trends</h2>
+                      <p className="text-gray-500 mb-4">Monthly trends for proposals and approvals</p>
+                      <ResponsiveContainer width="100%" height={400}>
                         <LineChart data={monthlyData} margin={{ top: 16, right: 16, left: 0, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="month" />
@@ -449,15 +453,11 @@ export default function AdminReportsPage() {
                           <Line type="monotone" dataKey="approved" stroke="#10B981" name="Approved" />
                         </LineChart>
                       </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Funding by Category</CardTitle>
-                      <CardDescription>Trends in funding allocation</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={300}>
+                    </div>
+                    <div className="w-full">
+                      <h2 className="text-lg font-semibold mb-2">Funding by Category</h2>
+                      <p className="text-gray-500 mb-4">Trends in funding allocation</p>
+                      <ResponsiveContainer width="100%" height={400}>
                         <PieChart>
                           <Pie
                             data={categoryData}
@@ -465,7 +465,7 @@ export default function AdminReportsPage() {
                             nameKey="name"
                             cx="50%"
                             cy="50%"
-                            outerRadius={100}
+                            outerRadius={140}
                             label
                           >
                             {categoryData.map((entry, index) => (
@@ -475,9 +475,9 @@ export default function AdminReportsPage() {
                           <Tooltip />
                         </PieChart>
                       </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-                </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </TabsContent>
             </Tabs>
           </main>

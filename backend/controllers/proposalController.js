@@ -98,16 +98,17 @@ exports.submitProposal = async (req, res, next) => {
       ...filePaths
     });
 
-    // --- Recommendation Algorithm ---
-    let recommendedScore = 0;
-    const keywords = ["innovation", "impact", "feasibility"];
+    // --- Advanced Recommendation Algorithm ---
+    let score = 0;
     const abstractLower = abstract.toLowerCase();
+
+    // 1. Keywords (innovation, impact, feasibility): +10 each if present (max 30)
+    const keywords = ["innovation", "impact", "feasibility"];
     for (const keyword of keywords) {
-      if (abstractLower.includes(keyword)) {
-        recommendedScore += 10;
-      }
+      if (abstractLower.includes(keyword)) score += 10;
     }
-    // Get the grant's funding amount
+
+    // 2. Budget feasibility: +20 if proposal.budget <= grantFundingAmount
     let grantDoc;
     try {
       grantDoc = await Grant.findById(grant);
@@ -115,20 +116,52 @@ exports.submitProposal = async (req, res, next) => {
       return res.status(500).json({ message: 'Error fetching grant for recommendation.' });
     }
     if (grantDoc && parseInt(funding) <= grantDoc.funding) {
-      recommendedScore += 20;
+      score += 20;
     }
-    // Count words in abstract
+
+    // 3. Word count: +10 if abstract has at least 200 words
     const wordCount = abstract.trim().split(/\s+/).length;
-    if (wordCount >= 200) {
-      recommendedScore += 10;
+    if (wordCount >= 200) score += 10;
+
+    // 4. Clarity / Readability: +10 if average sentence length < 20 words
+    const sentences = abstract.split(/[.!?]/).filter(s => s.trim().length > 0);
+    const avgSentenceLength = sentences.length > 0 ? wordCount / sentences.length : wordCount;
+    if (avgSentenceLength < 20) score += 10;
+
+    // 5. Structure detection: +2 for each section found (max 10)
+    const structureSections = ["introduction", "methodology", "outcomes", "impact", "budget"];
+    let structureScore = 0;
+    for (const section of structureSections) {
+      if (abstractLower.includes(section)) structureScore += 2;
     }
-    // Recommendation text
-    const recommendation = recommendedScore >= 40 ? "Recommended for Acceptance" : "Not Recommended for Acceptance";
-    // Update proposal with recommendation fields
-    proposal.recommendedScore = recommendedScore;
+    score += Math.min(structureScore, 10);
+
+    // 6. Domain relevance: +10 if domain-specific keywords found
+    const domainKeywords = ["renewable", "solar", "energy"];
+    if (domainKeywords.some(k => abstractLower.includes(k))) score += 10;
+
+    // 7. Grammar/spelling: +10 if ≤5 spelling errors (dummy function)
+    function dummySpellCheck(text) {
+      // Placeholder: always return 3 errors for demo
+      return 3;
+    }
+    const spellingErrors = dummySpellCheck(abstract);
+    if (spellingErrors <= 5) score += 10;
+
+    // Cap score at 100
+    score = Math.min(score, 100);
+
+    // Recommendation
+    let recommendation = "Not Recommended for Acceptance";
+    if (score >= 60) recommendation = "Recommended for Acceptance";
+    else if (score < 50) recommendation = "Not Recommended for Acceptance";
+    else recommendation = "Borderline/Needs Revision";
+
+    // Save to proposal
+    proposal.recommendedScore = score;
     proposal.recommendation = recommendation;
     await proposal.save();
-    // Return proposal with recommendation fields
+
     res.status(201).json(proposal);
   } catch (err) {
     next(err);
