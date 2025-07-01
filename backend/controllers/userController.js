@@ -81,6 +81,14 @@ exports.getProfile = async (req, res, next) => {
 exports.updateProfile = async (req, res, next) => {
   try {
     const updateFields = { ...req.body };
+
+    // If password is being updated, hash it
+    if (updateFields.password) {
+      const bcrypt = require('bcryptjs');
+      const salt = await bcrypt.genSalt(10);
+      updateFields.password = await bcrypt.hash(updateFields.password, salt);
+    }
+
     // Handle profile image upload
     if (req.files && req.files.profileImage) {
       const path = require('path');
@@ -95,6 +103,7 @@ exports.updateProfile = async (req, res, next) => {
       await file.mv(filePath);
       updateFields.profileImage = fileName;
     }
+
     const user = await User.findByIdAndUpdate(
       req.user.id,
       updateFields,

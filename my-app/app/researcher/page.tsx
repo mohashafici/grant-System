@@ -1,4 +1,5 @@
 "use client"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,45 +22,6 @@ import {
 import { Home, FileText, Plus, Bell, User, Eye, Edit, Trash2, Award, Settings } from "lucide-react"
 import ResearcherLayout from "@/components/layouts/ResearcherLayout"
 import { useAuthRedirect } from "@/hooks/use-auth-redirect"
-
-const proposals = [
-  {
-    id: 1,
-    title: "AI-Powered Medical Diagnosis System",
-    status: "Under Review",
-    dateSubmitted: "2024-01-15",
-    deadline: "2024-03-15",
-    funding: "$75,000",
-    progress: 75,
-  },
-  {
-    id: 2,
-    title: "Sustainable Energy Storage Solutions",
-    status: "Draft",
-    dateSubmitted: null,
-    deadline: "2024-04-20",
-    funding: "$50,000",
-    progress: 30,
-  },
-  {
-    id: 3,
-    title: "Quantum Computing Applications",
-    status: "Approved",
-    dateSubmitted: "2023-11-20",
-    deadline: "2024-01-30",
-    funding: "$100,000",
-    progress: 100,
-  },
-  {
-    id: 4,
-    title: "Climate Change Modeling",
-    status: "Rejected",
-    dateSubmitted: "2023-12-10",
-    deadline: "2024-02-15",
-    funding: "$60,000",
-    progress: 100,
-  },
-]
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -183,19 +145,52 @@ function ResearcherSidebar() {
 
 export default function ResearcherDashboardPage() {
   useAuthRedirect(["researcher"])
+  const [proposals, setProposals] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    const fetchProposals = async () => {
+      setLoading(true)
+      setError("")
+      try {
+        const token = localStorage.getItem("token")
+        const res = await fetch("http://localhost:5000/api/proposals/mine", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!res.ok) throw new Error("Failed to fetch proposals")
+        const data = await res.json()
+        setProposals(data)
+      } catch (err: any) {
+        setError(err.message || "Error fetching proposals")
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchProposals()
+  }, [])
+
+  // Stats
+  const totalProposals = proposals.length
+  const approvedCount = proposals.filter((p) => p.status === "Approved").length
+  const underReviewCount = proposals.filter((p) => p.status === "Under Review").length
+  const rejectedCount = proposals.filter((p) => p.status === "Rejected").length
+  const totalFunding = proposals
+    .filter((p) => p.status === "Approved")
+    .reduce((sum, p) => sum + (typeof p.funding === "number" ? p.funding : parseFloat((p.funding || "0").replace(/[^\d.]/g, ""))), 0)
+
   return (
     <ResearcherLayout active="dashboard">
-      {/* Place all dashboard content here, excluding any sidebar/topbar duplication */}
       {/* Stats Cards */}
-      <div className="grid md:grid-cols-4 gap-6 mb-8">
+      <div className="grid md:grid-cols-5 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Proposals</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4</div>
-            <p className="text-xs text-muted-foreground">+1 from last month</p>
+            <div className="text-2xl font-bold">{totalProposals}</div>
+            <p className="text-xs text-muted-foreground">{totalProposals > 0 ? `+${totalProposals} this year` : "No proposals yet"}</p>
           </CardContent>
         </Card>
         <Card>
@@ -204,8 +199,10 @@ export default function ResearcherDashboardPage() {
             <div className="text-green-600">✅</div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1</div>
-            <p className="text-xs text-muted-foreground">25% success rate</p>
+            <div className="text-2xl font-bold">{approvedCount}</div>
+            <p className="text-xs text-muted-foreground">
+              {totalProposals > 0 ? `${Math.round((approvedCount / totalProposals) * 100)}% success rate` : "No approvals yet"}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -214,17 +211,27 @@ export default function ResearcherDashboardPage() {
             <div className="text-yellow-600">⏳</div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1</div>
+            <div className="text-2xl font-bold">{underReviewCount}</div>
             <p className="text-xs text-muted-foreground">Awaiting decision</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Funding</CardTitle>
-            <div className="text-blue-600">��</div>
+            <CardTitle className="text-sm font-medium">Rejected</CardTitle>
+            <div className="text-red-600">❌</div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$100K</div>
+            <div className="text-2xl font-bold">{rejectedCount}</div>
+            <p className="text-xs text-muted-foreground">Rejected proposals</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Funding</CardTitle>
+            <div className="text-blue-600">💰</div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${totalFunding.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">Approved funding</p>
           </CardContent>
         </Card>
@@ -235,62 +242,72 @@ export default function ResearcherDashboardPage() {
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">My Proposals</h2>
           <Button variant="outline" asChild>
-            <Link href="/dashboard/researcher/proposals">View All</Link>
+            <Link href="/researcher/proposals">View All</Link>
           </Button>
         </div>
 
-        <div className="grid gap-6">
-          {proposals.map((proposal) => (
-            <Card key={proposal.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-lg">{proposal.title}</CardTitle>
-                    <CardDescription>
-                      {proposal.dateSubmitted ? `Submitted: ${proposal.dateSubmitted}` : "Not submitted yet"} •
-                      Deadline: {proposal.deadline}
-                    </CardDescription>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge className={getStatusColor(proposal.status)}>
-                      {getStatusIcon(proposal.status)} {proposal.status}
-                    </Badge>
-                    <span className="text-lg font-semibold text-blue-600">{proposal.funding}</span>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>Progress</span>
-                      <span>{proposal.progress}%</span>
+        {loading ? (
+          <div className="text-center py-12 text-gray-500">Loading proposals...</div>
+        ) : error ? (
+          <div className="text-center py-12 text-red-500">{error}</div>
+        ) : (
+          <div className="grid gap-6">
+            {proposals.slice(0, 4).map((proposal) => (
+              <Card key={proposal._id || proposal.id} className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <CardTitle className="text-lg">{proposal.title}</CardTitle>
+                      <CardDescription>
+                        {proposal.dateSubmitted ? `Submitted: ${new Date(proposal.dateSubmitted).toLocaleDateString()}` : "Not submitted yet"} •
+                        Deadline: {proposal.deadline ? new Date(proposal.deadline).toLocaleDateString() : "-"}
+                      </CardDescription>
                     </div>
-                    <Progress value={proposal.progress} className="h-2" />
+                    <div className="flex items-center space-x-2">
+                      <Badge className={getStatusColor(proposal.status)}>
+                        {getStatusIcon(proposal.status)} {proposal.status}
+                      </Badge>
+                      <span className="text-lg font-semibold text-blue-600">
+                        {typeof proposal.funding === "number"
+                          ? `$${proposal.funding.toLocaleString()}`
+                          : proposal.funding}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex space-x-2">
-                    <Button size="sm" variant="outline">
-                      <Eye className="w-4 h-4 mr-1" />
-                      View
-                    </Button>
-                    {proposal.status === "Draft" && (
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between text-sm mb-2">
+                        <span>Progress</span>
+                        <span>{proposal.progress}%</span>
+                      </div>
+                      <Progress value={proposal.progress} className="h-2" />
+                    </div>
+                    <div className="flex space-x-2">
                       <Button size="sm" variant="outline">
-                        <Edit className="w-4 h-4 mr-1" />
-                        Edit
+                        <Eye className="w-4 h-4 mr-1" />
+                        View
                       </Button>
-                    )}
-                    {proposal.status === "Draft" && (
-                      <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
-                        <Trash2 className="w-4 h-4 mr-1" />
-                        Delete
-                      </Button>
-                    )}
+                      {proposal.status === "Draft" && (
+                        <Button size="sm" variant="outline">
+                          <Edit className="w-4 h-4 mr-1" />
+                          Edit
+                        </Button>
+                      )}
+                      {proposal.status === "Draft" && (
+                        <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          Delete
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </ResearcherLayout>
   )

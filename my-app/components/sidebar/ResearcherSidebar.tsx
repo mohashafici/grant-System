@@ -57,10 +57,10 @@ export default function ResearcherSidebar({ active }: { active: string }) {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={active === "notifications"}>
-                      <Link href="/researcher/notifications">
+                      {/* <Link href="/researcher/notifications">
                         <Bell className="w-4 h-4" />
                         <span>Notifications</span>
-                      </Link>
+                      </Link> */}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
@@ -81,10 +81,10 @@ export default function ResearcherSidebar({ active }: { active: string }) {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={active === "settings"}>
-                      <Link href="/researcher/settings">
+                      {/* <Link href="/researcher/settings">
                         <Settings className="w-4 h-4" />
                         <span>Settings</span>
-                      </Link>
+                      </Link> */}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 </SidebarMenu>

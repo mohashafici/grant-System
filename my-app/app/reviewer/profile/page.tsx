@@ -44,88 +44,13 @@ import {
   BookOpen,
   Star,
   Settings,
+  Save,
 } from "lucide-react"
 import { ReviewerSidebar } from "@/components/ui/sidebar"
+import ReviewerLayout from "@/components/layouts/ReviewerLayout"
+import { useToast } from "@/hooks/use-toast"
+import { useRouter } from "next/navigation"
 
-const staticProfileData = {
-  education: [
-    {
-      degree: "Ph.D. in Computer Science",
-      institution: "Stanford University",
-      year: "2008",
-      focus: "Machine Learning and Artificial Intelligence",
-    },
-    {
-      degree: "M.S. in Computer Science",
-      institution: "Carnegie Mellon University",
-      year: "2004",
-      focus: "Computer Science",
-    },
-    {
-      degree: "B.S. in Computer Engineering",
-      institution: "UC Berkeley",
-      year: "2002",
-      focus: "Computer Engineering",
-    },
-  ],
-  experience: [
-    {
-      position: "Professor",
-      institution: "MIT",
-      period: "2015 - Present",
-      description: "Leading research in AI and machine learning, teaching graduate courses.",
-    },
-    {
-      position: "Associate Professor",
-      institution: "MIT",
-      period: "2010 - 2015",
-      description: "Research and teaching in computer science and AI.",
-    },
-    {
-      position: "Research Scientist",
-      institution: "Google Research",
-      period: "2008 - 2010",
-      description: "Developed machine learning algorithms for search and recommendation systems.",
-    },
-  ],
-  publications: [
-    {
-      title: "Deep Learning Approaches to Natural Language Understanding",
-      journal: "Nature Machine Intelligence",
-      year: "2023",
-      citations: 245,
-    },
-    {
-      title: "Ethical Considerations in AI Decision Making",
-      journal: "AI & Society",
-      year: "2023",
-      citations: 189,
-    },
-    {
-      title: "Transformer Networks for Multi-Modal Learning",
-      journal: "ICML 2022",
-      year: "2022",
-      citations: 567,
-    },
-  ],
-  awards: [
-    {
-      title: "Outstanding Reviewer Award",
-      organization: "National Science Foundation",
-      year: "2023",
-    },
-    {
-      title: "Excellence in Teaching Award",
-      organization: "MIT",
-      year: "2022",
-    },
-    {
-      title: "Best Paper Award",
-      organization: "ICML Conference",
-      year: "2021",
-    },
-  ],
-}
 
 function EditProfileModal({ onClose }: { onClose: () => void }) {
   const [formData, setFormData] = useState({
@@ -191,45 +116,35 @@ function EditProfileModal({ onClose }: { onClose: () => void }) {
 
 export default function ReviewerProfilePage() {
   const [profile, setProfile] = useState<any>(null);
-  const [stats, setStats] = useState<any>({
-    totalReviews: 0,
-    averageScore: 0,
-    approvalRate: 0,
-    specializations: [],
-  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState({
+    firstName: "",
+    lastName: "",
+    institution: "",
+    email: "",
+    password: "",
+  });
+  const { toast } = useToast();
 
   useEffect(() => {
-    const fetchProfileAndStats = async () => {
+    const fetchProfile = async () => {
       setLoading(true);
       try {
         const token = localStorage.getItem("token");
-        // Fetch user profile
         const res = await fetch("http://localhost:5000/api/users/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to fetch profile");
         const userData = await res.json();
         setProfile(userData);
-
-        // Fetch review stats
-        const res2 = await fetch("http://localhost:5000/api/reviews/assigned", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const reviews = await res2.json();
-        const completed = reviews.filter((r: any) => r.status === "Completed");
-        const totalReviews = completed.length;
-        const averageScore = totalReviews
-          ? (completed.reduce((sum: number, r: any) => sum + (parseFloat(r.score) || 0), 0) / totalReviews).toFixed(1)
-          : 0;
-        const approved = completed.filter((r: any) => r.decision === "Approved").length;
-        const approvalRate = totalReviews ? Math.round((approved / totalReviews) * 100) : 0;
-        setStats({
-          totalReviews,
-          averageScore,
-          approvalRate,
-          specializations: [], // Add logic if you want to store this
+        setForm({
+          firstName: userData.firstName || "",
+          lastName: userData.lastName || "",
+          institution: userData.institution || "",
+          email: userData.email || "",
+          password: "",
         });
       } catch (err: any) {
         setError(err.message || "Error fetching profile");
@@ -237,17 +152,41 @@ export default function ReviewerProfilePage() {
         setLoading(false);
       }
     };
-    fetchProfileAndStats();
+    fetchProfile();
   }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSave = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:5000/api/users/me", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) throw new Error("Failed to update profile");
+      const updated = await res.json();
+      setProfile(updated);
+      setIsEditing(false);
+      toast({ title: "Profile updated!", description: "Your profile was updated successfully." });
+    } catch (err: any) {
+      toast({ title: "Profile update failed", description: err.message || "Error saving profile", variant: "destructive" });
+    }
+  };
 
   if (loading) return <div className="p-8 text-center text-gray-500">Loading profile...</div>;
   if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
   if (!profile) return <div className="p-8 text-center text-gray-500">Profile not found.</div>;
 
   return (
-    <SidebarProvider>
+    <ReviewerLayout active="profile">
       <div className="flex min-h-screen bg-gray-50">
-        <ReviewerSidebar active="profile" />
         <div className="flex-1">
           <header className="bg-white border-b px-6 py-4">
             <div className="flex items-center justify-between">
@@ -255,23 +194,25 @@ export default function ReviewerProfilePage() {
                 <SidebarTrigger />
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
-                  <p className="text-gray-600">Manage your reviewer profile and information</p>
+                  <p className="text-gray-600">Manage your personal and professional information</p>
                 </div>
               </div>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    <Edit className="w-4 h-4 mr-2" />
+              <div className="flex space-x-3">
+                {isEditing ? (
+                  <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Changes
+                  </Button>
+                ) : (
+                  <Button onClick={() => setIsEditing(true)} className="bg-blue-600 hover:bg-blue-700">
                     Edit Profile
                   </Button>
-                </DialogTrigger>
-                <EditProfileModal onClose={() => {}} />
-              </Dialog>
+                )}
+              </div>
             </div>
           </header>
 
           <main className="p-6">
-            {/* Profile Header */}
             <Card className="mb-8">
               <CardContent className="p-6">
                 <div className="flex items-start space-x-6">
@@ -292,196 +233,79 @@ export default function ReviewerProfilePage() {
                         <Mail className="w-4 h-4 mr-1" />
                         {profile.email}
                       </div>
-                      {/* Add phone/location if you add to user model */}
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Review Statistics */}
-            <div className="grid md:grid-cols-4 gap-6 mb-8">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Reviews</CardTitle>
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalReviews}</div>
-                  <p className="text-xs text-muted-foreground">Completed reviews</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Average Score</CardTitle>
-                  <Star className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.averageScore}</div>
-                  <p className="text-xs text-muted-foreground">Out of 10</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Approval Rate</CardTitle>
-                  <Award className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.approvalRate}%</div>
-                  <p className="text-xs text-muted-foreground">Proposals approved</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Specializations</CardTitle>
-                  <BookOpen className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.specializations.length}</div>
-                  <p className="text-xs text-muted-foreground">Areas of expertise</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Profile Tabs */}
-            <Tabs defaultValue="overview" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="education">Education</TabsTrigger>
-                <TabsTrigger value="experience">Experience</TabsTrigger>
-                <TabsTrigger value="publications">Publications</TabsTrigger>
-                <TabsTrigger value="awards">Awards</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="overview" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>About</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-700 leading-relaxed">{profile.bio || "No bio provided."}</p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Areas of Expertise</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {/* You can add expertise to user model and map here if needed */}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Review Specializations</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {/* You can add specializations to user model and map here if needed */}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="education" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Education</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      {staticProfileData.education.map((edu, index) => (
-                        <div key={index} className="border-l-2 border-blue-200 pl-4">
-                          <h3 className="font-semibold text-lg">{edu.degree}</h3>
-                          <p className="text-blue-600 font-medium">{edu.institution}</p>
-                          <p className="text-gray-600">{edu.year}</p>
-                          <p className="text-sm text-gray-500 mt-1">{edu.focus}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="experience" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Professional Experience</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      {staticProfileData.experience.map((exp, index) => (
-                        <div key={index} className="border-l-2 border-green-200 pl-4">
-                          <h3 className="font-semibold text-lg">{exp.position}</h3>
-                          <p className="text-green-600 font-medium">{exp.institution}</p>
-                          <p className="text-gray-600">{exp.period}</p>
-                          <p className="text-sm text-gray-700 mt-2">{exp.description}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="publications" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Recent Publications</CardTitle>
-                    <CardDescription>Selected recent publications and research papers</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {staticProfileData.publications.map((pub, index) => (
-                        <div key={index} className="p-4 border rounded-lg">
-                          <h3 className="font-semibold text-lg mb-2">{pub.title}</h3>
-                          <div className="flex items-center justify-between text-sm text-gray-600">
-                            <span className="flex items-center">
-                              <BookOpen className="w-4 h-4 mr-1" />
-                              {pub.journal} • {pub.year}
-                            </span>
-                            <span className="flex items-center">
-                              <Star className="w-4 h-4 mr-1" />
-                              {pub.citations} citations
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="awards" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Awards & Recognition</CardTitle>
-                    <CardDescription>Professional awards and recognition received</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {staticProfileData.awards.map((award, index) => (
-                        <div key={index} className="flex items-center space-x-4 p-4 border rounded-lg">
-                          <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                            <Award className="w-6 h-6 text-yellow-600" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold">{award.title}</h3>
-                            <p className="text-gray-600">{award.organization}</p>
-                            <p className="text-sm text-gray-500">{award.year}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+            <Card>
+              <CardHeader>
+                <CardTitle>Edit Profile</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">First Name</label>
+                    <input
+                      type="text"
+                      name="firstName"
+                      value={form.firstName}
+                      onChange={handleChange}
+                      className="w-full border rounded px-3 py-2"
+                      disabled={!isEditing}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Last Name</label>
+                    <input
+                      type="text"
+                      name="lastName"
+                      value={form.lastName}
+                      onChange={handleChange}
+                      className="w-full border rounded px-3 py-2"
+                      disabled={!isEditing}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Institution</label>
+                    <input
+                      type="text"
+                      name="institution"
+                      value={form.institution}
+                      onChange={handleChange}
+                      className="w-full border rounded px-3 py-2"
+                      disabled={!isEditing}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Email</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      className="w-full border rounded px-3 py-2"
+                      disabled={!isEditing}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Password</label>
+                    <input
+                      type="password"
+                      name="password"
+                      value={form.password}
+                      onChange={handleChange}
+                      className="w-full border rounded px-3 py-2"
+                      disabled={!isEditing}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </main>
         </div>
       </div>
-    </SidebarProvider>
+    </ReviewerLayout>
   )
 }

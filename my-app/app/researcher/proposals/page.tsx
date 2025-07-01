@@ -67,7 +67,7 @@ function ResearcherSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link href="/dashboard/researcher">
+                  <Link href="/researcher">
                     <Home className="w-4 h-4" />
                     <span>Home</span>
                   </Link>
@@ -75,7 +75,7 @@ function ResearcherSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive>
-                  <Link href="/dashboard/researcher/proposals">
+                  <Link href="/researcher/proposals">
                     <FileText className="w-4 h-4" />
                     <span>My Proposals</span>
                   </Link>
@@ -83,7 +83,7 @@ function ResearcherSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link href="/dashboard/researcher/submit">
+                  <Link href="/researcher/submit">
                     <Plus className="w-4 h-4" />
                     <span>Submit Proposal</span>
                   </Link>
@@ -99,7 +99,7 @@ function ResearcherSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link href="/dashboard/researcher/profile">
+                  <Link href="/researcher/profile">
                     <User className="w-4 h-4" />
                     <span>Profile</span>
                   </Link>
@@ -150,12 +150,6 @@ function ProposalDetailsModal({ proposal, onClose }: { proposal: any; onClose: (
                 <div>
                   <span className="font-medium">Submitted:</span>
                   <span className="ml-2">{new Date(proposal.dateSubmitted).toLocaleDateString()}</span>
-                </div>
-              )}
-              {proposal.reviewer && (
-                <div>
-                  <span className="font-medium">Reviewer:</span>
-                  <span className="ml-2">{proposal.reviewer}</span>
                 </div>
               )}
             </CardContent>
@@ -400,6 +394,21 @@ export default function ResearcherProposalsPage() {
     return matchesSearch && matchesStatus
   })
 
+  const handleDelete = async (id: string) => {
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`http://localhost:5000/api/proposals/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error("Failed to delete proposal")
+      const data = await res.json()
+      setProposals(proposals.filter((p) => p._id !== id))
+    } catch (err: any) {
+      setError(err.message || "Error deleting proposal")
+    }
+  }
+
   return (
     <ResearcherLayout active="proposals">
       <main className="p-6">
@@ -461,18 +470,6 @@ export default function ResearcherProposalsPage() {
                     <Progress value={proposal.progress} className="h-2" />
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-600">
-                      <span className="font-medium">Category:</span> {proposal.category}
-                      {proposal.reviewer && (
-                        <>
-                          <span className="mx-2">•</span>
-                          <span className="font-medium">Reviewer:</span> {proposal.reviewer}
-                        </>
-                      )}
-                    </div>
-                  </div>
-
                   <div className="flex space-x-2">
                     <Dialog>
                       <DialogTrigger asChild>
@@ -488,22 +485,6 @@ export default function ResearcherProposalsPage() {
                         />
                       )}
                     </Dialog>
-
-                    {(proposal.status === "Draft" || proposal.status === "Needs Revision") && (
-                      <Button size="sm" variant="outline" asChild>
-                        <Link href="/dashboard/researcher/submit">
-                          <Edit className="w-4 h-4 mr-1" />
-                          Edit
-                        </Link>
-                      </Button>
-                    )}
-
-                    {proposal.status === "Draft" && (
-                      <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
-                        <Trash2 className="w-4 h-4 mr-1" />
-                        Delete
-                      </Button>
-                    )}
 
                     {proposal.status === "Approved" && (
                       <Button size="sm" className="bg-green-600 hover:bg-green-700">
@@ -529,7 +510,7 @@ export default function ResearcherProposalsPage() {
             </p>
             {!searchTerm && statusFilter === "all" && (
               <Button asChild className="bg-blue-600 hover:bg-blue-700">
-                <Link href="/dashboard/researcher/submit">
+                <Link href="/researcher/submit">
                   <Plus className="w-4 h-4 mr-2" />
                   Create Your First Proposal
                 </Link>
