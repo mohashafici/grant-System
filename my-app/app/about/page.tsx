@@ -6,25 +6,25 @@ import Link from "next/link"
 export default function AboutPage() {
   const teamMembers = [
     {
-      name: "Dr. Sarah Mitchell",
+      name: "MOHAMED SHAFICI ABDIRAHMAN",
       role: "Director of Research Programs",
       image: "/placeholder.svg?height=200&width=200&text=Dr.+Sarah+Mitchell",
       bio: "Leading researcher in AI and machine learning with 15+ years of experience in grant management.",
     },
     {
-      name: "Prof. James Anderson",
+      name: "Mohamed Abdi Ali",
       role: "Chief Technology Officer",
       image: "/placeholder.svg?height=200&width=200&text=Prof.+James+Anderson",
       bio: "Former NASA scientist specializing in space technology and innovation funding strategies.",
     },
     {
-      name: "Dr. Maria Rodriguez",
+      name: "Abdirisaq Calas",
       role: "Head of Reviewer Relations",
       image: "/placeholder.svg?height=200&width=200&text=Dr.+Maria+Rodriguez",
       bio: "Expert in peer review processes with extensive experience in academic evaluation systems.",
     },
     {
-      name: "Prof. David Chen",
+      name: "ABDI SHAKUUR NUUR MOHAMED",
       role: "Strategic Partnerships Director",
       image: "/placeholder.svg?height=200&width=200&text=Prof.+David+Chen",
       bio: "Building bridges between academia and industry to foster collaborative research initiatives.",
@@ -145,7 +145,7 @@ export default function AboutPage() {
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div>
                 <img
-                  src="/placeholder.svg?height=400&width=500&text=Research+Team+Meeting"
+                  src="/me.jpeg?height=400&width=500&text=Research+Team+Meeting"
                   alt="Research team meeting"
                   className="w-full h-64 object-cover rounded-lg"
                 />

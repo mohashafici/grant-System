@@ -8,23 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
 import { Progress } from "@/components/ui/progress"
 import { Home, FileText, Plus, Bell, User, Upload, Save, Send, Award, ChevronLeft, ChevronRight, X } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import ResearcherLayout from "@/components/layouts/ResearcherLayout"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 
 const steps = [
   { id: 1, title: "Project Details", description: "Basic information about your research" },
@@ -33,73 +21,6 @@ const steps = [
   { id: 4, title: "Documents", description: "Upload supporting documents" },
   { id: 5, title: "Review & Submit", description: "Final review before submission" },
 ]
-
-function ResearcherSidebar() {
-  return (
-    <Sidebar>
-      <SidebarHeader className="border-b">
-        <div className="flex items-center space-x-3 p-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <Award className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h2 className="font-semibold">Grant Portal</h2>
-            <p className="text-xs text-muted-foreground">Researcher</p>
-          </div>
-        </div>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link href="/dashboard/researcher">
-                    <Home className="w-4 h-4" />
-                    <span>Home</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link href="/dashboard/researcher/proposals">
-                    <FileText className="w-4 h-4" />
-                    <span>My Proposals</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive>
-                  <Link href="/dashboard/researcher/submit">
-                    <Plus className="w-4 h-4" />
-                    <span>Submit Proposal</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link href="/dashboard/researcher/notifications">
-                    <Bell className="w-4 h-4" />
-                    <span>Notifications</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link href="/dashboard/researcher/profile">
-                    <User className="w-4 h-4" />
-                    <span>Profile</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
-  )
-}
 
 export default function ResearcherSubmitPage() {
   const [currentStep, setCurrentStep] = useState(1)
@@ -279,7 +200,7 @@ export default function ResearcherSubmitPage() {
 
       setSubmitSuccess(true)
       setTimeout(() => {
-        router.push("/dashboard/researcher/proposals")
+        router.push("/researcher/proposals")
       }, 1500)
     } catch (err: any) {
       setSubmitError(err.message || "Error submitting proposal")
@@ -707,104 +628,100 @@ export default function ResearcherSubmitPage() {
 
   return (
     <ResearcherLayout active="submit">
-      <div className="flex min-h-screen bg-gray-50">
-        <div className="flex-1">
-          <header className="bg-white border-b px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <SidebarTrigger />
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Submit New Proposal</h1>
-                  <p className="text-gray-600">
-                    Step {currentStep} of {steps.length}: {steps[currentStep - 1].title}
-                  </p>
+      <>
+        <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-8">
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center space-x-4">
+              <SidebarTrigger />
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Submit New Proposal</h1>
+                <p className="text-gray-500 text-base">
+                  Step {currentStep} of {steps.length}: <span className="font-semibold text-gray-700">{steps[currentStep - 1].title}</span>
+                </p>
+              </div>
+            </div>
+            <Button variant="outline" asChild className="text-gray-700 border-gray-300">
+              <Link href="/researcher/proposals">Cancel</Link>
+            </Button>
+          </div>
+        </header>
+
+        {submitError && (
+          <div className="mb-4 text-red-600 font-medium">{submitError}</div>
+        )}
+        {submitSuccess && (
+          <div className="mb-4 text-green-600 font-medium">Proposal submitted successfully! Redirecting to My Proposals...</div>
+        )}
+        {/* Progress Bar */}
+        <div className="mb-10 w-full">
+          <div className="flex justify-between items-center mb-4 w-full">
+            <h2 className="text-lg font-semibold">Proposal Progress</h2>
+            <span className="text-sm text-gray-600">{Math.round(progress)}% Complete</span>
+          </div>
+          <Progress value={progress} className="h-2 mb-4 w-full" />
+          <div className="flex justify-between w-full">
+            {steps.map((step, index) => (
+              <div key={step.id} className="flex flex-col items-center text-center max-w-[120px]">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium mb-2 ${
+                    step.id <= currentStep ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
+                  }`}
+                >
+                  {step.id}
+                </div>
+                <div className="text-xs">
+                  <div className="font-medium">{step.title}</div>
+                  <div className="text-gray-500">{step.description}</div>
                 </div>
               </div>
-              <Button variant="outline" asChild>
-                <Link href="/dashboard/researcher">Cancel</Link>
-              </Button>
-            </div>
-          </header>
-
-          <main className="p-6">
-            {submitError && (
-              <div className="mb-4 text-red-600 font-medium">{submitError}</div>
-            )}
-            {submitSuccess && (
-              <div className="mb-4 text-green-600 font-medium">Proposal submitted successfully! Redirecting to My Proposals...</div>
-            )}
-            {/* Progress Bar */}
-            <div className="mb-8">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold">Proposal Progress</h2>
-                <span className="text-sm text-gray-600">{Math.round(progress)}% Complete</span>
-              </div>
-              <Progress value={progress} className="h-2 mb-4" />
-              <div className="flex justify-between">
-                {steps.map((step, index) => (
-                  <div key={step.id} className="flex flex-col items-center text-center max-w-[120px]">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium mb-2 ${
-                        step.id <= currentStep ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
-                      }`}
-                    >
-                      {step.id}
-                    </div>
-                    <div className="text-xs">
-                      <div className="font-medium">{step.title}</div>
-                      <div className="text-gray-500">{step.description}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Form Content */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{steps[currentStep - 1].title}</CardTitle>
-                <CardDescription>{steps[currentStep - 1].description}</CardDescription>
-              </CardHeader>
-              <CardContent>{renderStepContent()}</CardContent>
-            </Card>
-
-            {/* Navigation Buttons */}
-            <div className="flex justify-between mt-8">
-              <Button variant="outline" onClick={handlePrevious} disabled={currentStep === 1 || submitting}>
-                <ChevronLeft className="w-4 h-4 mr-2" />
-                Previous
-              </Button>
-
-              <div className="flex space-x-3">
-                <Button variant="outline" onClick={handleSaveDraft} disabled={submitting}>
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Draft
-                </Button>
-
-                {currentStep === steps.length ? (
-                  <Button onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700" disabled={submitting}>
-                    {submitting ? (
-                      <>
-                        <span className="animate-spin mr-2">⏳</span>Submitting...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4 mr-2" />
-                        Submit Proposal
-                      </>
-                    )}
-                  </Button>
-                ) : (
-                  <Button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700" disabled={submitting}>
-                    Next
-                    <ChevronRight className="w-4 h-4 ml-2" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          </main>
+            ))}
+          </div>
         </div>
-      </div>
+
+        {/* Form Content */}
+        <Card className="shadow-md border-gray-200 w-full">
+          <CardHeader>
+            <CardTitle className="text-xl">{steps[currentStep - 1].title}</CardTitle>
+            <CardDescription>{steps[currentStep - 1].description}</CardDescription>
+          </CardHeader>
+          <CardContent>{renderStepContent()}</CardContent>
+        </Card>
+
+        {/* Navigation Buttons */}
+        <div className="flex justify-between mt-10 w-full">
+          <Button variant="outline" onClick={handlePrevious} disabled={currentStep === 1 || submitting} className="px-6 py-2">
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            Previous
+          </Button>
+
+          <div className="flex space-x-3">
+            {/* <Button variant="outline" onClick={handleSaveDraft} disabled={submitting} className="px-6 py-2">
+              <Save className="w-4 h-4 mr-2" />
+              Save Draft
+            </Button> */}
+
+            {currentStep === steps.length ? (
+              <Button onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700 px-6 py-2 text-white font-semibold" disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <span className="animate-spin mr-2">⏳</span>Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    Submit Proposal
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700 px-6 py-2 text-white font-semibold" disabled={submitting}>
+                Next
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </>
     </ResearcherLayout>
   )
 }
