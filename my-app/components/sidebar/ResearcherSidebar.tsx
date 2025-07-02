@@ -73,10 +73,10 @@ export default function ResearcherSidebar({ active }: { active: string }) {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={active === "reports"}>
-                      <Link href="/researcher/reports">
+                      {/* <Link href="/researcher/reports">
                         <FileText className="w-4 h-4" />
                         <span>Progress Reports</span>
-                      </Link>
+                      </Link> */}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>

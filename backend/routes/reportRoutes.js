@@ -9,5 +9,7 @@ router.get('/evaluation', auth, authorizeRoles('admin'), reportController.getEva
 router.get('/analytics', auth, authorizeRoles('admin'), reportController.getAnalytics);
 // GET /api/reports/reviewer-performance
 router.get('/reviewer-performance', auth, authorizeRoles('admin'), reportController.getReviewerPerformance);
+// POST /api/reports/generate
+router.post('/generate', auth, authorizeRoles('admin'), reportController.generateReport);
 
 module.exports = router; 

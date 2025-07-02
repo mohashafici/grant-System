@@ -62,6 +62,7 @@ import {
   Clock,
 } from "lucide-react"
 import AdminLayout from "@/components/layouts/AdminLayout"
+import { toast } from "@/hooks/use-toast"
 
 function ReportDetailsModal({ report, onClose }: { report: any; onClose: () => void }) {
   return (
@@ -218,6 +219,39 @@ export default function AdminReportsPage() {
     }
   }
 
+  const handleGenerateReport = async () => {
+    setLoading(true)
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch("http://localhost:5000/api/reports/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      if (!res.ok) throw new Error("Failed to generate report")
+      toast({
+        title: "Report generated",
+        description: "A new evaluation report has been created.",
+      })
+      // Refresh reports list
+      const evalRes = await fetch("http://localhost:5000/api/reports/evaluation", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!evalRes.ok) throw new Error("Failed to fetch evaluation reports")
+      const evalData = await evalRes.json()
+      setEvaluationReports(evalData)
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message || "Failed to generate report",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (loading) return <div className="p-8 text-center text-lg">Loading reports...</div>
   if (error) return <div className="p-8 text-center text-red-600">{error}</div>
 
@@ -234,7 +268,7 @@ export default function AdminReportsPage() {
                   <p className="text-gray-600">Comprehensive analysis and reporting on grant evaluations</p>
                 </div>
               </div>
-              <Button className="bg-blue-600 hover:bg-blue-700">
+              <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleGenerateReport}>
                 <Download className="w-4 h-4 mr-2" />
                 Generate New Report
               </Button>
@@ -412,7 +446,7 @@ export default function AdminReportsPage() {
                             <TableHead>Reviews Completed</TableHead>
                             <TableHead>Avg. Score</TableHead>
                             <TableHead>On-Time Rate</TableHead>
-                            <TableHead>Expertise</TableHead>
+                            {/* <TableHead>Expertise</TableHead> */}
                           </TableRow>
                         </TableHeader>
                         <TableBody>
