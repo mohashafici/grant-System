@@ -368,6 +368,7 @@ const getStatusIcon = (status: string) => {
 
 export default function ResearcherProposalsPage() {
   const [proposals, setProposals] = useState<any[]>([])
+  const [grants, setGrants] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
@@ -392,7 +393,17 @@ export default function ResearcherProposalsPage() {
         setLoading(false)
       }
     }
-    fetchProposals()
+    const fetchGrants = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/grants");
+        const data = await res.json();
+        setGrants(data);
+      } catch {
+        setGrants([]);
+      }
+    };
+    fetchProposals();
+    fetchGrants();
   }, [])
 
   const filteredProposals = proposals.filter((proposal) => {
@@ -415,6 +426,16 @@ export default function ResearcherProposalsPage() {
       setError(err.message || "Error deleting proposal")
     }
   }
+
+  // Helper to get grant title from id
+  const getGrantTitle = (proposal: any) => {
+    if (proposal.grantTitle) return proposal.grantTitle;
+    if (proposal.grant) {
+      const found = grants.find((g) => g._id === proposal.grant);
+      return found ? found.title : proposal.grant;
+    }
+    return "-";
+  };
 
   return (
     <ResearcherLayout active="proposals">
@@ -455,14 +476,8 @@ export default function ResearcherProposalsPage() {
                   <div className="space-y-1 flex-1">
                     <CardTitle className="text-lg">{proposal.title}</CardTitle>
                     <CardDescription>
-                      {proposal.dateSubmitted ? `Submitted: ${proposal.dateSubmitted}` : "Not submitted yet"} •
-                      Deadline: {proposal.deadline}
-                      {proposal.grantTitle && (
-                        <>
-                          <br />
-                          <span className="font-medium text-gray-700">Grant: {proposal.grantTitle}</span>
-                        </>
-                      )}
+                      Grant: {getGrantTitle(proposal)}
+                      {/* Deadline: {proposal.deadline} */}
                     </CardDescription>
                   </div>
                   <div className="flex items-center space-x-2">
