@@ -7,35 +7,35 @@ import { Badge } from "@/components/ui/badge"
 import { Calendar, Users, Award, BookOpen, ArrowRight, ChevronLeft, ChevronRight, Menu, X } from "lucide-react"
 import Link from "next/link"
 
-const currentGrants = [
-  {
-    id: 1,
-    title: "AI Innovation Research Grant 2024",
-    description: "Supporting breakthrough research in artificial intelligence and machine learning applications.",
-    deadline: "March 15, 2024",
-    funding: "$50,000",
-    category: "Technology",
-    applicants: 45,
-  },
-  {
-    id: 2,
-    title: "Sustainable Energy Solutions",
-    description: "Funding renewable energy research and clean technology development projects.",
-    deadline: "April 20, 2024",
-    funding: "$75,000",
-    category: "Environment",
-    applicants: 32,
-  },
-  {
-    id: 3,
-    title: "Healthcare Innovation Fund",
-    description: "Supporting medical research and healthcare technology advancement initiatives.",
-    deadline: "May 10, 2024",
-    funding: "$100,000",
-    category: "Healthcare",
-    applicants: 28,
-  },
-]
+// const currentGrants = [
+//   {
+//     id: 1,
+//     title: "AI Innovation Research Grant 2024",
+//     description: "Supporting breakthrough research in artificial intelligence and machine learning applications.",
+//     deadline: "March 15, 2024",
+//     funding: "$50,000",
+//     category: "Technology",
+//     applicants: 45,
+//   },
+//   {
+//     id: 2,
+//     title: "Sustainable Energy Solutions",
+//     description: "Funding renewable energy research and clean technology development projects.",
+//     deadline: "April 20, 2024",
+//     funding: "$75,000",
+//     category: "Environment",
+//     applicants: 32,
+//   },
+//   {
+//     id: 3,
+//     title: "Healthcare Innovation Fund",
+//     description: "Supporting medical research and healthcare technology advancement initiatives.",
+//     deadline: "May 10, 2024",
+//     funding: "$100,000",
+//     category: "Healthcare",
+//     applicants: 28,
+//   },
+// ]
 
 export default function LandingPage() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -79,7 +79,7 @@ export default function LandingPage() {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % carouselImages.length);
-    }, 5000);
+    }, 2000);
     return () => clearInterval(timer);
   }, [carouselImages.length]);
 
@@ -490,14 +490,14 @@ export default function LandingPage() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/careers" className="hover:text-white">
+                  {/* <Link href="/careers" className="hover:text-white">
                     Careers
-                  </Link>
+                  </Link> */}
                 </li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Support</h4>
+              {/* <h4 className="font-semibold mb-4">Support</h4>
               <ul className="space-y-2 text-sm text-gray-400">
                 <li>
                   <Link href="/help" className="hover:text-white">
@@ -519,11 +519,11 @@ export default function LandingPage() {
                     Accessibility
                   </Link>
                 </li>
-              </ul>
+              </ul> */}
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
-            <p>&copy; 2024 Innovation Grant Portal. All rights reserved.</p>
+            <p>&copy; 2025 Innovation Grant Portal. All rights reserved.</p>
           </div>
         </div>
       </footer>
