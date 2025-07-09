@@ -38,7 +38,7 @@ export default function LoginPage() {
       // Save JWT and user info
       localStorage.setItem("token", data.token)
       localStorage.setItem("user", JSON.stringify(data.user))
-      toast({ title: "Login successful!", description: "Welcome back.", duration: 3000 })
+      toast({ title: "Login successful!", description: "Welcome back.", duration: 2000 })
       // Redirect based on role
       if (data.user.role === "admin") router.push("/admin")
       else if (data.user.role === "reviewer") router.push("/reviewer")
@@ -107,9 +107,9 @@ export default function LoginPage() {
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+                {/* <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
                   Forgot password?
-                </Link>
+                </Link> */}
               </div>
               <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}>
                 {loading ? "Signing in..." : "Sign In"}

@@ -5,21 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-  LogoutButton,
-} from "@/components/ui/sidebar"
-import { Home, FileText, Plus, Bell, User, Eye, Edit, Trash2, Award, Settings } from "lucide-react"
+import { Plus, FileText, Clock, CheckCircle, DollarSign, Calendar, User } from "lucide-react"
 import ResearcherLayout from "@/components/layouts/ResearcherLayout"
 import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 
@@ -38,114 +24,10 @@ const getStatusColor = (status: string) => {
   }
 }
 
-const getStatusIcon = (status: string) => {
-  switch (status) {
-    case "Approved":
-      return "✅"
-    case "Rejected":
-      return "❌"
-    case "Under Review":
-      return "⏳"
-    case "Draft":
-      return "📝"
-    default:
-      return "📄"
-  }
-}
-
-function ResearcherSidebar() {
-  return (
-    <Sidebar>
-      <SidebarHeader className="border-b">
-        <div className="flex items-center space-x-3 p-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <Award className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h2 className="font-semibold">Grant Portal</h2>
-            <p className="text-xs text-muted-foreground">Researcher</p>
-          </div>
-        </div>
-      </SidebarHeader>
-      <SidebarContent>
-        <div className="flex flex-col h-full justify-between min-h-[60vh]">
-          <div>
-            <SidebarGroup>
-              <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive>
-                      <Link href="/dashboard/researcher">
-                        <Home className="w-4 h-4" />
-                        <span>Home</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <Link href="/dashboard/researcher/proposals">
-                        <FileText className="w-4 h-4" />
-                        <span>My Proposals</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <Link href="/dashboard/researcher/submit">
-                        <Plus className="w-4 h-4" />
-                        <span>Submit Proposal</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <Link href="/dashboard/researcher/notifications">
-                        <Bell className="w-4 h-4" />
-                        <span>Notifications</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <Link href="/dashboard/researcher/profile">
-                        <User className="w-4 h-4" />
-                        <span>Profile</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <Link href="/dashboard/researcher/reports">
-                        <FileText className="w-4 h-4" />
-                        <span>Progress Reports</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <Link href="/dashboard/researcher/settings">
-                        <Settings className="w-4 h-4" />
-                        <span>Settings</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </div>
-          <div className="mb-4">
-            <LogoutButton />
-          </div>
-        </div>
-      </SidebarContent>
-    </Sidebar>
-  )
-}
-
 export default function ResearcherDashboardPage() {
   useAuthRedirect(["researcher"])
   const [proposals, setProposals] = useState<any[]>([])
+  const [grants, setGrants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
@@ -167,147 +49,232 @@ export default function ResearcherDashboardPage() {
         setLoading(false)
       }
     }
-    fetchProposals()
+    const fetchGrants = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/grants");
+        const data = await res.json();
+        setGrants(data);
+      } catch {
+        setGrants([]);
+      }
+    };
+    fetchProposals();
+    fetchGrants();
   }, [])
 
   // Stats
-  const totalProposals = proposals.length
-  const approvedCount = proposals.filter((p) => p.status === "Approved").length
-  const underReviewCount = proposals.filter((p) => p.status === "Under Review").length
-  const rejectedCount = proposals.filter((p) => p.status === "Rejected").length
+  const totalProposals = proposals.length;
+  const totalGrants = grants.length;
+  const approvedCount = proposals.filter((p) => p.status === "Approved").length;
+  const underReviewCount = proposals.filter((p) => p.status === "Under Review").length;
+  const rejectedCount = proposals.filter((p) => p.status === "Rejected").length;
   const totalFunding = proposals
     .filter((p) => p.status === "Approved")
-    .reduce((sum, p) => sum + (typeof p.funding === "number" ? p.funding : parseFloat((p.funding || "0").replace(/[^\d.]/g, ""))), 0)
+    .reduce((sum, p) => sum + (typeof p.funding === "number" ? p.funding : parseFloat((p.funding || "0").replace(/[^\d.]/g, ""))), 0);
+  const grantsFunding = grants.reduce((sum, g) => sum + (typeof g.funding === "number" ? g.funding : parseFloat((g.funding || "0").replace(/[^\d.]/g, ""))), 0);
+
+  // Recent activity placeholder
+  const recentActivity = [
+    {
+      type: "Grant Approved",
+      desc: proposals.find((p) => p.status === "Approved")?.title || "-",
+      amount: proposals.find((p) => p.status === "Approved")?.funding || "-",
+      time: "2 days ago",
+      color: "bg-green-500",
+    },
+    {
+      type: "Review Started",
+      desc: proposals.find((p) => p.status === "Under Review")?.title || "-",
+      time: "1 week ago",
+      color: "bg-yellow-500",
+    },
+    {
+      type: "Application Submitted",
+      desc: proposals[0]?.title || "-",
+      time: "2 weeks ago",
+      color: "bg-blue-500",
+    },
+  ]
 
   return (
-    <ResearcherLayout active="dashboard">
-      {/* Stats Cards */}
-      <div className="grid md:grid-cols-5 gap-6 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Proposals</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalProposals}</div>
-            <p className="text-xs text-muted-foreground">{totalProposals > 0 ? `+${totalProposals} this year` : "No proposals yet"}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Approved</CardTitle>
-            <div className="text-green-600">✅</div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{approvedCount}</div>
-            <p className="text-xs text-muted-foreground">
-              {totalProposals > 0 ? `${Math.round((approvedCount / totalProposals) * 100)}% success rate` : "No approvals yet"}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Under Review</CardTitle>
-            <div className="text-yellow-600">⏳</div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{underReviewCount}</div>
-            <p className="text-xs text-muted-foreground">Awaiting decision</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rejected</CardTitle>
-            <div className="text-red-600">❌</div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{rejectedCount}</div>
-            <p className="text-xs text-muted-foreground">Rejected proposals</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Funding</CardTitle>
-            <div className="text-blue-600">💰</div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${totalFunding.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Approved funding</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Proposals Section */}
+    <ResearcherLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">My Proposals</h2>
-          <Button variant="outline" asChild>
-            <Link href="/researcher/proposals">View All</Link>
-          </Button>
+        {/* Welcome Section */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Welcome back, Dr. Johnson</h1>
+          <p className="text-gray-600">Manage your research grant applications and track their progress</p>
         </div>
 
-        {loading ? (
-          <div className="text-center py-12 text-gray-500">Loading proposals...</div>
-        ) : error ? (
-          <div className="text-center py-12 text-red-500">{error}</div>
-        ) : (
-          <div className="grid gap-6">
-            {proposals.slice(0, 4).map((proposal) => (
-              <Card key={proposal._id || proposal.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <CardTitle className="text-lg">{proposal.title}</CardTitle>
-                      <CardDescription>
-                        {proposal.dateSubmitted ? `Submitted: ${new Date(proposal.dateSubmitted).toLocaleDateString()}` : "Not submitted yet"} •
-                        Deadline: {proposal.deadline ? new Date(proposal.deadline).toLocaleDateString() : "-"}
-                      </CardDescription>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge className={getStatusColor(proposal.status)}>
-                        {getStatusIcon(proposal.status)} {proposal.status}
-                      </Badge>
-                      <span className="text-lg font-semibold text-blue-600">
-                        {typeof proposal.funding === "number"
-                          ? `$${proposal.funding.toLocaleString()}`
-                          : proposal.funding}
-                      </span>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
+        {/* Stats Cards */}
+        <div className="grid md:grid-cols-4 gap-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Available Grants</p>
+                  <p className="text-2xl font-bold text-green-600">{totalGrants}</p>
+                </div>
+                <DollarSign className="w-8 h-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Applications</p>
+                  <p className="text-2xl font-bold text-blue-600">{totalProposals}</p>
+                </div>
+                <FileText className="w-8 h-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Approved Grants</p>
+                  <p className="text-2xl font-bold text-green-600">{approvedCount}</p>
+                </div>
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Funding</p>
+                  <p className="text-2xl font-bold text-blue-600">${grantsFunding.toLocaleString()}</p>
+                </div>
+                <DollarSign className="w-8 h-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Recent Applications</CardTitle>
+                  <CardDescription>Your latest grant submissions</CardDescription>
+                </div>
+                <Link href="/researcher/submit">
+                  <Button className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="w-4 h-4 mr-2" />
+                    New Application
+                  </Button>
+                </Link>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="text-center py-12 text-gray-500">Loading proposals...</div>
+                ) : error ? (
+                  <div className="text-center py-12 text-red-500">{error}</div>
+                ) : (
                   <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span>Progress</span>
-                        <span>{proposal.progress}%</span>
+                    {proposals.slice(0, 4).map((proposal) => (
+                      <div key={proposal._id || proposal.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900 mb-1">{proposal.title}</h3>
+                            <div className="flex items-center space-x-4 text-sm text-gray-600">
+                              <span className="flex items-center">
+                                <DollarSign className="w-4 h-4 mr-1" />
+                                {typeof proposal.funding === "number"
+                                  ? `$${proposal.funding.toLocaleString()}`
+                                  : proposal.funding}
+                              </span>
+                              {proposal.dateSubmitted && (
+                                <span className="flex items-center">
+                                  <Calendar className="w-4 h-4 mr-1" />
+                                  {new Date(proposal.dateSubmitted).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <Badge className={getStatusColor(proposal.status)}>{proposal.status}</Badge>
+                        </div>
+                        {proposal.status === "Draft" && (
+                          <div className="mb-3">
+                            <div className="flex items-center justify-between text-sm mb-1">
+                              <span className="text-gray-600">Completion Progress</span>
+                              <span className="text-gray-900">{proposal.progress || 0}%</span>
+                            </div>
+                            <Progress value={proposal.progress || 0} className="h-2" />
+                          </div>
+                        )}
+                        <div className="flex items-center space-x-2">
+                          <Button variant="outline" size="sm">
+                            View Details
+                          </Button>
+                          {proposal.status === "Draft" && (
+                            <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                              Continue Editing
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      <Progress value={proposal.progress} className="h-2" />
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button size="sm" variant="outline">
-                        <Eye className="w-4 h-4 mr-1" />
-                        View
-                      </Button>
-                      {proposal.status === "Draft" && (
-                        <Button size="sm" variant="outline">
-                          <Edit className="w-4 h-4 mr-1" />
-                          Edit
-                        </Button>
-                      )}
-                      {proposal.status === "Draft" && (
-                        <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          Delete
-                        </Button>
-                      )}
-                    </div>
+                    ))}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                )}
+              </CardContent>
+            </Card>
           </div>
-        )}
+
+          <div className="space-y-6">
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Link href="/researcher/submit">
+                  <Button variant="outline" className="w-full justify-start bg-transparent">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Start New Application
+                  </Button>
+                </Link>
+                <Link href="/researcher/proposals">
+                  <Button variant="outline" className="w-full justify-start bg-transparent">
+                    <FileText className="w-4 h-4 mr-2" />
+                    View All Applications
+                  </Button>
+                </Link>
+                <Link href="/researcher/profile">
+                  <Button variant="outline" className="w-full justify-start bg-transparent">
+                    <User className="w-4 h-4 mr-2" />
+                    Update Profile
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* Recent Activity */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Activity</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {recentActivity.map((activity, idx) => (
+                    <div key={idx} className="flex items-start space-x-3">
+                      <div className={`w-2 h-2 ${activity.color} rounded-full mt-2`}></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{activity.type}</p>
+                        <p className="text-xs text-gray-600">{activity.desc}{activity.amount ? ` - $${activity.amount}` : ""}</p>
+                        <p className="text-xs text-gray-500">{activity.time}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </ResearcherLayout>
   )

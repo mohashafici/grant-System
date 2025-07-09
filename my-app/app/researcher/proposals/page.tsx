@@ -43,75 +43,76 @@ import {
   Filter,
   Download,
   Copy,
+  CheckCircle,
 } from "lucide-react"
 import ResearcherLayout from "@/components/layouts/ResearcherLayout"
 
-function ResearcherSidebar() {
-  return (
-    <Sidebar>
-      <SidebarHeader className="border-b">
-        <div className="flex items-center space-x-3 p-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <Award className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h2 className="font-semibold">Grant Portal</h2>
-            <p className="text-xs text-muted-foreground">Researcher</p>
-          </div>
-        </div>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link href="/researcher">
-                    <Home className="w-4 h-4" />
-                    <span>Home</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive>
-                  <Link href="/researcher/proposals">
-                    <FileText className="w-4 h-4" />
-                    <span>My Proposals</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link href="/researcher/submit">
-                    <Plus className="w-4 h-4" />
-                    <span>Submit Proposal</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link href="/notifications">
-                    <Bell className="w-4 h-4" />
-                    <span>Notifications</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link href="/researcher/profile">
-                    <User className="w-4 h-4" />
-                    <span>Profile</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
-  )
-}
+// function ResearcherSidebar() {
+//   return (
+//     <Sidebar>
+//       <SidebarHeader className="border-b">
+//         <div className="flex items-center space-x-3 p-2">
+//           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+//             <Award className="w-5 h-5 text-white" />
+//           </div>
+//           <div>
+//             <h2 className="font-semibold">Grant Portal</h2>
+//             <p className="text-xs text-muted-foreground">Researcher</p>
+//           </div>
+//         </div>
+//       </SidebarHeader>
+//       <SidebarContent>
+//         <SidebarGroup>
+//           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+//           <SidebarGroupContent>
+//             <SidebarMenu>
+//               <SidebarMenuItem>
+//                 <SidebarMenuButton asChild>
+//                   <Link href="/researcher">
+//                     <Home className="w-4 h-4" />
+//                     <span>Home</span>
+//                   </Link>
+//                 </SidebarMenuButton>
+//               </SidebarMenuItem>
+//               <SidebarMenuItem>
+//                 <SidebarMenuButton asChild isActive>
+//                   <Link href="/researcher/proposals">
+//                     <FileText className="w-4 h-4" />
+//                     <span>My Proposals</span>
+//                   </Link>
+//                 </SidebarMenuButton>
+//               </SidebarMenuItem>
+//               <SidebarMenuItem>
+//                 <SidebarMenuButton asChild>
+//                   <Link href="/researcher/submit">
+//                     <Plus className="w-4 h-4" />
+//                     <span>Submit Proposal</span>
+//                   </Link>
+//                 </SidebarMenuButton>
+//               </SidebarMenuItem>
+//               <SidebarMenuItem>
+//                 <SidebarMenuButton asChild>
+//                   <Link href="/notifications">
+//                     <Bell className="w-4 h-4" />
+//                     <span>Notifications</span>
+//                   </Link>
+//                 </SidebarMenuButton>
+//               </SidebarMenuItem>
+//               <SidebarMenuItem>
+//                 <SidebarMenuButton asChild>
+//                   <Link href="/researcher/profile">
+//                     <User className="w-4 h-4" />
+//                     <span>Profile</span>
+//                   </Link>
+//                 </SidebarMenuButton>
+//               </SidebarMenuItem>
+//             </SidebarMenu>
+//           </SidebarGroupContent>
+//         </SidebarGroup>
+//       </SidebarContent>
+//     </Sidebar>
+//   )
+// }
 
 function ProposalDetailsModal({ proposal, onClose }: { proposal: any; onClose: () => void }) {
   return (
@@ -138,6 +139,12 @@ function ProposalDetailsModal({ proposal, onClose }: { proposal: any; onClose: (
                 <span className="font-medium">Category:</span>
                 <span className="ml-2">{proposal.category}</span>
               </div>
+              {proposal.grantTitle && (
+                <div>
+                  <span className="font-medium">Grant:</span>
+                  <span className="ml-2">{proposal.grantTitle}</span>
+                </div>
+              )}
               <div>
                 <span className="font-medium">Funding Requested:</span>
                 <span className="ml-2 text-blue-600 font-semibold">${proposal.funding?.toLocaleString()}</span>
@@ -155,11 +162,11 @@ function ProposalDetailsModal({ proposal, onClose }: { proposal: any; onClose: (
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
+          {/* <Card> */}
+            {/* <CardHeader>
               <CardTitle className="text-lg">Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
+            </CardHeader> */}
+            {/* <CardContent>
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span>Completion</span>
@@ -170,8 +177,8 @@ function ProposalDetailsModal({ proposal, onClose }: { proposal: any; onClose: (
                   {proposal.progress === 100 ? "Proposal completed and submitted" : "Proposal in progress"}
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </CardContent> */}
+          {/* </Card> */}
         </div>
 
         <Card>
@@ -308,7 +315,7 @@ function ProposalDetailsModal({ proposal, onClose }: { proposal: any; onClose: (
         )}
 
         <div className="flex justify-between">
-          <div className="flex space-x-3">
+          {/* <div className="flex space-x-3">
             <Button variant="outline">
               <Download className="w-4 h-4 mr-2" />
               Download PDF
@@ -317,7 +324,7 @@ function ProposalDetailsModal({ proposal, onClose }: { proposal: any; onClose: (
               <Copy className="w-4 h-4 mr-2" />
               Duplicate
             </Button>
-          </div>
+          </div> */}
           <Button onClick={onClose}>Close</Button>
         </div>
       </div>
@@ -450,6 +457,12 @@ export default function ResearcherProposalsPage() {
                     <CardDescription>
                       {proposal.dateSubmitted ? `Submitted: ${proposal.dateSubmitted}` : "Not submitted yet"} •
                       Deadline: {proposal.deadline}
+                      {proposal.grantTitle && (
+                        <>
+                          <br />
+                          <span className="font-medium text-gray-700">Grant: {proposal.grantTitle}</span>
+                        </>
+                      )}
                     </CardDescription>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -462,13 +475,13 @@ export default function ResearcherProposalsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div>
+                  {/* <div>
                     <div className="flex justify-between text-sm mb-2">
                       <span>Progress</span>
                       <span>{proposal.progress}%</span>
                     </div>
                     <Progress value={proposal.progress} className="h-2" />
-                  </div>
+                  </div> */}
 
                   <div className="flex space-x-2">
                     <Dialog>
@@ -487,10 +500,13 @@ export default function ResearcherProposalsPage() {
                     </Dialog>
 
                     {proposal.status === "Approved" && (
-                      <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                        <Download className="w-4 h-4 mr-1" />
-                        Award Letter
-                      </Button>
+                      <div className="bg-green-50 p-3 rounded-lg mb-3">
+                        <div className="flex items-center text-green-800 mb-1">
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                          <span className="font-medium">Congratulations! Your proposal has been approved for funding.</span>
+                        </div>
+                        <p className="text-sm text-green-700 mb-2">You will receive an official award letter and next steps soon.</p>
+                      </div>
                     )}
                   </div>
                 </div>
