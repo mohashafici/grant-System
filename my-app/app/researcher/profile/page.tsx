@@ -11,19 +11,6 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
-import {
   Home,
   FileText,
   Plus,
@@ -120,161 +107,126 @@ export default function ResearcherProfilePage() {
   }
 
   return (
-    <ResearcherLayout active="profile">
-      <div className="flex min-h-screen bg-gray-50">
-        <div className="flex-1">
-          <header className="bg-white border-b px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <SidebarTrigger />
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
-                  <p className="text-gray-600">Manage your personal and professional information</p>
-                </div>
-              </div>
-              <div className="flex space-x-3">
-                {isEditing ? (
-                  <>
-                    <Button variant="outline" onClick={() => setIsEditing(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Changes
-                    </Button>
-                  </>
-                ) : (
-                  <Button onClick={() => setIsEditing(true)} className="bg-blue-600 hover:bg-blue-700">
-                    Edit Profile
+    <ResearcherLayout active="profile" email={profileData.email} firstName={profileData.firstName}>
+      <div className="max-w-4xl mx-auto space-y-6 p-6">
+        {/* Profile Header */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-start space-x-6">
+              <div className="relative">
+                <Avatar className="w-24 h-24">
+                  <AvatarImage src="/placeholder.svg?height=96&width=96" alt="Profile" />
+                  <AvatarFallback className="text-xl">
+                    {profileData.firstName?.[0]}
+                    {profileData.lastName?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                {isEditing && (
+                  <Button size="sm" className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0">
+                    <Upload className="w-4 h-4" />
                   </Button>
                 )}
               </div>
+              <div className="flex-1">
+                <div className="flex items-center space-x-3 mb-2">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Dr. {profileData.firstName} {profileData.lastName}
+                  </h2>
+                  <Badge className="bg-blue-100 text-blue-800">Verified Researcher</Badge>
+                </div>
+                <p className="text-lg text-gray-600 mb-2">{profileData.title}</p>
+                <div className="flex items-center text-gray-600 space-x-4">
+                  <div className="flex items-center">
+                    <Building className="w-4 h-4 mr-1" />
+                    {profileData.institution}
+                  </div>
+                  <div className="flex items-center">
+                    <GraduationCap className="w-4 h-4 mr-1" />
+                    {profileData.department}
+                  </div>
+                </div>
+              </div>
             </div>
-          </header>
+          </CardContent>
+        </Card>
 
-          <main className="p-6">
-            <div className="max-w-4xl mx-auto space-y-6">
-              {/* Profile Header */}
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-start space-x-6">
-                    <div className="relative">
-                      <Avatar className="w-24 h-24">
-                        <AvatarImage src="/placeholder.svg?height=96&width=96" alt="Profile" />
-                        <AvatarFallback className="text-xl">
-                          {profileData.firstName?.[0]}
-                          {profileData.lastName?.[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      {isEditing && (
-                        <Button size="sm" className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0">
-                          <Upload className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h2 className="text-2xl font-bold text-gray-900">
-                          Dr. {profileData.firstName} {profileData.lastName}
-                        </h2>
-                        <Badge className="bg-blue-100 text-blue-800">Verified Researcher</Badge>
-                      </div>
-                      <p className="text-lg text-gray-600 mb-2">{profileData.title}</p>
-                      <div className="flex items-center text-gray-600 space-x-4">
-                        <div className="flex items-center">
-                          <Building className="w-4 h-4 mr-1" />
-                          {profileData.institution}
-                        </div>
-                        <div className="flex items-center">
-                          <GraduationCap className="w-4 h-4 mr-1" />
-                          {profileData.department}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Personal Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Personal Information</CardTitle>
-                  <CardDescription>Your basic contact and professional details</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
-                      <Input
-                        id="firstName"
-                        value={profileData.firstName || ""}
-                        onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
-                      <Input
-                        id="lastName"
-                        value={profileData.lastName || ""}
-                        onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        value={profileData.email || ""}
-                        onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone</Label>
-                      <Input
-                        id="phone"
-                        value={profileData.phone || ""}
-                        onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Professional Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Professional Information</CardTitle>
-                  <CardDescription>Your academic and professional background</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="institution">Institution</Label>
-                    <Input
-                      id="institution"
-                      value={profileData.institution || ""}
-                      onChange={(e) => setProfileData({ ...profileData, institution: e.target.value })}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="department">Department</Label>
-                    <Input
-                      id="department"
-                      value={profileData.department || ""}
-                      onChange={(e) => setProfileData({ ...profileData, department: e.target.value })}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+        {/* Personal Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Personal Information</CardTitle>
+            <CardDescription>Your basic contact and professional details</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  value={profileData.firstName || ""}
+                  onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
+                  disabled={!isEditing}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  value={profileData.lastName || ""}
+                  onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
+                  disabled={!isEditing}
+                />
+              </div>
             </div>
-          </main>
-        </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  value={profileData.email || ""}
+                  onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                  disabled={!isEditing}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  value={profileData.phone || ""}
+                  onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                  disabled={!isEditing}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Professional Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Professional Information</CardTitle>
+            <CardDescription>Your academic and professional background</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="institution">Institution</Label>
+              <Input
+                id="institution"
+                value={profileData.institution || ""}
+                onChange={(e) => setProfileData({ ...profileData, institution: e.target.value })}
+                disabled={!isEditing}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="department">Department</Label>
+              <Input
+                id="department"
+                value={profileData.department || ""}
+                onChange={(e) => setProfileData({ ...profileData, department: e.target.value })}
+                disabled={!isEditing}
+              />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </ResearcherLayout>
   )

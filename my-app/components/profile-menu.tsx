@@ -3,7 +3,7 @@ import { User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function ProfileMenu({ profileHref = "/profile" }: { profileHref?: string }) {
+export default function ProfileMenu({ profileHref = "/profile", email, firstName }: { profileHref?: string, email?: string, firstName?: string }) {
   const router = useRouter();
   return (
     <DropdownMenu>
@@ -13,6 +13,13 @@ export default function ProfileMenu({ profileHref = "/profile" }: { profileHref?
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        {(email || firstName) && (
+          <div className="px-3 py-2 text-xs text-gray-700">
+            {firstName && <div className="font-semibold">{firstName}</div>}
+            {email && <div className="text-gray-500">{email}</div>}
+          </div>
+        )}
+        <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href={profileHref}>Profile</Link>
         </DropdownMenuItem>
