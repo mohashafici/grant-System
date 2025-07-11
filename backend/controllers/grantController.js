@@ -3,7 +3,21 @@ const Grant = require('../models/Grant');
 // GET /api/grants - Get all grants
 exports.getAllGrants = async (req, res, next) => {
   try {
-    const grants = await Grant.find().sort({ createdDate: -1 });
+    const now = new Date();
+    let grants = await Grant.find().sort({ createdDate: -1 });
+    // Update status to 'Closed' if deadline has passed and status is not already 'Closed'
+    const updates = [];
+    grants.forEach(grant => {
+      if (grant.status !== 'Closed' && grant.deadline < now) {
+        grant.status = 'Closed';
+        updates.push(grant.save());
+      }
+    });
+    if (updates.length > 0) {
+      await Promise.all(updates);
+      // Re-fetch grants to ensure up-to-date status
+      grants = await Grant.find().sort({ createdDate: -1 });
+    }
     res.json(grants);
   } catch (err) {
     next(err);
