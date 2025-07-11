@@ -255,268 +255,251 @@ export default function AdminReportsPage() {
   if (loading) return <div className="p-8 text-center text-lg">Loading reports...</div>
   if (error) return <div className="p-8 text-center text-red-600">{error}</div>
 
+  // Key metrics
+  const totalProposals = monthlyData.reduce((sum, m) => sum + (m.applications || 0), 0);
+  const totalApproved = monthlyData.reduce((sum, m) => sum + (m.approved || 0), 0);
+  const totalRejected = monthlyData.reduce((sum, m) => sum + (m.rejected || 0), 0);
+  const totalFunding = monthlyData.reduce((sum, m) => sum + (m.funding || 0), 0);
+  const activeReviewers = reviewerPerformance.length;
+  const avgReviewTime = reviewerPerformance.length > 0 ? (reviewerPerformance.reduce((sum, r) => sum + (r.avgTime || 0), 0) / reviewerPerformance.length).toFixed(1) : "-";
+
   return (
     <AdminLayout active="reports">
-      <div className="flex min-h-screen bg-gray-50">
-        <div className="flex-1">
-          <header className="bg-white border-b px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <SidebarTrigger />
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Evaluation Reports</h1>
-                  <p className="text-gray-600">Comprehensive analysis and reporting on grant evaluations</p>
-                </div>
-              </div>
-              <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleGenerateReport}>
-                <Download className="w-4 h-4 mr-2" />
-                Generate New Report
-              </Button>
-            </div>
-          </header>
-
-          <main className="p-6">
-            <Tabs defaultValue="reports" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="reports">Reports</TabsTrigger>
-                <TabsTrigger value="analytics">Analytics</TabsTrigger>
-                <TabsTrigger value="performance">Performance</TabsTrigger>
-                <TabsTrigger value="trends">Trends</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="reports" className="space-y-6">
-                {/* Search and Filter */}
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input
-                      placeholder="Search reports..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[180px]">
-                      <Filter className="w-4 h-4 mr-2" />
-                      <SelectValue placeholder="Filter by status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="Final">Final</SelectItem>
-                      <SelectItem value="Draft">Draft</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Reports Table */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Evaluation Reports</CardTitle>
-                    <CardDescription>Generated reports and analysis documents</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Report Title</TableHead>
-                          <TableHead>Period</TableHead>
-                          <TableHead>Proposals</TableHead>
-                          <TableHead>Approved</TableHead>
-                          <TableHead>Total Funding</TableHead>
-                          <TableHead>Generated</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredReports.map((report) => (
-                          <TableRow key={report.id}>
-                            <TableCell className="font-medium">{report.title}</TableCell>
-                            <TableCell>{report.period}</TableCell>
-                            <TableCell>{report.totalProposals}</TableCell>
-                            <TableCell>
-                              <span className="font-semibold text-green-600">{report.approved}</span>
-                              <span className="text-gray-500">
-                                /{report.totalProposals} ({Math.round((report.approved / report.totalProposals) * 100)}
-                                %)
-                              </span>
-                            </TableCell>
-                            <TableCell className="font-semibold text-blue-600">{report.totalFunding}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center text-sm">
-                                <Calendar className="w-4 h-4 mr-1 text-gray-400" />
-                                {report.generatedDate}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge className={getStatusColor(report.status)}>{report.status}</Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex space-x-2">
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Button size="sm" variant="outline" onClick={() => setSelectedReport(report)}>
-                                      <Eye className="w-4 h-4 mr-1" />
-                                      View
-                                    </Button>
-                                  </DialogTrigger>
-                                  {selectedReport && (
-                                    <ReportDetailsModal
-                                      report={selectedReport}
-                                      onClose={() => setSelectedReport(null)}
-                                    />
-                                  )}
-                                </Dialog>
-                                <Button size="sm" variant="outline">
-                                  <Download className="w-4 h-4 mr-1" />
-                                  Download
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Analytics Tab */}
-              <TabsContent value="analytics" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Analytics</CardTitle>
-                    <CardDescription>Visualize proposal, approval, and funding analytics</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-8">
-                    <div className="w-full">
-                      <h2 className="text-lg font-semibold mb-2">Monthly Proposal Trends</h2>
-                      <p className="text-gray-500 mb-4">Proposal submissions and approvals over time</p>
-                      <ResponsiveContainer width="100%" height={400}>
-                        <BarChart data={monthlyData} margin={{ top: 16, right: 16, left: 0, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="month" />
-                          <YAxis />
-                          <Tooltip />
-                          <Bar dataKey="proposals" fill="#3B82F6" name="Proposals" />
-                          <Bar dataKey="approved" fill="#10B981" name="Approved" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="w-full">
-                      <h2 className="text-lg font-semibold mb-2">Funding by Category</h2>
-                      <p className="text-gray-500 mb-4">Distribution of funding across categories</p>
-                      <ResponsiveContainer width="100%" height={400}>
-                        <PieChart>
-                          <Pie
-                            data={categoryData}
-                            dataKey="funding"
-                            nameKey="name"
-                            cx="50%"
-                            cy="50%"
-                            outerRadius={140}
-                            label
-                          >
-                            {categoryData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Performance Tab */}
-              <TabsContent value="performance" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Reviewer Performance</CardTitle>
-                    <CardDescription>Reviewer activity and performance metrics</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="overflow-x-auto">
-                      <Table className="min-w-full">
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Reviews Completed</TableHead>
-                            <TableHead>Avg. Score</TableHead>
-                            <TableHead>On-Time Rate</TableHead>
-                            {/* <TableHead>Expertise</TableHead> */}
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {reviewerPerformance.map((reviewer) => (
-                            <TableRow key={reviewer.id}>
-                              <TableCell>{reviewer.name}</TableCell>
-                              <TableCell>{reviewer.reviewsCompleted}</TableCell>
-                              <TableCell>{reviewer.averageScore}</TableCell>
-                              <TableCell>{reviewer.onTimeRate}%</TableCell>
-                              <TableCell>{reviewer.expertise}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Trends Tab (reuse analytics data) */}
-              <TabsContent value="trends" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Trends</CardTitle>
-                    <CardDescription>Trends in proposals, approvals, and funding allocation</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-8">
-                    <div className="w-full">
-                      <h2 className="text-lg font-semibold mb-2">Proposal & Approval Trends</h2>
-                      <p className="text-gray-500 mb-4">Monthly trends for proposals and approvals</p>
-                      <ResponsiveContainer width="100%" height={400}>
-                        <LineChart data={monthlyData} margin={{ top: 16, right: 16, left: 0, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="month" />
-                          <YAxis />
-                          <Tooltip />
-                          <Line type="monotone" dataKey="proposals" stroke="#3B82F6" name="Proposals" />
-                          <Line type="monotone" dataKey="approved" stroke="#10B981" name="Approved" />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="w-full">
-                      <h2 className="text-lg font-semibold mb-2">Funding by Category</h2>
-                      <p className="text-gray-500 mb-4">Trends in funding allocation</p>
-                      <ResponsiveContainer width="100%" height={400}>
-                        <PieChart>
-                          <Pie
-                            data={categoryData}
-                            dataKey="funding"
-                            nameKey="name"
-                            cx="50%"
-                            cy="50%"
-                            outerRadius={140}
-                            label
-                          >
-                            {categoryData.map((entry, index) => (
-                              <Cell key={`cell-trend-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </main>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
+            <p className="text-gray-600">Comprehensive insights into grant application trends and performance</p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Select defaultValue="2024">
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2024">2024</SelectItem>
+                <SelectItem value="2023">2023</SelectItem>
+                <SelectItem value="2022">2022</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline">
+              <Download className="w-4 h-4 mr-2" />
+              Export Report
+            </Button>
+          </div>
         </div>
+
+        {/* Key Metrics */}
+        <div className="grid md:grid-cols-6 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Total Proposals</p>
+                  <p className="text-2xl font-bold">{totalProposals}</p>
+                  {/* Trend can be calculated if you have previous period data */}
+                </div>
+                <FileText className="w-8 h-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Approved</p>
+                  <p className="text-2xl font-bold">{totalApproved}</p>
+                </div>
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Rejected</p>
+                  <p className="text-2xl font-bold">{totalRejected}</p>
+                </div>
+                <XCircle className="w-8 h-8 text-red-600" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Total Funding</p>
+                  <p className="text-2xl font-bold">${totalFunding.toLocaleString()}</p>
+                </div>
+                <DollarSign className="w-8 h-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Active Reviewers</p>
+                  <p className="text-2xl font-bold">{activeReviewers}</p>
+                </div>
+                <Users className="w-8 h-8 text-purple-600" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Avg Review Time</p>
+                  <p className="text-2xl font-bold">{avgReviewTime}d</p>
+                </div>
+                <Clock className="w-8 h-8 text-orange-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Charts and Analytics */}
+        <Tabs defaultValue="applications" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="applications">Applications</TabsTrigger>
+            <TabsTrigger value="funding">Funding</TabsTrigger>
+            <TabsTrigger value="reviewers">Reviewers</TabsTrigger>
+            {/* Removed Institutions tab */}
+          </TabsList>
+
+          <TabsContent value="applications" className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Applications by Month</CardTitle>
+                  <CardDescription>Monthly application submission trends</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={monthlyData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="applications" fill="#3b82f6" name="Total" />
+                      <Bar dataKey="approved" fill="#10b981" name="Approved" />
+                      <Bar dataKey="rejected" fill="#ef4444" name="Rejected" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Applications by Category</CardTitle>
+                  <CardDescription>Distribution across research categories</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={categoryData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        fill="#8884d8"
+                        dataKey="value"
+                        label={({ name, value }) => `${name}: ${value}`}
+                      >
+                        {categoryData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color || "#3b82f6"} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="funding" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Funding Trends</CardTitle>
+                <CardDescription>Monthly funding allocation and application volume</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={400}>
+                  <LineChart data={monthlyData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis yAxisId="left" />
+                    <YAxis yAxisId="right" orientation="right" />
+                    <Tooltip
+                      formatter={(value, name) => [
+                        name === "funding" ? `$${(value as number).toLocaleString()}` : value,
+                        name === "funding" ? "Funding" : "Applications",
+                      ]}
+                    />
+                    <Line
+                      yAxisId="left"
+                      type="monotone"
+                      dataKey="funding"
+                      stroke="#3b82f6"
+                      strokeWidth={3}
+                      dot={false}
+                    />
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="applications"
+                      stroke="#ef4444"
+                      strokeWidth={3}
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="reviewers" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Reviewer Performance</CardTitle>
+                <CardDescription>Review completion and scoring metrics</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={400}>
+                  <BarChart data={reviewerPerformance} layout="horizontal">
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" />
+                    <YAxis dataKey="name" type="category" width={100} />
+                    <Tooltip />
+                    <Bar dataKey="reviews" fill="#3b82f6" name="Reviews Completed" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="institutions" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Top Institutions</CardTitle>
+                <CardDescription>Applications and funding by institution</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* You can fetch and map real institution stats here if available */}
+                  {/* Example: */}
+                  {/* institutionStats.map((inst, index) => ( ... )) */}
+                  <div className="text-gray-500">Institution analytics coming soon...</div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </AdminLayout>
-  )
+  );
 }

@@ -182,7 +182,7 @@ function ProposalViewModal({ proposal, onClose }: { proposal: any; onClose: () =
             <CardHeader>
               <CardTitle className="text-blue-900 flex items-center gap-2">
                 <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                AI-Powered Recommendation Analysis
+                Recommendation Analysis
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -232,7 +232,7 @@ function ProposalViewModal({ proposal, onClose }: { proposal: any; onClose: () =
 
               {/* Recommendation Summary */}
               <div className="p-4 bg-white rounded-lg border">
-                <h4 className="font-semibold text-gray-800 mb-2">AI Recommendation</h4>
+                <h4 className="font-semibold text-gray-800 mb-2"> Recommendation</h4>
                 <p className="text-gray-700 leading-relaxed">{proposal.recommendation}</p>
               </div>
 

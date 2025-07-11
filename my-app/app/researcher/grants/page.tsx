@@ -65,21 +65,38 @@ export default function BrowseGrants() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedGrant, setSelectedGrant] = useState(null);
   const [isApplyDialogOpen, setIsApplyDialogOpen] = useState(false);
+  const [proposals, setProposals] = useState([]);
 
   useEffect(() => {
-    const fetchGrants = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await fetch("http://localhost:5000/api/grants");
-        const data = await res.json();
-        setGrants(data);
+        // Fetch grants
+        const grantsRes = await fetch("http://localhost:5000/api/grants");
+        const grantsData = await grantsRes.json();
+        // Fetch proposals for current user
+        const token = localStorage.getItem("token");
+        let proposalsData = [];
+        if (token) {
+          const proposalsRes = await fetch("http://localhost:5000/api/proposals/mine", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (proposalsRes.ok) {
+            proposalsData = await proposalsRes.json();
+          }
+        }
+        setProposals(proposalsData);
+        // Mark grants as applied if user has a proposal for that grant
+        const appliedGrantIds = new Set(proposalsData.map((p) => p.grant));
+        const grantsWithApplied = grantsData.map((g) => ({ ...g, applied: appliedGrantIds.has(g._id) }));
+        setGrants(grantsWithApplied);
       } catch {
         setGrants([]);
       } finally {
         setLoading(false);
       }
     };
-    fetchGrants();
+    fetchData();
   }, []);
 
   // Dynamic categories from grants
@@ -118,7 +135,7 @@ export default function BrowseGrants() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Available Grants</p>
-                  <p className="text-2xl font-bold text-green-600">{grants.filter((g) => g.status === "Open").length}</p>
+                  <p className="text-2xl font-bold text-green-600">{grants.length}</p>
                 </div>
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
@@ -130,7 +147,7 @@ export default function BrowseGrants() {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Funding</p>
                   <p className="text-2xl font-bold text-blue-600">
-                    ${grants.reduce((sum, g) => sum + (g.funding || 0), 0).toLocaleString()}
+                    ${proposals.filter((p) => p.status === "Approved").reduce((sum, p) => sum + (p.funding || 0), 0).toLocaleString()}
                   </p>
                 </div>
                 <DollarSign className="w-8 h-8 text-blue-600" />
@@ -139,7 +156,7 @@ export default function BrowseGrants() {
           </Card>
           <Card>
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">My Applications</p>
                   <p className="text-2xl font-bold text-purple-600">{grants.filter((g) => g.applied).length}</p>
@@ -181,7 +198,7 @@ export default function BrowseGrants() {
                 <Filter className="w-4 h-4 mr-2" />
                 More Filters
               </Button>
-            </div>
+                  </div>
           </CardContent>
         </Card>
 
@@ -341,18 +358,18 @@ export default function BrowseGrants() {
                       </Button>
                     ) : (
                       <Button asChild size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
-                        <Link href={`/researcher/submit?grantId=${grant._id}`}>
+                    <Link href={`/researcher/submit?grantId=${grant._id}`}>
                           <Send className="w-4 h-4 mr-2" />
                           Apply Now
-                        </Link>
-                      </Button>
+                    </Link>
+                  </Button>
                     )}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
 
         {filteredGrants.length === 0 && !loading && (
           <Card>

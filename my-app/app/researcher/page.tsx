@@ -101,13 +101,13 @@ export default function ResearcherDashboardPage() {
       <div className="space-y-6">
         {/* Welcome Section */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Welcome back, Dr. Johnson</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Welcome back, Dr.</h1>
           <p className="text-gray-600">Manage your research grant applications and track their progress</p>
         </div>
 
-        {/* Stats Cards */}
+      {/* Stats Cards */}
         <div className="grid md:grid-cols-4 gap-6">
-          <Card>
+        <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -116,20 +116,20 @@ export default function ResearcherDashboardPage() {
                 </div>
                 <DollarSign className="w-8 h-8 text-green-600" />
               </div>
-            </CardContent>
-          </Card>
-          <Card>
+          </CardContent>
+        </Card>
+        <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Applications</p>
+                  <p className="text-sm font-medium text-gray-600">Total Proposals</p>
                   <p className="text-2xl font-bold text-blue-600">{totalProposals}</p>
                 </div>
                 <FileText className="w-8 h-8 text-blue-600" />
               </div>
-            </CardContent>
-          </Card>
-          <Card>
+          </CardContent>
+        </Card>
+        <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -138,20 +138,20 @@ export default function ResearcherDashboardPage() {
                 </div>
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
-            </CardContent>
-          </Card>
-          <Card>
+          </CardContent>
+        </Card>
+        <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Funding</p>
-                  <p className="text-2xl font-bold text-blue-600">${grantsFunding.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-blue-600">${totalFunding.toLocaleString()}</p>
                 </div>
                 <DollarSign className="w-8 h-8 text-blue-600" />
               </div>
-            </CardContent>
-          </Card>
-        </div>
+          </CardContent>
+        </Card>
+      </div>
 
         {/* Main Content */}
         <div className="grid lg:grid-cols-3 gap-6">
@@ -159,24 +159,24 @@ export default function ResearcherDashboardPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle>Recent Applications</CardTitle>
+                  <CardTitle>Recent Proposals</CardTitle>
                   <CardDescription>Your latest grant submissions</CardDescription>
                 </div>
                 <Link href="/researcher/submit">
                   <Button className="bg-blue-600 hover:bg-blue-700">
                     <Plus className="w-4 h-4 mr-2" />
-                    New Application
-                  </Button>
+                    New Proposal
+          </Button>
                 </Link>
               </CardHeader>
               <CardContent>
-                {loading ? (
-                  <div className="text-center py-12 text-gray-500">Loading proposals...</div>
-                ) : error ? (
-                  <div className="text-center py-12 text-red-500">{error}</div>
-                ) : (
+        {loading ? (
+          <div className="text-center py-12 text-gray-500">Loading proposals...</div>
+        ) : error ? (
+          <div className="text-center py-12 text-red-500">{error}</div>
+        ) : (
                   <div className="space-y-4">
-                    {proposals.slice(0, 4).map((proposal) => (
+            {proposals.slice(0, 4).map((proposal) => (
                       <div key={proposal._id || proposal.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
@@ -184,10 +184,10 @@ export default function ResearcherDashboardPage() {
                             <div className="flex items-center space-x-4 text-sm text-gray-600">
                               <span className="flex items-center">
                                 <DollarSign className="w-4 h-4 mr-1" />
-                                {typeof proposal.funding === "number"
-                                  ? `$${proposal.funding.toLocaleString()}`
-                                  : proposal.funding}
-                              </span>
+                        {typeof proposal.funding === "number"
+                          ? `$${proposal.funding.toLocaleString()}`
+                          : proposal.funding}
+                      </span>
                               {proposal.dateSubmitted && (
                                 <span className="flex items-center">
                                   <Calendar className="w-4 h-4 mr-1" />
@@ -208,16 +208,13 @@ export default function ResearcherDashboardPage() {
                           </div>
                         )}
                         <div className="flex items-center space-x-2">
+                          
                           <Button variant="outline" size="sm">
                             View Details
                           </Button>
-                          {proposal.status === "Draft" && (
-                            <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                              Continue Editing
-                            </Button>
-                          )}
+                          
                         </div>
-                      </div>
+                    </div>
                     ))}
                   </div>
                 )}
@@ -235,13 +232,13 @@ export default function ResearcherDashboardPage() {
                 <Link href="/researcher/submit">
                   <Button variant="outline" className="w-full justify-start bg-transparent">
                     <Plus className="w-4 h-4 mr-2" />
-                    Start New Application
+                    Start New Proposal
                   </Button>
                 </Link>
                 <Link href="/researcher/proposals">
                   <Button variant="outline" className="w-full justify-start bg-transparent">
                     <FileText className="w-4 h-4 mr-2" />
-                    View All Applications
+                    View All Proposals
                   </Button>
                 </Link>
                 <Link href="/researcher/profile">
@@ -257,8 +254,8 @@ export default function ResearcherDashboardPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent>
+                </CardHeader>
+                <CardContent>
                 <div className="space-y-3">
                   {recentActivity.map((activity, idx) => (
                     <div key={idx} className="flex items-start space-x-3">
@@ -270,9 +267,9 @@ export default function ResearcherDashboardPage() {
                       </div>
                     </div>
                   ))}
-                </div>
-              </CardContent>
-            </Card>
+                  </div>
+                </CardContent>
+              </Card>
           </div>
         </div>
       </div>

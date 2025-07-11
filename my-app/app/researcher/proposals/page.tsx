@@ -340,8 +340,6 @@ const getStatusColor = (status: string) => {
       return "bg-red-100 text-red-800"
     case "Under Review":
       return "bg-yellow-100 text-yellow-800"
-    case "Draft":
-      return "bg-gray-100 text-gray-800"
     case "Needs Revision":
       return "bg-orange-100 text-orange-800"
     default:
@@ -357,8 +355,6 @@ const getStatusIcon = (status: string) => {
       return "❌"
     case "Under Review":
       return "⏳"
-    case "Draft":
-      return "📝"
     case "Needs Revision":
       return "🔄"
     default:
@@ -458,7 +454,6 @@ export default function ResearcherProposalsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="Draft">Draft</SelectItem>
               <SelectItem value="Under Review">Under Review</SelectItem>
               <SelectItem value="Approved">Approved</SelectItem>
               <SelectItem value="Rejected">Rejected</SelectItem>

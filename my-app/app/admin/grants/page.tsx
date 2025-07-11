@@ -212,7 +212,6 @@ export default function ManageGrantsPage() {
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="Active">Active</SelectItem>
               <SelectItem value="Closed">Closed</SelectItem>
-              <SelectItem value="Draft">Draft</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -435,6 +434,8 @@ function CreateGrantModal({ onClose, onGrantChanged }: { onClose: () => void; on
               <SelectItem value="Environment">Environment & Sustainability</SelectItem>
               <SelectItem value="Social Sciences">Social Sciences</SelectItem>
               <SelectItem value="Education">Education</SelectItem>
+              <SelectItem value="Education">Others</SelectItem>
+
             </SelectContent>
           </Select>
         </div>
@@ -570,6 +571,8 @@ function EditGrantModal({ grant, onClose, onGrantChanged }: { grant: any; onClos
               <SelectItem value="Environment">Environment & Sustainability</SelectItem>
               <SelectItem value="Social Sciences">Social Sciences</SelectItem>
               <SelectItem value="Education">Education</SelectItem>
+              <SelectItem value="Others">Others</SelectItem>
+
             </SelectContent>
           </Select>
         </div>

@@ -30,91 +30,91 @@ import {
 import AdminLayout from "@/components/layouts/AdminLayout"
 import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 
-function AssignReviewerModal({ submission, onClose }: { submission: any; onClose: () => void }) {
-  const [selectedReviewer, setSelectedReviewer] = useState("")
-  const [submitting, setSubmitting] = useState(false)
-  const { toast } = useToast()
+// function AssignReviewerModal({ submission, onClose }: { submission: any; onClose: () => void }) {
+//   const [selectedReviewer, setSelectedReviewer] = useState("")
+//   const [submitting, setSubmitting] = useState(false)
+//   const { toast } = useToast()
 
-  const handleAssign = async () => {
-    if (!selectedReviewer) {
-      toast({
-        title: "Validation Error",
-        description: "Please select a reviewer",
-        variant: "destructive",
-      })
-      return
-    }
+//   const handleAssign = async () => {
+//     if (!selectedReviewer) {
+//       toast({
+//         title: "Validation Error",
+//         description: "Please select a reviewer",
+//         variant: "destructive",
+//       })
+//       return
+//     }
 
-    setSubmitting(true)
-    try {
-      // TODO: Connect to backend to assign reviewer
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+//     setSubmitting(true)
+//     try {
+//       // TODO: Connect to backend to assign reviewer
+//       // Simulate API call
+//       await new Promise(resolve => setTimeout(resolve, 1000))
       
-      toast({
-        title: "Reviewer Assigned",
-        description: `Reviewer has been successfully assigned to "${submission.title}"`,
-      })
-      onClose()
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to assign reviewer. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setSubmitting(false)
-    }
-  }
+//       toast({
+//         title: "Reviewer Assigned",
+//         description: `Reviewer has been successfully assigned to "${submission.title}"`,
+//       })
+//       onClose()
+//     } catch (error) {
+//       toast({
+//         title: "Error",
+//         description: "Failed to assign reviewer. Please try again.",
+//         variant: "destructive",
+//       })
+//     } finally {
+//       setSubmitting(false)
+//     }
+//   }
 
-  return (
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Assign Reviewer</DialogTitle>
-        <DialogDescription>Assign a reviewer to: {submission.title}</DialogDescription>
-      </DialogHeader>
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label>Select Reviewer</Label>
-          <Select value={selectedReviewer} onValueChange={setSelectedReviewer}>
-            <SelectTrigger>
-              <SelectValue placeholder="Choose a reviewer" />
-            </SelectTrigger>
-            <SelectContent>
-              {/* Reviewers should be fetched from the backend */}
-              {/* For now, we'll use a static list */}
-              {/* Replace this with actual reviewer data */}
-              {/* {reviewers.map((reviewer) => (
-                <SelectItem key={reviewer.id} value={reviewer.id.toString()}>
-                  {reviewer.name} - {reviewer.expertise} (Workload: {reviewer.workload})
-                </SelectItem>
-              ))} */}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex space-x-3">
-          <Button 
-            onClick={handleAssign} 
-            className="bg-blue-600 hover:bg-blue-700"
-            disabled={submitting}
-          >
-            {submitting ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Assigning...
-              </>
-            ) : (
-              "Assign Reviewer"
-            )}
-          </Button>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-        </div>
-      </div>
-    </DialogContent>
-  )
-}
+//   return (
+//     <DialogContent>
+//       <DialogHeader>
+//         <DialogTitle>Assign Reviewer</DialogTitle>
+//         <DialogDescription>Assign a reviewer to: {submission.title}</DialogDescription>
+//       </DialogHeader>
+//       <div className="space-y-4">
+//         <div className="space-y-2">
+//           <Label>Select Reviewer</Label>
+//           <Select value={selectedReviewer} onValueChange={setSelectedReviewer}>
+//             <SelectTrigger>
+//               <SelectValue placeholder="Choose a reviewer" />
+//             </SelectTrigger>
+//             <SelectContent>
+//               {/* Reviewers should be fetched from the backend */}
+//               {/* For now, we'll use a static list */}
+//               {/* Replace this with actual reviewer data */}
+//               {/* {reviewers.map((reviewer) => (
+//                 <SelectItem key={reviewer.id} value={reviewer.id.toString()}>
+//                   {reviewer.name} - {reviewer.expertise} (Workload: {reviewer.workload})
+//                 </SelectItem>
+//               ))} */}
+//             </SelectContent>
+//           </Select>
+//         </div>
+//         <div className="flex space-x-3">
+//           <Button 
+//             onClick={handleAssign} 
+//             className="bg-blue-600 hover:bg-blue-700"
+//             disabled={submitting}
+//           >
+//             {submitting ? (
+//               <>
+//                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+//                 Assigning...
+//               </>
+//             ) : (
+//               "Assign Reviewer"
+//             )}
+//           </Button>
+//           <Button variant="outline" onClick={onClose}>
+//             Cancel
+//           </Button>
+//         </div>
+//       </div>
+//     </DialogContent>
+//   )
+// }
 
 function ProposalViewModal({ proposal, onClose, reviewer }: { proposal: any; onClose: () => void; reviewer?: any }) {
   return (
