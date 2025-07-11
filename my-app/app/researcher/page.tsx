@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Plus, FileText, Clock, CheckCircle, DollarSign, Calendar, User } from "lucide-react"
+import { Plus, FileText, Clock, CheckCircle, DollarSign, Calendar, User, Clipboard } from "lucide-react"
 import ResearcherLayout from "@/components/layouts/ResearcherLayout"
 import { useAuthRedirect } from "@/hooks/use-auth-redirect"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -99,10 +100,13 @@ export default function ResearcherDashboardPage() {
   return (
     <ResearcherLayout>
       <div className="space-y-6">
+        <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4 flex items-center">
+          <SidebarTrigger />
+          <h1 className="text-2xl font-bold text-gray-900 ml-4">Welcome back, Dr.</h1>
+        </header>
         {/* Welcome Section */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Welcome back, Dr.</h1>
-          <p className="text-gray-600">Manage your research grant applications and track their progress</p>
+          <p className="text-gray-600 ml-16">Manage your research grant applications and track their progress</p>
         </div>
 
       {/* Stats Cards */}
@@ -180,7 +184,10 @@ export default function ResearcherDashboardPage() {
                       <div key={proposal._id || proposal.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
-                            <h3 className="font-semibold text-gray-900 mb-1">{proposal.title}</h3>
+                            <div className="flex items-center space-x-2 mb-1">
+                              <h3 className="font-semibold text-gray-900">{proposal.title}</h3>
+                              <Clipboard className="w-4 h-4 text-gray-400" />
+                            </div>
                             <div className="flex items-center space-x-4 text-sm text-gray-600">
                               <span className="flex items-center">
                                 <DollarSign className="w-4 h-4 mr-1" />

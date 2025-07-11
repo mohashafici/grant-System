@@ -44,6 +44,7 @@ import {
   Download,
   Copy,
   CheckCircle,
+  Clipboard,
 } from "lucide-react"
 import ResearcherLayout from "@/components/layouts/ResearcherLayout"
 
@@ -436,6 +437,10 @@ export default function ResearcherProposalsPage() {
   return (
     <ResearcherLayout active="proposals">
       <main className="p-6">
+        <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4 flex items-center">
+          <SidebarTrigger />
+          <h1 className="text-2xl font-bold text-gray-900 ml-4">My Proposals</h1>
+        </header>
         {/* Search and Filter */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="flex-1 relative">
@@ -469,7 +474,10 @@ export default function ResearcherProposalsPage() {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="space-y-1 flex-1">
-                    <CardTitle className="text-lg">{proposal.title}</CardTitle>
+                    <div className="flex items-center space-x-2">
+                      <CardTitle className="text-lg">{proposal.title}</CardTitle>
+                      <Clipboard className="w-4 h-4 text-gray-400" />
+                    </div>
                     <CardDescription>
                       Grant: {getGrantTitle(proposal)}
                       {/* Deadline: {proposal.deadline} */}
