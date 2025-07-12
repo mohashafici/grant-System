@@ -372,28 +372,10 @@ export default function AdminNotificationsPage() {
 
   return (
     <AdminLayout active="notifications">
-      <div className="flex min-h-screen bg-gray-50">
-        <div className="flex-1">
-          <header className="bg-white border-b px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <SidebarTrigger />
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-                  <p className="text-gray-600">Manage system notifications and communications</p>
-                </div>
-              </div>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Notification
-                  </Button>
-                </DialogTrigger>
-                <CreateNotificationModal onClose={() => {}} />
-              </Dialog>
-            </div>
-          </header>
+      <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4 flex items-center">
+        <SidebarTrigger />
+        <h1 className="text-2xl font-bold text-gray-900 ml-4">Notifications</h1>
+      </header>
 
           <main className="p-6">
             <Tabs defaultValue="notifications" className="space-y-6">

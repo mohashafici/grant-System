@@ -475,7 +475,7 @@ export default function ResearcherProposalsPage() {
                 <div className="flex items-start justify-between">
                   <div className="space-y-1 flex-1">
                     <div className="flex items-center space-x-2">
-                      <CardTitle className="text-lg">{proposal.title}</CardTitle>
+                    <CardTitle className="text-lg">{proposal.title}</CardTitle>
                       <Clipboard className="w-4 h-4 text-gray-400" />
                     </div>
                     <CardDescription>

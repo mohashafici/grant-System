@@ -48,20 +48,67 @@ import {
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import AdminLayout from "@/components/layouts/AdminLayout"
+import { useRouter } from "next/navigation"
 
-function CreateUserModal({ onClose }: { onClose: () => void }) {
+function CreateUserModal({ onClose, onUserCreated }: { onClose: () => void; onUserCreated: (user: any) => void }) {
   const [userData, setUserData] = useState({
     firstName: "",
     lastName: "",
     email: "",
+    password: "",
     role: "",
     institution: "",
     department: "",
   })
+  const [loading, setLoading] = useState(false)
+  const { toast } = useToast()
+  const router = useRouter()
 
-  const handleSubmit = () => {
-    console.log("Creating user:", userData)
+  const handleSubmit = async () => {
+    // Validate required fields
+    if (!userData.firstName || !userData.lastName || !userData.email || !userData.password || !userData.role || !userData.institution) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill all required fields",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setLoading(true)
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch("http://localhost:5000/api/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(userData),
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.message || "Failed to create user")
+      }
+
+      const data = await res.json()
+      toast({
+        title: "User Created Successfully",
+        description: "The user has been created successfully",
+      })
+      onUserCreated(data.user)
     onClose()
+      router.push("/admin/users")
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create user",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -105,6 +152,17 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            placeholder="Enter password"
+            value={userData.password}
+            onChange={(e) => setUserData({ ...userData, password: e.target.value })}
+          />
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="role">Role</Label>
           <Select value={userData.role} onValueChange={(value) => setUserData({ ...userData, role: value })}>
             <SelectTrigger>
@@ -140,10 +198,14 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="flex space-x-3">
-          <Button onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700">
-            Create User
+          <Button 
+            onClick={handleSubmit} 
+            className="bg-blue-600 hover:bg-blue-700"
+            disabled={loading}
+          >
+            {loading ? "Creating..." : "Create User"}
           </Button>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={() => { onClose(); router.push("/admin/users") }} disabled={loading}>
             Cancel
           </Button>
         </div>
@@ -383,6 +445,8 @@ export default function ManageUsersPage() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [viewUserId, setViewUserId] = useState<string | null>(null)
   const [editUserId, setEditUserId] = useState<string | null>(null)
+  const [createUserOpen, setCreateUserOpen] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -432,6 +496,26 @@ export default function ManageUsersPage() {
   })
 
   const handleUserUpdated = (updated: any) => {
+    // If it's a newly created user, add it to the list
+    if (!updated._id) {
+      const newUser = {
+        id: updated.id,
+        name: `${updated.firstName} ${updated.lastName}`,
+        email: updated.email,
+        role: updated.role.charAt(0).toUpperCase() + updated.role.slice(1),
+        institution: updated.institution,
+        department: updated.department,
+        status: "Active",
+        joinDate: new Date().toISOString().slice(0, 10),
+        lastLogin: new Date().toISOString().slice(0, 10),
+        proposals: 0,
+        approved: 0,
+        reviews: 0,
+        avatar: "/placeholder-user.jpg",
+      }
+      setUsers(prev => [newUser, ...prev])
+    } else {
+      // If it's an updated user, update the existing one
     setUsers(prev => prev.map(u => u.id === updated._id ? {
       ...u,
       name: `${updated.firstName} ${updated.lastName}`,
@@ -440,6 +524,7 @@ export default function ManageUsersPage() {
       institution: updated.institution,
       department: updated.department,
     } : u))
+    }
   }
 
   return (
@@ -455,14 +540,14 @@ export default function ManageUsersPage() {
                   <p className="text-gray-600">View and manage user accounts</p>
                 </div>
               </div>
-              <Dialog>
+              <Dialog open={createUserOpen} onOpenChange={setCreateUserOpen}>
                 <DialogTrigger asChild>
                   <Button className="bg-blue-600 hover:bg-blue-700">
                     <UserPlus className="w-4 h-4 mr-2" />
                     Add New User
                   </Button>
                 </DialogTrigger>
-                <CreateUserModal onClose={() => {}} />
+                <CreateUserModal onClose={() => setCreateUserOpen(false)} onUserCreated={handleUserUpdated} />
               </Dialog>
             </div>
           </header>

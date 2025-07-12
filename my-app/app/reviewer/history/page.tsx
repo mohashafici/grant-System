@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,26 +15,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 import {
   FileText,
-  User,
-  History,
   Eye,
-  Award,
   Search,
   Filter,
   Calendar,
@@ -43,120 +26,13 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  Settings,
 } from "lucide-react"
-import { ReviewerSidebar } from "@/components/ui/sidebar"
 import ReviewerLayout from "@/components/layouts/ReviewerLayout"
-
-function ReviewDetailsModal({ review, onClose }: { review: any; onClose: () => void }) {
-  return (
-    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-      <DialogHeader>
-        <DialogTitle>Review Details: {review.proposal?.title}</DialogTitle>
-        <DialogDescription>
-          Reviewed on {review.reviewDate ? new Date(review.reviewDate).toLocaleDateString() : ''} • {review.proposal?.researcher?.firstName} {review.proposal?.researcher?.lastName} from {review.proposal?.researcher?.institution}
-        </DialogDescription>
-      </DialogHeader>
-
-      <div className="space-y-6">
-        {/* Review Summary */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Review Summary</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <span className="font-medium">Overall Score:</span>
-                <span className="ml-2 text-2xl font-bold text-blue-600">{review.score}/10</span>
-              </div>
-              <div>
-                <span className="font-medium">Decision:</span>
-                <Badge
-                  className={`ml-2 ${
-                    review.decision === "Approved"
-                      ? "bg-green-100 text-green-800"
-                      : review.decision === "Rejected"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-yellow-100 text-yellow-800"
-                  }`}
-                >
-                  {review.decision === "Approved" ? (
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                  ) : review.decision === "Rejected" ? (
-                    <XCircle className="w-3 h-3 mr-1" />
-                  ) : (
-                    <Clock className="w-3 h-3 mr-1" />
-                  )}
-                  {review.decision}
-                </Badge>
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <span className="font-medium">Innovation:</span>
-                <span className="ml-2">{review.innovationScore}/10</span>
-              </div>
-              <div>
-                <span className="font-medium">Impact:</span>
-                <span className="ml-2">{review.impactScore}/10</span>
-              </div>
-              <div>
-                <span className="font-medium">Feasibility:</span>
-                <span className="ml-2">{review.feasibilityScore}/10</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Proposal Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Proposal Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <span className="font-medium">Category:</span>
-                <Badge className="ml-2">{review.proposal?.category}</Badge>
-              </div>
-              <div>
-                <span className="font-medium">Funding Requested:</span>
-                <span className="ml-2 font-semibold text-blue-600">${review.proposal?.funding?.toLocaleString()}</span>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <span className="font-medium">Submission Date:</span>
-                <span className="ml-2">{review.proposal?.dateSubmitted ? new Date(review.proposal.dateSubmitted).toLocaleDateString() : ''}</span>
-              </div>
-              <div>
-                <span className="font-medium">Review Date:</span>
-                <span className="ml-2">{review.reviewDate ? new Date(review.reviewDate).toLocaleDateString() : ''}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Review Comments */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Review Comments</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-700">{review.comments}</p>
-          </CardContent>
-        </Card>
-
-        <div className="flex justify-end">
-          <Button onClick={onClose}>Close</Button>
-        </div>
-      </div>
-    </DialogContent>
-  )
-}
+import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 
 export default function ReviewHistoryPage() {
+  useAuthRedirect()
+  
   const [searchTerm, setSearchTerm] = useState("")
   const [decisionFilter, setDecisionFilter] = useState("all")
   const [categoryFilter, setCategoryFilter] = useState("all")
@@ -164,7 +40,6 @@ export default function ReviewHistoryPage() {
   const [reviews, setReviews] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [monthlyReviews, setMonthlyReviews] = useState<any[]>([])
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -179,22 +54,6 @@ export default function ReviewHistoryPage() {
         const data = await res.json()
         const completed = data.filter((r: any) => r.status === "Completed")
         setReviews(completed)
-        // Build monthlyReviews for charts
-        const monthMap: Record<string, { reviews: number, totalScore: number }> = {}
-        completed.forEach((r: any) => {
-          const date = r.reviewDate ? new Date(r.reviewDate) : null
-          if (!date) return
-          const month = date.toLocaleString('default', { month: 'short' })
-          if (!monthMap[month]) monthMap[month] = { reviews: 0, totalScore: 0 }
-          monthMap[month].reviews++
-          monthMap[month].totalScore += parseFloat(r.score) || 0
-        })
-        const months = Object.keys(monthMap)
-        setMonthlyReviews(months.map(month => ({
-          month,
-          reviews: monthMap[month].reviews,
-          avgScore: monthMap[month].reviews ? (monthMap[month].totalScore / monthMap[month].reviews).toFixed(1) : 0
-        })))
       } catch (err: any) {
         setError(err.message || "Error fetching reviews")
       } finally {
@@ -235,21 +94,15 @@ export default function ReviewHistoryPage() {
 
   return (
     <ReviewerLayout active="history">
-      <div className="flex min-h-screen bg-gray-50">
-        <div className="flex-1">
-          <header className="bg-white border-b px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+      <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4 flex items-center">
                 <SidebarTrigger />
+        <h1 className="text-2xl font-bold text-gray-900 ml-4">Review History</h1>
+      </header>
+      <div className="space-y-6">
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Review History</h1>
-                  <p className="text-gray-600">Your completed reviews and performance metrics</p>
-                </div>
-              </div>
+          <p className="text-gray-600 ml-16">View your completed reviews and evaluations</p>
             </div>
-          </header>
 
-          <main className="p-6">
             {/* Stats Cards */}
             <div className="grid md:grid-cols-4 gap-6 mb-8">
               <Card>
@@ -292,45 +145,6 @@ export default function ReviewHistoryPage() {
                 <CardContent>
                   <div className="text-2xl font-bold">3</div>
                   <p className="text-xs text-muted-foreground">Reviews completed</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Charts */}
-            <div className="grid lg:grid-cols-2 gap-6 mb-8">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Monthly Review Activity</CardTitle>
-                  <CardDescription>Number of reviews completed each month</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={monthlyReviews}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="reviews" fill="#3B82F6" name="Reviews" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Average Scores Trend</CardTitle>
-                  <CardDescription>Your average review scores over time</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={monthlyReviews}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis domain={[0, 10]} />
-                      <Tooltip />
-                      <Line type="monotone" dataKey="avgScore" stroke="#10B981" strokeWidth={2} name="Avg Score" />
-                    </LineChart>
-                  </ResponsiveContainer>
                 </CardContent>
               </Card>
             </div>
@@ -397,7 +211,6 @@ export default function ReviewHistoryPage() {
                         <TableHead>Review Date</TableHead>
                         <TableHead>Score</TableHead>
                         <TableHead>Decision</TableHead>
-                        <TableHead>Funding</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -441,19 +254,11 @@ export default function ReviewHistoryPage() {
                               {review.decision}
                             </Badge>
                           </TableCell>
-                          <TableCell className="font-semibold text-blue-600">{review.funding}</TableCell>
                           <TableCell>
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button size="sm" variant="outline" onClick={() => setSelectedReview(review)}>
+                        <Button size="sm" variant="outline">
                                   <Eye className="w-4 h-4 mr-1" />
                                   View Details
                                 </Button>
-                              </DialogTrigger>
-                              {selectedReview && (
-                                <ReviewDetailsModal review={selectedReview} onClose={() => setSelectedReview(null)} />
-                              )}
-                            </Dialog>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -462,8 +267,6 @@ export default function ReviewHistoryPage() {
                 )}
               </CardContent>
             </Card>
-          </main>
-        </div>
       </div>
     </ReviewerLayout>
   )

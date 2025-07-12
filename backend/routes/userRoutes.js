@@ -7,6 +7,8 @@ const { auth, authorizeRoles } = require('../middleware/authMiddleware');
 router.get('/', auth, authorizeRoles('admin'), userController.getAllUsers);
 // GET /api/users/reviewers - Get all reviewers (admin only)
 router.get('/reviewers', auth, authorizeRoles('admin'), userController.getAllReviewers);
+// POST /api/users - Create new user (admin only)
+router.post('/', auth, authorizeRoles('admin'), userController.createUser);
 // Add profile routes for current user
 router.get('/me', auth, userController.getProfile);
 router.put('/me', auth, userController.updateProfile);

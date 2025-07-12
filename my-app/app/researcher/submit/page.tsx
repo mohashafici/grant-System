@@ -63,15 +63,25 @@ export default function ResearcherSubmitPage() {
       try {
         const res = await fetch("http://localhost:5000/api/grants")
         const data = await res.json()
-        setGrants(data)
+        // Filter to show only active grants
+        const activeGrants = data.filter((grant: any) => grant.status === "Active")
+        setGrants(activeGrants)
         // If grantId is in the URL and valid, set it as selected
-        if (grantIdFromQuery && data.some((g) => g._id === grantIdFromQuery)) {
+        if (grantIdFromQuery && activeGrants.some((g: any) => g._id === grantIdFromQuery)) {
           setFormData((prev) => ({ ...prev, grant: grantIdFromQuery }))
         }
       } catch {}
     }
     fetchGrants()
   }, [grantIdFromQuery])
+
+  // Set grant when selected (no auto-fill)
+  const handleGrantChange = (grantId: string) => {
+    setFormData((prev) => ({ ...prev, grant: grantId }))
+  }
+
+  // Get selected grant info for display
+  const selectedGrant = grants.find((g) => g._id === formData.grant)
 
   const handleNext = () => {
     if (currentStep < steps.length) {
@@ -245,17 +255,46 @@ export default function ResearcherSubmitPage() {
               <Label htmlFor="grant">Select Grant *</Label>
               <Select
                 value={formData.grant}
-                onValueChange={(value) => setFormData({ ...formData, grant: value })}
+                onValueChange={handleGrantChange}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select grant" />
                 </SelectTrigger>
                 <SelectContent>
                   {grants.map((grant) => (
-                    <SelectItem key={grant._id} value={grant._id}>{grant.title}</SelectItem>
+                    <SelectItem key={grant._id} value={grant._id}>
+                      {grant.title} - ${grant.funding?.toLocaleString()}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {selectedGrant && (
+                <Card className="mt-3">
+                  <CardContent className="pt-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="font-medium">Grant Title:</span>
+                        <span>{selectedGrant.title}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Available Funding:</span>
+                        <span className="text-green-600 font-semibold">${selectedGrant.funding?.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Category:</span>
+                        <span>{selectedGrant.category}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Deadline:</span>
+                        <span>{new Date(selectedGrant.deadline).toLocaleDateString()}</span>
+                      </div>
+                      <div className="text-sm text-gray-600 mt-2">
+                        {selectedGrant.description}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="deadline">Proposal Deadline *</Label>

@@ -29,6 +29,7 @@ import {
 } from "lucide-react"
 import AdminLayout from "@/components/layouts/AdminLayout"
 import { useAuthRedirect } from "@/hooks/use-auth-redirect"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 
 // function AssignReviewerModal({ submission, onClose }: { submission: any; onClose: () => void }) {
 //   const [selectedReviewer, setSelectedReviewer] = useState("")
@@ -282,6 +283,10 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout active="dashboard">
+      <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4 flex items-center">
+        <SidebarTrigger />
+        <h1 className="text-2xl font-bold text-gray-900 ml-4">Admin Dashboard</h1>
+      </header>
       <main className="p-6">
         {/* Stats Cards */}
         <div className="grid md:grid-cols-5 gap-6 mb-8">

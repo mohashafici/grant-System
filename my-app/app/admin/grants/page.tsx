@@ -172,24 +172,13 @@ export default function ManageGrantsPage() {
 
   return (
     <AdminLayout active="grants">
-      <header className="bg-white border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Manage Grants</h1>
-              <p className="text-gray-600">Create and manage funding opportunities</p>
-            </div>
-          </div>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Create New Grant
-              </Button>
-            </DialogTrigger>
-            <CreateGrantModal onClose={() => {}} onGrantChanged={fetchGrants} />
-          </Dialog>
-        </div>
+      <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4 flex items-center">
+        <SidebarTrigger />
+        <h1 className="text-2xl font-bold text-gray-900 ml-4">Manage Grants</h1>
+        <Button className="ml-auto bg-blue-600 hover:bg-blue-700" onClick={() => setCreateModalOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Grant
+        </Button>
       </header>
       <main className="p-6">
         {/* Search and Filter */}
@@ -355,11 +344,18 @@ export default function ManageGrantsPage() {
           </Card>
         </div>
       </main>
+      <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+        <CreateGrantModal
+          open={createModalOpen}
+          onClose={() => setCreateModalOpen(false)}
+          onGrantChanged={fetchGrants}
+        />
+      </Dialog>
     </AdminLayout>
   )
 }
 
-function CreateGrantModal({ onClose, onGrantChanged }: { onClose: () => void; onGrantChanged: () => void }) {
+function CreateGrantModal({ open, onClose, onGrantChanged }: { open: boolean; onClose: () => void; onGrantChanged: () => void }) {
   const [grantData, setGrantData] = useState({
     title: "",
     description: "",
@@ -434,7 +430,7 @@ function CreateGrantModal({ onClose, onGrantChanged }: { onClose: () => void; on
               <SelectItem value="Environment">Environment & Sustainability</SelectItem>
               <SelectItem value="Social Sciences">Social Sciences</SelectItem>
               <SelectItem value="Education">Education</SelectItem>
-              <SelectItem value="Education">Others</SelectItem>
+              <SelectItem value="Others">Others</SelectItem>
 
             </SelectContent>
           </Select>

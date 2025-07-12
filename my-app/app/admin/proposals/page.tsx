@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { SidebarTrigger } from "@/components/ui/sidebar"
 
 // Proposal View Modal Component
 function ProposalViewModal({ proposal, onClose }: { proposal: any; onClose: () => void }) {
@@ -430,6 +431,10 @@ export default function AdminProposalsPage() {
 
   return (
     <AdminLayout active="proposals">
+      <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4 flex items-center">
+        <SidebarTrigger />
+        <h1 className="text-2xl font-bold text-gray-900 ml-4">Manage Proposals</h1>
+      </header>
       <Card>
         <CardHeader>
           <CardTitle>All Proposals</CardTitle>

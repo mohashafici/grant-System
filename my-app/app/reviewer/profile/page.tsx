@@ -43,7 +43,6 @@ import {
   Calendar,
   BookOpen,
   Star,
-  Settings,
   Save,
 } from "lucide-react"
 import { ReviewerSidebar } from "@/components/ui/sidebar"
