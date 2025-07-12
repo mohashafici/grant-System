@@ -29,43 +29,57 @@ export default function ResearcherDashboardPage() {
   useAuthRedirect(["researcher"])
   const [proposals, setProposals] = useState<any[]>([])
   const [grants, setGrants] = useState<any[]>([]);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
   useEffect(() => {
-    const fetchProposals = async () => {
+    const fetchData = async () => {
       setLoading(true)
       setError("")
       try {
         const token = localStorage.getItem("token")
-        const res = await fetch("http://localhost:5000/api/proposals/mine", {
+        
+        // Fetch user profile
+        setProfileLoading(true);
+        const profileRes = await fetch("http://localhost:5000/api/users/me", {
           headers: { Authorization: `Bearer ${token}` },
         })
-        if (!res.ok) throw new Error("Failed to fetch proposals")
-        const data = await res.json()
-        setProposals(data)
+        if (profileRes.ok) {
+          const profileData = await profileRes.json()
+          setUserProfile(profileData)
+          console.log("Fetched user profile:", profileData)
+        } else {
+          setUserProfile(null)
+        }
+        setProfileLoading(false);
+
+        // Fetch proposals
+        const proposalsRes = await fetch("http://localhost:5000/api/proposals/mine", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!proposalsRes.ok) throw new Error("Failed to fetch proposals")
+        const proposalsData = await proposalsRes.json()
+        setProposals(proposalsData)
+
+        // Fetch grants
+        const grantsRes = await fetch("http://localhost:5000/api/grants");
+        const grantsData = await grantsRes.json();
+        setGrants(grantsData);
       } catch (err: any) {
-        setError(err.message || "Error fetching proposals")
+        setError(err.message || "Error fetching data")
       } finally {
         setLoading(false)
       }
     }
-    const fetchGrants = async () => {
-      try {
-        const res = await fetch("http://localhost:5000/api/grants");
-        const data = await res.json();
-        setGrants(data);
-      } catch {
-        setGrants([]);
-      }
-    };
-    fetchProposals();
-    fetchGrants();
+    
+    fetchData();
   }, [])
 
   // Stats
   const totalProposals = proposals.length;
-  const totalGrants = grants.length;
+  const totalGrants = grants.filter((g) => g.status === "Active").length;
   const approvedCount = proposals.filter((p) => p.status === "Approved").length;
   const underReviewCount = proposals.filter((p) => p.status === "Under Review").length;
   const rejectedCount = proposals.filter((p) => p.status === "Rejected").length;
@@ -97,12 +111,21 @@ export default function ResearcherDashboardPage() {
     },
   ]
 
+  // Get user's full name
+  const getUserName = () => {
+    if (profileLoading) return "..."
+    if (userProfile && userProfile.firstName && userProfile.lastName) {
+      return `Dr. ${userProfile.firstName} ${userProfile.lastName}`
+    }
+    return "Dr."
+  }
+
   return (
     <ResearcherLayout>
       <div className="space-y-6">
         <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4 flex items-center">
           <SidebarTrigger />
-          <h1 className="text-2xl font-bold text-gray-900 ml-4">Welcome back, Dr.</h1>
+          <h1 className="text-2xl font-bold text-gray-900 ml-4">Welcome back, {getUserName()}</h1>
         </header>
         {/* Welcome Section */}
         <div>
@@ -215,11 +238,11 @@ export default function ResearcherDashboardPage() {
                           </div>
                         )}
                         <div className="flex items-center space-x-2">
-                          
-                          <Button variant="outline" size="sm">
-                            View Details
-                          </Button>
-                          
+                          <Link href={`/researcher/proposals/${proposal._id || proposal.id}`} passHref legacyBehavior>
+                            <Button asChild variant="outline" size="sm">
+                              <span>View Details</span>
+                            </Button>
+                          </Link>
                         </div>
                     </div>
                     ))}

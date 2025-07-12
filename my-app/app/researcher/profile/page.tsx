@@ -121,24 +121,24 @@ export default function ResearcherProfilePage() {
                 <Avatar className="w-28 h-28 shadow-md border-4 border-white">
                   <AvatarImage src="/placeholder.svg?height=112&width=112" alt="Profile" />
                   <AvatarFallback className="text-2xl">
-                    {profileData.firstName?.[0]}
-                    {profileData.lastName?.[0]}
-                  </AvatarFallback>
-                </Avatar>
-                {isEditing && (
-                  <Button size="sm" className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0">
-                    <Upload className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
+                          {profileData.firstName?.[0]}
+                          {profileData.lastName?.[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      {isEditing && (
+                        <Button size="sm" className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0">
+                          <Upload className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
               <h2 className="text-2xl font-bold text-gray-900 text-center">Dr. {profileData.firstName} {profileData.lastName}</h2>
               <Badge className="bg-blue-100 text-blue-800 mt-2">Verified Researcher</Badge>
               <p className="text-md text-gray-600 mt-1">{profileData.title}</p>
               <div className="flex flex-wrap justify-center gap-4 text-gray-600 mt-2">
                 <span className="flex items-center"><Building className="w-4 h-4 mr-1" />{profileData.institution}</span>
                 <span className="flex items-center"><GraduationCap className="w-4 h-4 mr-1" />{profileData.department}</span>
-              </div>
-            </div>
+                        </div>
+                      </div>
             <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
               <div>
                 <h3 className="text-lg font-semibold mb-2">Personal Information</h3>
@@ -148,22 +148,22 @@ export default function ResearcherProfilePage() {
                     <Input id="firstName" value={profileData.firstName || ""} onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })} disabled={!isEditing} />
                   </div>
                   <div className="flex flex-col">
-                    <Label htmlFor="lastName">Last Name</Label>
+                      <Label htmlFor="lastName">Last Name</Label>
                     <Input id="lastName" value={profileData.lastName || ""} onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })} disabled={!isEditing} />
                   </div>
                   <div className="flex flex-col">
-                    <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="email">Email</Label>
                     <Input id="email" value={profileData.email || ""} onChange={(e) => setProfileData({ ...profileData, email: e.target.value })} disabled={!isEditing} />
-                  </div>
+                    </div>
                   <div className="flex flex-col">
-                    <Label htmlFor="phone">Phone</Label>
+                      <Label htmlFor="phone">Phone</Label>
                     <Input id="phone" value={profileData.phone || ""} onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })} disabled={!isEditing} />
                   </div>
                 </div>
               </div>
               <div>
                 <h3 className="text-lg font-semibold mb-2">Professional Information</h3>
-                <div className="space-y-2">
+                  <div className="space-y-2">
                   <div className="flex flex-col">
                     <Label htmlFor="institution">Institution</Label>
                     <Input id="institution" value={profileData.institution || ""} onChange={(e) => setProfileData({ ...profileData, institution: e.target.value })} disabled={!isEditing} />
@@ -207,8 +207,8 @@ export default function ResearcherProfilePage() {
                 <Button onClick={() => setIsEditing(true)} className="bg-blue-600 hover:bg-blue-700 text-white">Edit Profile</Button>
               </div>
             )}
-          </CardContent>
-        </Card>
+                </CardContent>
+              </Card>
       </div>
     </ResearcherLayout>
   )

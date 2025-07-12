@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast"
 import { FileText, User, History, Eye, Award, Star, CheckCircle, XCircle, Clock, AlertCircle, TrendingUp, DollarSign, Download } from "lucide-react"
 import ReviewerLayout from "@/components/layouts/ReviewerLayout"
 import { useAuthRedirect } from "@/hooks/use-auth-redirect"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 
 function ReviewModal({ review, onClose, onSubmit }: { review: any; onClose: () => void; onSubmit: (reviewData: any) => void }) {
   const [reviewData, setReviewData] = useState({
@@ -466,13 +467,14 @@ function ProposalViewModal({ proposal, onClose }: { proposal: any; onClose: () =
 }
 
 export default function ReviewerDashboardPage() {
-  useAuthRedirect(["reviewer"]);
+  useAuthRedirect()
+  const { toast } = useToast()
+
   const [assignedReviews, setAssignedReviews] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [selectedReview, setSelectedReview] = useState<any | null>(null)
   const [viewProposal, setViewProposal] = useState<any | null>(null)
-  const { toast } = useToast()
 
   useEffect(() => {
     const fetchAssigned = async () => {
@@ -536,7 +538,14 @@ export default function ReviewerDashboardPage() {
 
   return (
     <ReviewerLayout active="dashboard">
-      <main className="p-6">
+      <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4 flex items-center">
+        <SidebarTrigger />
+        <h1 className="text-2xl font-bold text-gray-900 ml-4">Reviewer Dashboard</h1>
+      </header>
+      <div className="space-y-6">
+        <div>
+          <p className="text-gray-600 ml-16">Review and evaluate research proposals</p>
+        </div>
         {/* Stats Cards */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
           <Card>
@@ -755,7 +764,7 @@ export default function ReviewerDashboardPage() {
             )}
           </div>
         )}
-      </main>
+      </div>
     </ReviewerLayout>
   )
 }

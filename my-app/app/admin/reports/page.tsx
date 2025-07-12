@@ -154,6 +154,7 @@ export default function AdminReportsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedReport, setSelectedReport] = useState(null)
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString())
 
   // Dynamic data states
   const [evaluationReports, setEvaluationReports] = useState<any[]>([])
@@ -162,6 +163,7 @@ export default function AdminReportsPage() {
   const [reviewerPerformance, setReviewerPerformance] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [exportLoading, setExportLoading] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -169,6 +171,10 @@ export default function AdminReportsPage() {
       setError("")
       try {
         const token = localStorage.getItem("token")
+        if (!token) {
+          throw new Error("No authentication token found")
+        }
+
         // Fetch evaluation reports
         const evalRes = await fetch("http://localhost:5000/api/reports/evaluation", {
           headers: { Authorization: `Bearer ${token}` },
@@ -183,8 +189,8 @@ export default function AdminReportsPage() {
         })
         if (!analyticsRes.ok) throw new Error("Failed to fetch analytics")
         const analyticsData = await analyticsRes.json()
-        setMonthlyData(analyticsData.monthlyData)
-        setCategoryData(analyticsData.categoryData)
+        setMonthlyData(analyticsData.monthlyData || [])
+        setCategoryData(analyticsData.categoryData || [])
 
         // Fetch reviewer performance
         const perfRes = await fetch("http://localhost:5000/api/reports/reviewer-performance", {
@@ -192,9 +198,10 @@ export default function AdminReportsPage() {
         })
         if (!perfRes.ok) throw new Error("Failed to fetch reviewer performance")
         const perfData = await perfRes.json()
-        setReviewerPerformance(perfData)
+        setReviewerPerformance(perfData || [])
       } catch (err: any) {
         setError(err.message)
+        console.error("Error fetching data:", err)
       } finally {
         setLoading(false)
       }
@@ -252,19 +259,61 @@ export default function AdminReportsPage() {
     }
   }
 
+  const handleExportReport = async () => {
+    setExportLoading(true)
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`http://localhost:5000/api/reports/export?year=${selectedYear}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error("Failed to export report")
+      
+      // Create blob and download
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `grant-report-${selectedYear}.csv`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      
+      toast({
+        title: "Report exported",
+        description: `Grant report for ${selectedYear} has been downloaded.`,
+      })
+    } catch (err: any) {
+      toast({
+        title: "Export failed",
+        description: err.message || "Failed to export report",
+      })
+    } finally {
+      setExportLoading(false)
+    }
+  }
+
   if (loading) return <div className="p-8 text-center text-lg">Loading reports...</div>
   if (error) return <div className="p-8 text-center text-red-600">{error}</div>
 
-  // Key metrics
+  // Key metrics - calculate from actual data with better error handling
   const totalProposals = monthlyData.reduce((sum, m) => sum + (m.applications || 0), 0);
   const totalApproved = monthlyData.reduce((sum, m) => sum + (m.approved || 0), 0);
   const totalRejected = monthlyData.reduce((sum, m) => sum + (m.rejected || 0), 0);
   const totalFunding = monthlyData.reduce((sum, m) => sum + (m.funding || 0), 0);
   const activeReviewers = reviewerPerformance.length;
-  const avgReviewTime = reviewerPerformance.length > 0 ? (reviewerPerformance.reduce((sum, r) => sum + (r.avgTime || 0), 0) / reviewerPerformance.length).toFixed(1) : "-";
+  
+  // Calculate average review time more robustly
+  const reviewersWithTime = reviewerPerformance.filter(r => r.avgTime > 0);
+  const avgReviewTime = reviewersWithTime.length > 0 ? 
+    Math.round(reviewersWithTime.reduce((sum, r) => sum + (r.avgTime || 0), 0) / reviewersWithTime.length) : 0;
 
   return (
     <AdminLayout active="reports">
+      <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4 flex items-center">
+        <SidebarTrigger />
+        <h1 className="text-2xl font-bold text-gray-900 ml-4">Reports</h1>
+      </header>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -273,7 +322,7 @@ export default function AdminReportsPage() {
             <p className="text-gray-600">Comprehensive insights into grant application trends and performance</p>
           </div>
           <div className="flex items-center space-x-2">
-            <Select defaultValue="2024">
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
               <SelectTrigger className="w-32">
                 <SelectValue />
               </SelectTrigger>
@@ -283,9 +332,13 @@ export default function AdminReportsPage() {
                 <SelectItem value="2022">2022</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline">
+            <Button 
+              variant="outline" 
+              onClick={handleExportReport}
+              disabled={exportLoading}
+            >
               <Download className="w-4 h-4 mr-2" />
-              Export Report
+              {exportLoading ? "Exporting..." : "Export Report"}
             </Button>
           </div>
         </div>
@@ -298,7 +351,6 @@ export default function AdminReportsPage() {
                 <div>
                   <p className="text-sm text-gray-600">Total Proposals</p>
                   <p className="text-2xl font-bold">{totalProposals}</p>
-                  {/* Trend can be calculated if you have previous period data */}
                 </div>
                 <FileText className="w-8 h-8 text-blue-600" />
               </div>
@@ -367,7 +419,6 @@ export default function AdminReportsPage() {
             <TabsTrigger value="applications">Applications</TabsTrigger>
             <TabsTrigger value="funding">Funding</TabsTrigger>
             <TabsTrigger value="reviewers">Reviewers</TabsTrigger>
-            {/* Removed Institutions tab */}
           </TabsList>
 
           <TabsContent value="applications" className="space-y-4">
@@ -469,31 +520,47 @@ export default function AdminReportsPage() {
                 <CardDescription>Review completion and scoring metrics</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={400}>
-                  <BarChart data={reviewerPerformance} layout="horizontal">
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
-                    <YAxis dataKey="name" type="category" width={100} />
-                    <Tooltip />
-                    <Bar dataKey="reviews" fill="#3b82f6" name="Reviews Completed" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="institutions" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Top Institutions</CardTitle>
-                <CardDescription>Applications and funding by institution</CardDescription>
-              </CardHeader>
-              <CardContent>
                 <div className="space-y-4">
-                  {/* You can fetch and map real institution stats here if available */}
-                  {/* Example: */}
-                  {/* institutionStats.map((inst, index) => ( ... )) */}
-                  <div className="text-gray-500">Institution analytics coming soon...</div>
+                  {/* Reviewer Performance Table */}
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Reviewer</TableHead>
+                          <TableHead>Reviews Completed</TableHead>
+                          <TableHead>Total Assigned</TableHead>
+                          <TableHead>Avg Score</TableHead>
+                          <TableHead>Avg Time (days)</TableHead>
+                          <TableHead>On-Time Rate</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {reviewerPerformance.map((reviewer) => (
+                          <TableRow key={reviewer.id}>
+                            <TableCell className="font-medium">{reviewer.name}</TableCell>
+                            <TableCell>{reviewer.reviews}</TableCell>
+                            <TableCell>{reviewer.totalAssigned}</TableCell>
+                            <TableCell>{reviewer.averageScore}/10</TableCell>
+                            <TableCell>{reviewer.avgTime}d</TableCell>
+                            <TableCell>{reviewer.onTimeRate}%</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  
+                  {/* Reviewer Performance Chart */}
+                  <div className="mt-6">
+                    <ResponsiveContainer width="100%" height={400}>
+                      <BarChart data={reviewerPerformance} layout="horizontal">
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" />
+                        <YAxis dataKey="name" type="category" width={100} />
+                        <Tooltip />
+                        <Bar dataKey="reviews" fill="#3b82f6" name="Reviews Completed" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
               </CardContent>
             </Card>

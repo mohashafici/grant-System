@@ -4,6 +4,89 @@ const path = require('path');
 const fs = require('fs');
 const Grant = require('../models/Grant');
 
+// Simple spell check function using a dictionary approach
+function spellCheckWithDictionary(text) {
+  // Common English words dictionary (simplified)
+  const commonWords = new Set([
+    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by',
+    'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did',
+    'will', 'would', 'could', 'should', 'may', 'might', 'can', 'must', 'shall',
+    'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they',
+    'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'her', 'its', 'our', 'their',
+    'research', 'innovation', 'technology', 'development', 'analysis', 'study', 'project',
+    'methodology', 'approach', 'implementation', 'evaluation', 'assessment', 'review',
+    'funding', 'grant', 'proposal', 'application', 'submission', 'deadline', 'timeline',
+    'objectives', 'goals', 'outcomes', 'results', 'impact', 'benefits', 'advantages',
+    'challenges', 'solutions', 'strategies', 'techniques', 'methods', 'processes',
+    'data', 'information', 'knowledge', 'expertise', 'experience', 'background',
+    'education', 'training', 'qualifications', 'certifications', 'publications',
+    'conferences', 'workshops', 'seminars', 'collaborations', 'partnerships',
+    'industry', 'academic', 'scientific', 'technical', 'professional', 'expert',
+    'specialist', 'consultant', 'advisor', 'mentor', 'supervisor', 'director',
+    'manager', 'coordinator', 'facilitator', 'researcher', 'scientist', 'engineer',
+    'developer', 'designer', 'analyst', 'evaluator', 'reviewer', 'assessor',
+    'innovative', 'creative', 'original', 'novel', 'unique', 'advanced', 'modern',
+    'cutting-edge', 'state-of-the-art', 'breakthrough', 'revolutionary', 'transformative',
+    'sustainable', 'environmental', 'ecological', 'green', 'renewable', 'energy',
+    'efficient', 'effective', 'productive', 'successful', 'profitable', 'valuable',
+    'important', 'significant', 'crucial', 'essential', 'vital', 'necessary',
+    'required', 'mandatory', 'compulsory', 'obligatory', 'standard', 'normal',
+    'typical', 'conventional', 'traditional', 'established', 'proven', 'tested',
+    'verified', 'validated', 'confirmed', 'approved', 'accepted', 'endorsed',
+    'recommended', 'suggested', 'proposed', 'planned', 'scheduled', 'organized',
+    'structured', 'systematic', 'methodical', 'logical', 'rational', 'reasonable',
+    'practical', 'feasible', 'achievable', 'attainable', 'realistic', 'viable',
+    'workable', 'manageable', 'controllable', 'measurable', 'quantifiable',
+    'observable', 'detectable', 'identifiable', 'recognizable', 'distinguishable',
+    'comparable', 'similar', 'related', 'connected', 'linked', 'associated',
+    'correlated', 'dependent', 'independent', 'autonomous', 'self-contained',
+    'integrated', 'unified', 'coordinated', 'synchronized', 'harmonized',
+    'optimized', 'maximized', 'minimized', 'reduced', 'increased', 'enhanced',
+    'improved', 'upgraded', 'updated', 'modified', 'adjusted', 'adapted',
+    'customized', 'personalized', 'tailored', 'designed', 'developed', 'created',
+    'built', 'constructed', 'assembled', 'produced', 'manufactured', 'generated',
+    'created', 'established', 'founded', 'launched', 'initiated', 'started',
+    'begun', 'commenced', 'undertaken', 'pursued', 'conducted', 'performed',
+    'executed', 'implemented', 'carried', 'completed', 'finished', 'accomplished',
+    'achieved', 'attained', 'reached', 'obtained', 'gained', 'acquired',
+    'secured', 'obtained', 'received', 'accepted', 'approved', 'granted',
+    'awarded', 'allocated', 'assigned', 'distributed', 'provided', 'supplied',
+    'delivered', 'transferred', 'conveyed', 'transmitted', 'communicated',
+    'shared', 'exchanged', 'traded', 'bought', 'sold', 'purchased', 'acquired',
+    'invested', 'funded', 'financed', 'sponsored', 'supported', 'backed',
+    'endorsed', 'recommended', 'suggested', 'proposed', 'advocated', 'promoted',
+    'marketed', 'advertised', 'publicized', 'announced', 'declared', 'stated',
+    'expressed', 'conveyed', 'communicated', 'transmitted', 'delivered', 'presented',
+    'demonstrated', 'illustrated', 'exemplified', 'showcased', 'highlighted',
+    'emphasized', 'stressed', 'underscored', 'reinforced', 'strengthened',
+    'enhanced', 'improved', 'upgraded', 'refined', 'polished', 'perfected',
+    'optimized', 'maximized', 'minimized', 'reduced', 'increased', 'enhanced',
+    'improved', 'upgraded', 'updated', 'modified', 'adjusted', 'adapted',
+    'customized', 'personalized', 'tailored', 'designed', 'developed', 'created',
+    'built', 'constructed', 'assembled', 'produced', 'manufactured', 'generated'
+  ]);
+
+  const words = text.toLowerCase().split(/\s+/);
+  let errors = 0;
+  
+  for (const word of words) {
+    // Clean the word (remove punctuation)
+    const cleanWord = word.replace(/[^\w]/g, '');
+    
+    // Skip empty words, numbers, and very short words
+    if (cleanWord.length === 0 || /^\d+$/.test(cleanWord) || cleanWord.length <= 2) {
+      continue;
+    }
+    
+    // Check if word is in dictionary
+    if (!commonWords.has(cleanWord)) {
+      errors++;
+    }
+  }
+  
+  return errors;
+}
+
 // POST /api/proposals - Submit new proposal
 exports.submitProposal = async (req, res, next) => {
   try {
@@ -140,12 +223,8 @@ exports.submitProposal = async (req, res, next) => {
     const domainKeywords = ["renewable", "solar", "energy"];
     if (domainKeywords.some(k => abstractLower.includes(k))) score += 10;
 
-    // 7. Grammar/spelling: +10 if ≤5 spelling errors (dummy function)
-    function dummySpellCheck(text) {
-      // Placeholder: always return 3 errors for demo
-      return 3;
-    }
-    const spellingErrors = dummySpellCheck(abstract);
+    // 7. Grammar/spelling: +10 if ≤5 spelling errors
+    const spellingErrors = spellCheckWithDictionary(abstract);
     if (spellingErrors <= 5) score += 10;
 
     // Cap score at 100
@@ -173,6 +252,19 @@ exports.getMyProposals = async (req, res, next) => {
   try {
     const proposals = await Proposal.find({ researcher: req.user.id }).sort({ createdAt: -1 });
     res.json(proposals);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /api/proposals/mine/:id - Get a single proposal by ID for the logged-in researcher
+exports.getMyProposalById = async (req, res, next) => {
+  try {
+    const proposal = await Proposal.findOne({ _id: req.params.id, researcher: req.user.id });
+    if (!proposal) {
+      return res.status(404).json({ message: 'Proposal not found or access denied.' });
+    }
+    res.json(proposal);
   } catch (err) {
     next(err);
   }

@@ -1,6 +1,57 @@
 const User = require('../models/User');
 const Proposal = require('../models/Proposal');
 const Review = require('../models/Review');
+const bcrypt = require('bcryptjs');
+
+// POST /api/users - Create new user (admin only)
+exports.createUser = async (req, res, next) => {
+  try {
+    const { firstName, lastName, email, password, role, institution, department } = req.body;
+    
+    // Validate required fields
+    if (!firstName || !lastName || !email || !password || !role || !institution) {
+      return res.status(400).json({ message: 'Please fill all required fields.' });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ message: 'Email already registered.' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create the user
+    const user = await User.create({
+      firstName,
+      lastName,
+      email,
+      password: hashedPassword,
+      role,
+      institution,
+      department,
+    });
+
+    // Return user data without password, but include the temporary password
+    const userResponse = {
+      id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+      institution: user.institution,
+      department: user.department,
+    };
+
+    res.status(201).json({
+      message: 'User created successfully',
+      user: userResponse,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 
 // GET /api/users - Get all users (admin only)
 exports.getAllUsers = async (req, res, next) => {

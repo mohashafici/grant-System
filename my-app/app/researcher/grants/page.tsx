@@ -100,13 +100,16 @@ export default function BrowseGrants() {
     fetchData();
   }, []);
 
-  // Dynamic categories from grants
+  // Only show available (active) grants
+  const availableGrants = grants.filter((g) => g.status === 'Active');
+
+  // Dynamic categories from available grants
   const categories = [
     { value: "all", label: "All Categories" },
-    ...Array.from(new Set(grants.map((g) => g.category))).map((cat) => ({ value: cat, label: cat })),
+    ...Array.from(new Set(availableGrants.map((g) => g.category))).map((cat) => ({ value: cat, label: cat })),
   ];
 
-  const filteredGrants = grants.filter((grant) => {
+  const filteredGrants = availableGrants.filter((grant) => {
     const matchesCategory = selectedCategory === "all" || grant.category === selectedCategory;
     const matchesSearch =
       grant.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -135,7 +138,7 @@ export default function BrowseGrants() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Available Grants</p>
-                  <p className="text-2xl font-bold text-green-600">{grants.length}</p>
+                  <p className="text-2xl font-bold text-green-600">{availableGrants.length}</p>
                 </div>
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
@@ -351,7 +354,12 @@ export default function BrowseGrants() {
                     </Dialog>
                   </div>
                   <div className="flex items-center space-x-2">
-                    {grant.applied ? (
+                    {grant.status === 'Closed' ? (
+                      <Button variant="outline" size="sm" disabled>
+                        <Clock className="w-4 h-4 mr-2" />
+                        Closed
+                      </Button>
+                    ) : grant.applied ? (
                       <Button variant="outline" size="sm" disabled>
                         <CheckCircle className="w-4 h-4 mr-2" />
                         Applied
