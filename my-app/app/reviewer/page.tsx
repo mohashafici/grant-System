@@ -198,7 +198,7 @@ function ReviewModal({ review, onClose, onSubmit }: { review: any; onClose: () =
                 <SelectContent>
                   <SelectItem value="Approved">Approved</SelectItem>
                   <SelectItem value="Rejected">Rejected</SelectItem>
-                  <SelectItem value="Revisions Requested">Revisions Requested</SelectItem>
+                  {/* <SelectItem value="Revisions Requested">Revisions Requested</SelectItem> */}
                 </SelectContent>
               </Select>
             </div>
