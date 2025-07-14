@@ -216,7 +216,7 @@ export default function ReviewHistoryPage() {
                     </TableHeader>
                     <TableBody>
                       {filteredReviews.map((review) => (
-                        <TableRow key={review.id}>
+                        <TableRow key={review._id}>
                           <TableCell className="font-medium">{review.proposal?.title}</TableCell>
                           <TableCell>
                             <div>
