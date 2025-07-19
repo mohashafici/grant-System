@@ -57,6 +57,14 @@ export default function AdminSidebar({ active }: { active: string }) {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={active === "announcements"}>
+                      <Link href="/admin/announcements">
+                        <BookOpen className="w-4 h-4" />
+                        <span>Announcements</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={active === "users"}>
                       <Link href="/admin/users">
                         <Users className="w-4 h-4" />
