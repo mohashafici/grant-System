@@ -4,8 +4,8 @@ const Proposal = require('../models/Proposal');
 // POST /api/reviews/:proposalId - Submit review
 exports.submitReview = async (req, res, next) => {
   try {
-    const { decision, score, innovationScore, impactScore, feasibilityScore, comments } = req.body;
-    if (!decision || !score || !innovationScore || !impactScore || !feasibilityScore || !comments) {
+    const { decision, score, comments } = req.body;
+    if (!decision || !comments) {
       return res.status(400).json({ message: 'Please fill all required fields.' });
     }
     
@@ -17,10 +17,7 @@ exports.submitReview = async (req, res, next) => {
       },
       {
         decision,
-        score: parseInt(score),
-        innovationScore: parseInt(innovationScore),
-        impactScore: parseInt(impactScore),
-        feasibilityScore: parseInt(feasibilityScore),
+        score: score !== undefined ? parseFloat(score) : undefined,
         comments,
         reviewDate: new Date(),
         status: 'Completed'

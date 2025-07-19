@@ -1,6 +1,6 @@
 import { Sidebar, SidebarHeader, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, LogoutButton } from "@/components/ui/sidebar";
 import Link from "next/link";
-import { Award, FileText, Users, Bell, Settings } from "lucide-react";
+import { Award, FileText, Users, Bell, Settings, BookOpen } from "lucide-react";
 
 export default function AdminSidebar({ active }: { active: string }) {
   return (
@@ -48,6 +48,14 @@ export default function AdminSidebar({ active }: { active: string }) {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={active === "resources"}>
+                      <Link href="/admin/resources">
+                        <BookOpen className="w-4 h-4" />
+                        <span>Resources</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={active === "users"}>
                       <Link href="/admin/users">

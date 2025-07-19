@@ -1,88 +1,73 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { BookOpen, ArrowLeft, Users, Target, Award, Globe, Heart, Lightbulb } from "lucide-react"
-import Link from "next/link"
+"use client";
+import { useState } from "react";
+import { BookOpen, Menu, X, Target, Lightbulb, Users } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import PublicNavbar from "@/components/public-navbar";
+
+const menuItems = [
+  { href: "/search-grants", label: "Search Grants" },
+  { href: "/grant-calendar", label: "Grant Calendar" },
+  { href: "/application-help", label: "Application Help" },
+  { href: "/resources", label: "Resources & Training" },
+  { href: "/community", label: "Community & Forums" },
+  { href: "/announcements", label: "Announcements" },
+  { href: "/about", label: "About" },
+  { href: "/contact", label: "Contact" },
+];
+
+const values = [
+  {
+    title: "Integrity",
+    description: "We uphold the highest standards of integrity in all our actions.",
+    icon: BookOpen, // or any other icon from lucide-react
+  },
+  {
+    title: "Collaboration",
+    description: "We work together, across boundaries, to meet the needs of our community.",
+    icon: Users, // import Users from lucide-react
+  },
+  {
+    title: "Innovation",
+    description: "We foster creativity and embrace new ideas to drive progress.",
+    icon: Lightbulb, // already imported
+  },
+  // Add more values as needed
+];
+
+const teamMembers = [
+  {
+    name: "Ali Rezaei",
+    role: "Lead Full Stack Developer",
+    image: "/placeholder-user.jpg",
+    bio: "Ali architected and built the core backend and frontend systems for the grant platform.",
+  },
+  {
+    name: "Sara Kim",
+    role: "UI/UX Designer & Frontend Engineer",
+    image: "/placeholder-user.jpg",
+    bio: "Sara designed the user experience and implemented the responsive UI for all user roles.",
+  },
+  {
+    name: "Mohammed Al-Farsi",
+    role: "DevOps & Security Engineer",
+    image: "/placeholder-user.jpg",
+    bio: "Mohammed set up CI/CD, cloud infrastructure, and ensured platform security and reliability.",
+  },
+  {
+    name: "Emily Zhang",
+    role: "Product Manager & QA Lead",
+    image: "/placeholder-user.jpg",
+    bio: "Emily coordinated development, managed requirements, and led testing for a robust launch.",
+  },
+];
 
 export default function AboutPage() {
-  const teamMembers = [
-    {
-      name: "MOHAMED SHAFICI ABDIRAHMAN",
-      role: "Director of Research Programs",
-      image: "/placeholder.svg?height=200&width=200&text=Dr.+Sarah+Mitchell",
-      bio: "Leading researcher in AI and machine learning with 15+ years of experience in grant management.",
-    },
-    {
-      name: "Mohamed Abdi Ali",
-      role: "Chief Technology Officer",
-      image: "/placeholder.svg?height=200&width=200&text=Prof.+James+Anderson",
-      bio: "Former NASA scientist specializing in space technology and innovation funding strategies.",
-    },
-    {
-      name: "Abdirisaq Calas",
-      role: "Head of Reviewer Relations",
-      image: "/placeholder.svg?height=200&width=200&text=Dr.+Maria+Rodriguez",
-      bio: "Expert in peer review processes with extensive experience in academic evaluation systems.",
-    },
-    {
-      name: "ABDI SHAKUUR NUUR MOHAMED",
-      role: "Strategic Partnerships Director",
-      image: "/placeholder.svg?height=200&width=200&text=Prof.+David+Chen",
-      bio: "Building bridges between academia and industry to foster collaborative research initiatives.",
-    },
-  ]
-
-  const values = [
-    {
-      icon: Target,
-      title: "Excellence",
-      description: "We maintain the highest standards in research evaluation and funding decisions.",
-    },
-    {
-      icon: Heart,
-      title: "Integrity",
-      description: "Transparent, fair, and ethical practices guide all our operations.",
-    },
-    {
-      icon: Users,
-      title: "Collaboration",
-      description: "Fostering partnerships between researchers, institutions, and industry.",
-    },
-    {
-      icon: Lightbulb,
-      title: "Innovation",
-      description: "Supporting groundbreaking research that pushes the boundaries of knowledge.",
-    },
-    {
-      icon: Globe,
-      title: "Global Impact",
-      description: "Funding research that addresses worldwide challenges and benefits humanity.",
-    },
-    {
-      icon: Award,
-      title: "Recognition",
-      description: "Celebrating and rewarding exceptional research contributions.",
-    },
-  ]
-
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
-      {/* Header */}
-      <header className="border-b border-blue-100 bg-white/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center space-x-3">
-            <Link href="/" className="text-blue-600 hover:text-blue-700">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">About Us</h1>
-              <p className="text-sm text-gray-600">Innovation Grant Portal</p>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white pb-12">
+      <PublicNavbar />
 
       <div className="container mx-auto px-4 py-12 max-w-6xl">
         {/* Hero Section */}
@@ -212,7 +197,7 @@ export default function AboutPage() {
               <Card key={index} className="border-blue-100 hover:shadow-lg transition-shadow">
                 <CardContent className="p-6 text-center">
                   <img
-                    src={member.image || "/placeholder.svg"}
+                    src={member.image}
                     alt={member.name}
                     className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
                   />

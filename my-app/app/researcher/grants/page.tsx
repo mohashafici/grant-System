@@ -33,7 +33,7 @@ import { Button } from "@/components/ui/button";
 import ResearcherLayout from "@/components/layouts/ResearcherLayout";
 import { SidebarTrigger } from "@/components/ui/sidebar"
 
-function getStatusColor(status) {
+function getStatusColor(status: string) {
   switch (status) {
     case "Open":
       return "bg-green-100 text-green-800";
@@ -46,7 +46,7 @@ function getStatusColor(status) {
   }
 }
 
-function getStatusIcon(status) {
+function getStatusIcon(status: string) {
   switch (status) {
     case "Open":
       return <CheckCircle className="w-4 h-4" />;
@@ -59,14 +59,40 @@ function getStatusIcon(status) {
   }
 }
 
+interface Grant {
+  _id: string;
+  title: string;
+  description?: string;
+  organization?: string;
+  funding?: number;
+  status?: string;
+  category?: string;
+  deadline?: string;
+  duration?: string;
+  projectStart?: string;
+  fundingAreas?: string[];
+  requirements?: string[];
+  eligibility?: string;
+  contactEmail?: string;
+  applications?: number;
+  applied?: boolean;
+  requirement?: string;
+}
+
+interface Proposal {
+  grant: string;
+  status: string;
+  funding: number;
+}
+
 export default function BrowseGrants() {
-  const [grants, setGrants] = useState([]);
+  const [grants, setGrants] = useState<Grant[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedGrant, setSelectedGrant] = useState(null);
+  const [selectedGrant, setSelectedGrant] = useState<Grant | null>(null);
   const [isApplyDialogOpen, setIsApplyDialogOpen] = useState(false);
-  const [proposals, setProposals] = useState([]);
+  const [proposals, setProposals] = useState<Proposal[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -101,15 +127,15 @@ export default function BrowseGrants() {
   }, []);
 
   // Only show available (active) grants
-  const availableGrants = grants.filter((g) => g.status === 'Active');
+  const availableGrants = grants.filter((g: Grant) => g.status === 'Active');
 
   // Dynamic categories from available grants
   const categories = [
     { value: "all", label: "All Categories" },
-    ...Array.from(new Set(availableGrants.map((g) => g.category))).map((cat) => ({ value: cat, label: cat })),
+    ...Array.from(new Set(availableGrants.map((g: Grant) => g.category))).map((cat) => ({ value: cat, label: cat })),
   ];
 
-  const filteredGrants = availableGrants.filter((grant) => {
+  const filteredGrants = availableGrants.filter((grant: Grant) => {
     const matchesCategory = selectedCategory === "all" || grant.category === selectedCategory;
     const matchesSearch =
       grant.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -118,7 +144,7 @@ export default function BrowseGrants() {
     return matchesCategory && matchesSearch;
   });
 
-  const handleApply = (grantId) => {
+  const handleApply = (grantId: string) => {
     // You can add real apply logic here
     setIsApplyDialogOpen(false);
   };
@@ -154,17 +180,6 @@ export default function BrowseGrants() {
                   </p>
                 </div>
                 <DollarSign className="w-8 h-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">My Applications</p>
-                  <p className="text-2xl font-bold text-purple-600">{grants.filter((g) => g.applied).length}</p>
-                </div>
-                <FileText className="w-8 h-8 text-purple-600" />
               </div>
             </CardContent>
           </Card>
@@ -245,8 +260,8 @@ export default function BrowseGrants() {
 
                   <div className="flex items-center space-x-2">
                     <Badge variant="outline">{grant.category}</Badge>
-                    <Badge className={getStatusColor(grant.status)}>
-                      {getStatusIcon(grant.status)}
+                    <Badge className={getStatusColor(grant.status || "")}>
+                      {getStatusIcon(grant.status || "")}
                       <span className="ml-1">{grant.status}</span>
                     </Badge>
                   </div>
@@ -264,90 +279,92 @@ export default function BrowseGrants() {
                       <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
                         <DialogHeader>
                           <DialogTitle className="flex items-center space-x-2">
-                            <span>{selectedGrant?.title}</span>
-                            <Badge className={getStatusColor(selectedGrant?.status || "")}>{selectedGrant?.status}</Badge>
+                            <span>{selectedGrant?.title || ''}</span>
+                            <Badge className={getStatusColor(selectedGrant?.status || "")}>{selectedGrant?.status || ''}</Badge>
                           </DialogTitle>
-                          <DialogDescription>{selectedGrant?.organization}</DialogDescription>
+                          {selectedGrant?.organization && (
+                            <DialogDescription>{selectedGrant.organization || ''}</DialogDescription>
+                          )}
                         </DialogHeader>
 
                         {selectedGrant && (
                           <Tabs defaultValue="overview" className="space-y-4">
                             <TabsList>
                               <TabsTrigger value="overview">Overview</TabsTrigger>
-                              <TabsTrigger value="requirements">Requirements</TabsTrigger>
-                              <TabsTrigger value="details">Details</TabsTrigger>
+                              {/* <TabsTrigger value="requirements">Requirements</TabsTrigger> */}
+                              {/* <TabsTrigger value="details">Details</TabsTrigger> */}
                             </TabsList>
 
                             <TabsContent value="overview" className="space-y-4">
-                              <div>
-                                <Label className="font-semibold">Description</Label>
-                                <p className="text-sm text-gray-600 mt-1">{selectedGrant.description}</p>
-                              </div>
-
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                  <Label className="font-semibold">Funding Amount</Label>
-                                  <p className="text-sm text-gray-600">{selectedGrant.funding ? `$${selectedGrant.funding.toLocaleString()}` : "N/A"}</p>
+                                  <Label className="font-semibold">Title</Label>
+                                  <p className="text-sm text-gray-600">{selectedGrant.title || ''}</p>
                                 </div>
                                 <div>
-                                  <Label className="font-semibold">Project Duration</Label>
-                                  <p className="text-sm text-gray-600">{selectedGrant.duration || "N/A"}</p>
+                                  <Label className="font-semibold">Category</Label>
+                                  <p className="text-sm text-gray-600">{selectedGrant.category || ''}</p>
+                                </div>
+                                <div>
+                                  <Label className="font-semibold">Funding Amount</Label>
+                                  <p className="text-sm text-gray-600">${selectedGrant.funding ? selectedGrant.funding.toLocaleString() : ''}</p>
                                 </div>
                                 <div>
                                   <Label className="font-semibold">Application Deadline</Label>
-                                  <p className="text-sm text-gray-600">{selectedGrant.deadline ? new Date(selectedGrant.deadline).toLocaleDateString() : "N/A"}</p>
+                                  <p className="text-sm text-gray-600">{selectedGrant.deadline ? new Date(selectedGrant.deadline).toLocaleDateString() : ''}</p>
                                 </div>
-                                <div>
-                                  <Label className="font-semibold">Project Start Date</Label>
-                                  <p className="text-sm text-gray-600">{selectedGrant.projectStart || "N/A"}</p>
+                                <div className="col-span-2">
+                                  <Label className="font-semibold">Status</Label>
+                                  <p className="text-sm text-gray-600">{selectedGrant.status || ''}</p>
                                 </div>
                               </div>
-
-                              {selectedGrant.fundingAreas && (
-                                <div>
-                                  <Label className="font-semibold">Funding Areas</Label>
-                                  <div className="flex flex-wrap gap-2 mt-1">
-                                    {selectedGrant.fundingAreas.map((area, index) => (
-                                      <Badge key={index} variant="outline">
-                                        {area}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
+                              <div>
+                                <Label className="font-semibold">Description</Label>
+                                <p className="text-sm text-gray-600 mt-1">{selectedGrant.description || ''}</p>
+                              </div>
+                              <div>
+                                <Label className="font-semibold">Requirements</Label>
+                                <p className="text-sm text-gray-600 mt-1">{selectedGrant.requirements || ''}</p>
+                              </div>
                             </TabsContent>
 
-                            <TabsContent value="requirements" className="space-y-4">
+                            {/* <TabsContent value="requirements" className="space-y-4">
                               <div>
                                 <Label className="font-semibold">Eligibility Requirements</Label>
+                                {selectedGrant.requirement && (
+                                  <p className="text-sm text-gray-600 mt-2">{selectedGrant.requirement}</p>
+                                )}
                                 <ul className="list-disc list-inside space-y-1 mt-2 text-sm text-gray-600">
-                                  {Array.isArray(selectedGrant?.requirements) && selectedGrant.requirements.length > 0 ? (
+                                  {Array.isArray(selectedGrant?.requirements) && selectedGrant.requirements.length > 0 &&
                                     selectedGrant.requirements.map((req, index) => (
                                       <li key={index}>{req}</li>
-                                    ))
-                                  ) : (
-                                    <li>No requirements listed.</li>
-                                  )}
+                                    ))}
                                 </ul>
                               </div>
-                              <div>
-                                <Label className="font-semibold">Eligibility</Label>
-                                <p className="text-sm text-gray-600 mt-1">{selectedGrant?.eligibility || "N/A"}</p>
-                              </div>
-                            </TabsContent>
+                              {selectedGrant?.eligibility && (
+                                <div>
+                                  <Label className="font-semibold">Eligibility</Label>
+                                  <p className="text-sm text-gray-600 mt-1">{selectedGrant.eligibility}</p>
+                                </div>
+                              )}
+                            </TabsContent> */}
 
-                            <TabsContent value="details" className="space-y-4">
+                            {/* <TabsContent value="details" className="space-y-4">
                               <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <Label className="font-semibold">Contact Email</Label>
-                                  <p className="text-sm text-gray-600">{selectedGrant.contactEmail || "N/A"}</p>
-                                </div>
-                                <div>
-                                  <Label className="font-semibold">Current Applications</Label>
-                                  <p className="text-sm text-gray-600">{selectedGrant.applications ? `${selectedGrant.applications} submitted` : "N/A"}</p>
-                                </div>
+                                {selectedGrant.contactEmail && (
+                                  <div>
+                                    <Label className="font-semibold">Contact Email</Label>
+                                    <p className="text-sm text-gray-600">{selectedGrant.contactEmail}</p>
+                                  </div>
+                                )}
+                                {selectedGrant.applications && (
+                                  <div>
+                                    <Label className="font-semibold">Current Applications</Label>
+                                    <p className="text-sm text-gray-600">{selectedGrant.applications} submitted</p>
+                                  </div>
+                                )}
                               </div>
-                            </TabsContent>
+                            </TabsContent> */}
                           </Tabs>
                         )}
                       </DialogContent>

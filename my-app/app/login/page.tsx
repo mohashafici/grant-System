@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Award, Eye, EyeOff } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useRedirectIfAuthenticated } from "@/hooks/use-redirect-if-authenticated"
 
 export default function LoginPage() {
@@ -23,6 +23,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
+  const searchParams = useSearchParams();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,7 +41,9 @@ export default function LoginPage() {
       localStorage.setItem("user", JSON.stringify(data.user))
       toast({ title: "Login successful!", description: "Welcome back.", duration: 2000 })
       // Redirect based on role
-      if (data.user.role === "admin") router.push("/admin")
+      const redirect = searchParams.get("redirect");
+      if (redirect) router.push(redirect);
+      else if (data.user.role === "admin") router.push("/admin")
       else if (data.user.role === "reviewer") router.push("/reviewer")
       else router.push("/researcher")
     } catch (err: any) {

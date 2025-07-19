@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 const fileUpload = require('express-fileupload');
 const path = require('path');
 const errorHandler = require('./middleware/errorHandler');
+const announcementRoutes = require('./routes/announcementRoutes');
+const communityRoutes = require('./routes/communityRoutes');
 
 dotenv.config();
 
@@ -29,6 +31,9 @@ app.use('/api/proposals', require('./routes/proposalRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
+app.use('/api/resources', require('./routes/resourceRoutes'));
+app.use('/api/announcements', announcementRoutes);
+app.use('/api/community', communityRoutes);
 // Future: app.use('/api/reviews', require('./routes/reviewRoutes'));
 
 // Error handler

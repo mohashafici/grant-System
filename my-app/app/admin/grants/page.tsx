@@ -170,6 +170,9 @@ export default function ManageGrantsPage() {
     }
   }
 
+  // Calculate total funding
+  const totalFunding = grants.reduce((sum, grant) => sum + (Number(grant.funding) || 0), 0)
+
   return (
     <AdminLayout active="grants">
       <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4 flex items-center">
@@ -247,10 +250,10 @@ export default function ManageGrantsPage() {
                     <TableCell>{grantStats[grant._id]?.rejected ?? 0}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="outline">
+                        {/* <Button size="sm" variant="outline">
                           <Eye className="w-4 h-4 mr-1" />
                           View
-                        </Button>
+                        </Button> */}
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button size="sm" variant="outline" onClick={() => setSelectedGrant(grant)}>
@@ -338,7 +341,7 @@ export default function ManageGrantsPage() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$345K</div>
+              <div className="text-2xl font-bold">{totalFunding.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}</div>
               <p className="text-xs text-muted-foreground">Available funding</p>
             </CardContent>
           </Card>

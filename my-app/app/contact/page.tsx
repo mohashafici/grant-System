@@ -21,8 +21,22 @@ import {
   HelpCircle,
   Users,
   FileText,
+  Menu,
+  X,
 } from "lucide-react"
 import Link from "next/link"
+import PublicNavbar from "@/components/public-navbar";
+
+const menuItems = [
+  { href: "/search-grants", label: "Search Grants" },
+  { href: "/grant-calendar", label: "Grant Calendar" },
+  { href: "/application-help", label: "Application Help" },
+  { href: "/resources", label: "Resources & Training" },
+  { href: "/community", label: "Community & Forums" },
+  { href: "/announcements", label: "Announcements" },
+  { href: "/about", label: "About" },
+  { href: "/contact", label: "Contact" },
+];
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -99,23 +113,7 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
-      {/* Header */}
-      <header className="border-b border-blue-100 bg-white/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center space-x-3">
-            <Link href="/" className="text-blue-600 hover:text-blue-700">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">Contact Us</h1>
-              <p className="text-sm text-gray-600">Get in touch with our support team</p>
-            </div>
-          </div>
-        </div>
-      </header>
+      <PublicNavbar />
 
       <div className="container mx-auto px-4 py-12 max-w-6xl">
         {/* Hero Section */}
@@ -243,7 +241,7 @@ export default function ContactPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            {/* <Card>
               <CardHeader>
                 <CardTitle>Quick Links</CardTitle>
                 <CardDescription>Find answers to common questions</CardDescription>
@@ -277,7 +275,7 @@ export default function ContactPage() {
                   </div>
                 </Link>
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
         </div>
 

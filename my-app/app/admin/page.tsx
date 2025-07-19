@@ -225,7 +225,9 @@ export default function AdminDashboard() {
   const approvedProposals = proposals.filter((p) => p.status === "Approved").length
   const pendingProposals = proposals.filter((p) => p.status === "Under Review" || p.status === "Pending Assignment").length
   const rejectedProposals = proposals.filter((p) => p.status === "Rejected").length
-  const totalFunding = proposals.reduce((sum, p) => sum + (parseFloat(p.funding) || 0), 0)
+  const totalFunding = proposals
+    .filter((p) => p.status === "Approved")
+    .reduce((sum, p) => sum + (parseFloat(p.funding) || 0), 0)
 
   // Chart data
   const submissionsByMonth: Record<string, { submissions: number, approved: number }> = {}
@@ -346,7 +348,7 @@ export default function AdminDashboard() {
         <div className="grid lg:grid-cols-2 gap-6 mb-8">
           <Card>
             <CardHeader>
-              <CardTitle>Submission Trends</CardTitle>
+              <CardTitle>Submissions</CardTitle>
               <CardDescription>Monthly proposal submissions and approvals</CardDescription>
             </CardHeader>
             <CardContent>

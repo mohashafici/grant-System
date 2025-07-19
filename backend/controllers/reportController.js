@@ -14,16 +14,31 @@ exports.getEvaluationReports = async (req, res, next) => {
   }
 };
 
-// POST /api/reports/generate - Generate a new evaluation report
-toISOStringWithLocal = (date) => {
+// POST /api/reports/generate - Generate a new monthly evaluation report
+const toISOStringWithLocal = (date) => {
   // Helper to format date as YYYY-MM-DD
   return date.toISOString().split('T')[0];
 };
 
 exports.generateReport = async (req, res, next) => {
   try {
-    // Aggregate proposals
-    const proposals = await Proposal.find();
+    // Accept month and year from request body, default to current month/year
+    let { month, year } = req.body;
+    const now = new Date();
+    if (!month) month = now.getMonth() + 1; // JS months are 0-based
+    if (!year) year = now.getFullYear();
+
+    // Calculate start and end of the month
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1);
+
+    // Aggregate proposals for the month
+    const proposals = await Proposal.find({
+      $or: [
+        { dateSubmitted: { $gte: startDate, $lt: endDate } },
+        { createdAt: { $gte: startDate, $lt: endDate } }
+      ]
+    });
     const totalProposals = proposals.length;
     const approved = proposals.filter(p => p.status === 'Approved').length;
     const rejected = proposals.filter(p => p.status === 'Rejected').length;
@@ -32,15 +47,22 @@ exports.generateReport = async (req, res, next) => {
       .filter(p => p.status === 'Approved')
       .reduce((sum, p) => sum + (p.funding || 0), 0);
 
-    // Aggregate reviews for average score
-    const reviews = await Review.find({ status: 'Completed', score: { $ne: null } });
+    // Aggregate reviews for average score (for proposals in this month)
+    const proposalIds = proposals.map(p => p._id);
+    const reviews = await Review.find({ proposal: { $in: proposalIds }, status: 'Completed', score: { $ne: null } });
     const averageScore = reviews.length > 0 ? (reviews.reduce((sum, r) => sum + r.score, 0) / reviews.length) : 0;
 
-    // Period: current year
-    const now = new Date();
-    const year = now.getFullYear();
-    const period = `${year} Annual`;
-    const title = `Grant Evaluation Report - ${year}`;
+    // Grants for the month
+    const grants = await Grant.find();
+    // New logic:
+    // Active = grants whose deadline is after the start of the month and status is not 'Closed'
+    // Closed = grants whose status is 'Closed' and deadline is before the end of the month
+    const activeGrants = grants.filter(g => g.status !== 'Closed' && g.deadline >= startDate).length;
+    const closedGrants = grants.filter(g => g.status === 'Closed' && g.deadline < endDate).length;
+
+    // Period string
+    const period = `${year}-${month.toString().padStart(2, '0')}`;
+    const title = `Grant System Monthly Report - ${period}`;
     const generatedDate = toISOStringWithLocal(now);
     const status = 'Final';
 
@@ -48,12 +70,16 @@ exports.generateReport = async (req, res, next) => {
     const report = new Report({
       title,
       period,
+      month,
+      year,
       totalProposals,
       approved,
       rejected,
       pending,
       totalFunding: `$${totalFunding.toLocaleString()}`,
       averageScore: Number(averageScore.toFixed(2)),
+      activeGrants,
+      closedGrants,
       generatedDate,
       status,
     });
@@ -83,7 +109,6 @@ exports.getAnalytics = async (req, res, next) => {
     
     // If no proposals found for the year, get all proposals for total counts
     const totalAllProposals = await Proposal.find();
-    console.log(`Found ${allProposals.length} proposals for ${year}, total: ${totalAllProposals.length}`);
     
     // Monthly data for the current year
     const months = [
@@ -116,7 +141,6 @@ exports.getAnalytics = async (req, res, next) => {
 
     // If no monthly data, create a summary from all proposals
     if (monthlyData.every(m => m.applications === 0)) {
-      console.log("No monthly data found, using total proposals for summary");
       const totalApproved = totalAllProposals.filter(p => p.status === 'Approved').length;
       const totalRejected = totalAllProposals.filter(p => p.status === 'Rejected').length;
       const totalFunding = totalAllProposals.filter(p => p.status === 'Approved').reduce((sum, p) => sum + (p.funding || 0), 0);
@@ -159,7 +183,6 @@ exports.getReviewerPerformance = async (req, res, next) => {
   try {
     // Find all reviewers
     const reviewers = await User.find({ role: 'reviewer' });
-    console.log(`Found ${reviewers.length} reviewers`);
     
     // For each reviewer, aggregate their reviews
     const data = await Promise.all(reviewers.map(async (reviewer) => {
@@ -209,7 +232,6 @@ exports.getReviewerPerformance = async (req, res, next) => {
       };
     }));
     
-    console.log(`Reviewer performance data:`, data);
     res.json(data);
   } catch (err) {
     next(err);
