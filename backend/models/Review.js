@@ -23,15 +23,6 @@ const ReviewSchema = new mongoose.Schema({
   score: {
     type: Number,
   },
-  innovationScore: {
-    type: Number,
-  },
-  impactScore: {
-    type: Number,
-  },
-  feasibilityScore: {
-    type: Number,
-  },
   comments: {
     type: String,
   },

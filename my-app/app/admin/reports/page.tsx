@@ -62,7 +62,7 @@ import {
   Clock,
 } from "lucide-react"
 import AdminLayout from "@/components/layouts/AdminLayout"
-import { toast } from "@/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
 function ReportDetailsModal({ report, onClose }: { report: any; onClose: () => void }) {
   return (
@@ -154,7 +154,11 @@ export default function AdminReportsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedReport, setSelectedReport] = useState(null)
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString())
+  const [month, setMonth] = useState(new Date().getMonth() + 1)
+  const [year, setYear] = useState(new Date().getFullYear())
+  const [generating, setGenerating] = useState(false)
+  const [report, setReport] = useState<any | null>(null)
+  const { toast } = useToast()
 
   // Dynamic data states
   const [evaluationReports, setEvaluationReports] = useState<any[]>([])
@@ -227,7 +231,8 @@ export default function AdminReportsPage() {
   }
 
   const handleGenerateReport = async () => {
-    setLoading(true)
+    setGenerating(true)
+    setReport(null)
     try {
       const token = localStorage.getItem("token")
       const res = await fetch("http://localhost:5000/api/reports/generate", {
@@ -236,26 +241,23 @@ export default function AdminReportsPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify({ month, year }),
       })
       if (!res.ok) throw new Error("Failed to generate report")
+      const data = await res.json()
+      setReport(data)
       toast({
-        title: "Report generated",
-        description: "A new evaluation report has been created.",
+        title: "Report Generated",
+        description: `Monthly report for ${year}-${month.toString().padStart(2, "0")}`,
       })
-      // Refresh reports list
-      const evalRes = await fetch("http://localhost:5000/api/reports/evaluation", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!evalRes.ok) throw new Error("Failed to fetch evaluation reports")
-      const evalData = await evalRes.json()
-      setEvaluationReports(evalData)
     } catch (err: any) {
       toast({
         title: "Error",
         description: err.message || "Failed to generate report",
+        variant: "destructive",
       })
     } finally {
-      setLoading(false)
+      setGenerating(false)
     }
   }
 
@@ -263,7 +265,7 @@ export default function AdminReportsPage() {
     setExportLoading(true)
     try {
       const token = localStorage.getItem("token")
-      const res = await fetch(`http://localhost:5000/api/reports/export?year=${selectedYear}`, {
+      const res = await fetch(`http://localhost:5000/api/reports/export?year=${year}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error("Failed to export report")
@@ -273,7 +275,7 @@ export default function AdminReportsPage() {
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `grant-report-${selectedYear}.csv`
+      a.download = `grant-report-${year}.csv`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
@@ -281,7 +283,7 @@ export default function AdminReportsPage() {
       
       toast({
         title: "Report exported",
-        description: `Grant report for ${selectedYear} has been downloaded.`,
+        description: `Grant report for ${year} has been downloaded.`,
       })
     } catch (err: any) {
       toast({
@@ -322,7 +324,7 @@ export default function AdminReportsPage() {
             <p className="text-gray-600">Comprehensive insights into grant application trends and performance</p>
           </div>
           <div className="flex items-center space-x-2">
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <Select value={year} onValueChange={setYear}>
               <SelectTrigger className="w-32">
                 <SelectValue />
               </SelectTrigger>
@@ -425,7 +427,7 @@ export default function AdminReportsPage() {
             <div className="grid md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Applications by Month</CardTitle>
+                  <CardTitle>submissons by Month</CardTitle>
                   <CardDescription>Monthly application submission trends</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -445,7 +447,7 @@ export default function AdminReportsPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Applications by Category</CardTitle>
+                  <CardTitle>Research domain by Category</CardTitle>
                   <CardDescription>Distribution across research categories</CardDescription>
                 </CardHeader>
                 <CardContent>

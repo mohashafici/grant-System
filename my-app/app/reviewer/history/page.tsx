@@ -30,6 +30,47 @@ import {
 import ReviewerLayout from "@/components/layouts/ReviewerLayout"
 import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 
+function ReviewHistoryModal({ review, onClose }: { review: any, onClose: () => void }) {
+  return (
+    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle>Review Details</DialogTitle>
+        <DialogDescription>
+          Proposal: <span className="font-semibold">{review.proposal?.title}</span>
+        </DialogDescription>
+      </DialogHeader>
+      <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Review Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div><span className="font-medium">Score:</span> {review.score}</div>
+            <div><span className="font-medium">Decision:</span> {review.decision}</div>
+            <div><span className="font-medium">Review Date:</span> {review.reviewDate ? new Date(review.reviewDate).toLocaleDateString() : ''}</div>
+            <div><span className="font-medium">Comments:</span> <div className="mt-1 whitespace-pre-line">{review.comments || 'No comments provided.'}</div></div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Proposal Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div><span className="font-medium">Researcher:</span> {review.proposal?.researcher ? `${review.proposal.researcher.firstName || ''} ${review.proposal.researcher.lastName || ''}`.trim() : 'Unknown'}</div>
+            <div><span className="font-medium">Institution:</span> {review.proposal?.researcher?.institution || 'Unknown'}</div>
+            <div><span className="font-medium">Category:</span> {review.proposal?.category}</div>
+            <div><span className="font-medium">Funding Requested:</span> ${review.proposal?.funding?.toLocaleString()}</div>
+            <div><span className="font-medium">Abstract:</span> <div className="mt-1 whitespace-pre-line">{review.proposal?.abstract}</div></div>
+          </CardContent>
+        </Card>
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={onClose}>Close</Button>
+        </div>
+      </div>
+    </DialogContent>
+  )
+}
+
 export default function ReviewHistoryPage() {
   useAuthRedirect()
   
@@ -255,10 +296,17 @@ export default function ReviewHistoryPage() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                        <Button size="sm" variant="outline">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button size="sm" variant="outline" onClick={() => setSelectedReview(review)}>
                                   <Eye className="w-4 h-4 mr-1" />
                                   View Details
                                 </Button>
+                              </DialogTrigger>
+                              {selectedReview && selectedReview._id === review._id && (
+                                <ReviewHistoryModal review={selectedReview} onClose={() => setSelectedReview(null)} />
+                              )}
+                            </Dialog>
                           </TableCell>
                         </TableRow>
                       ))}

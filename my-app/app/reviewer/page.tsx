@@ -25,9 +25,6 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 
 function ReviewModal({ review, onClose, onSubmit }: { review: any; onClose: () => void; onSubmit: (reviewData: any) => void }) {
   const [reviewData, setReviewData] = useState({
-    innovationScore: "",
-    impactScore: "",
-    feasibilityScore: "",
     comments: "",
     decision: "",
   })
@@ -35,7 +32,7 @@ function ReviewModal({ review, onClose, onSubmit }: { review: any; onClose: () =
   const { toast } = useToast()
 
   const handleSubmitReview = async () => {
-    if (!reviewData.decision || !reviewData.innovationScore || !reviewData.impactScore || !reviewData.feasibilityScore || !reviewData.comments) {
+    if (!reviewData.decision || !reviewData.comments) {
       toast({
         title: "Validation Error",
         description: "Please fill all required fields",
@@ -43,13 +40,10 @@ function ReviewModal({ review, onClose, onSubmit }: { review: any; onClose: () =
       })
       return;
     }
-    
     setSubmitting(true);
     try {
-      const score = (parseInt(reviewData.innovationScore) + parseInt(reviewData.impactScore) + parseInt(reviewData.feasibilityScore)) / 3;
       await onSubmit({
-        ...reviewData,
-        score: score.toFixed(1)
+        ...reviewData
       });
       toast({
         title: "Review Submitted",
@@ -96,70 +90,6 @@ function ReviewModal({ review, onClose, onSubmit }: { review: any; onClose: () =
             <div>
               <Label className="font-medium">Abstract</Label>
               <p className="text-sm text-gray-600 mt-1">{review.proposal?.abstract}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Evaluation Criteria</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Innovation Score (1-10)</Label>
-              <Select
-                value={reviewData.innovationScore}
-                onValueChange={(value) => setReviewData({ ...reviewData, innovationScore: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Rate innovation level" />
-                </SelectTrigger>
-                <SelectContent>
-                  {[...Array(10)].map((_, i) => (
-                    <SelectItem key={i + 1} value={(i + 1).toString()}>
-                      {i + 1} - {i < 3 ? "Poor" : i < 6 ? "Fair" : i < 8 ? "Good" : "Excellent"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Impact Score (1-10)</Label>
-              <Select
-                value={reviewData.impactScore}
-                onValueChange={(value) => setReviewData({ ...reviewData, impactScore: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Rate potential impact" />
-                </SelectTrigger>
-                <SelectContent>
-                  {[...Array(10)].map((_, i) => (
-                    <SelectItem key={i + 1} value={(i + 1).toString()}>
-                      {i + 1} - {i < 3 ? "Low" : i < 6 ? "Medium" : i < 8 ? "High" : "Very High"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Feasibility Score (1-10)</Label>
-              <Select
-                value={reviewData.feasibilityScore}
-                onValueChange={(value) => setReviewData({ ...reviewData, feasibilityScore: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Rate feasibility" />
-                </SelectTrigger>
-                <SelectContent>
-                  {[...Array(10)].map((_, i) => (
-                    <SelectItem key={i + 1} value={(i + 1).toString()}>
-                      {i + 1} - {i < 3 ? "Unlikely" : i < 6 ? "Possible" : i < 8 ? "Likely" : "Very Likely"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Award, Eye, EyeOff } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -26,6 +26,7 @@ export default function RegisterPage() {
     department: "",
   })
   const router = useRouter()
+  const searchParams = useSearchParams();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,13 +49,11 @@ export default function RegisterPage() {
       localStorage.setItem("token", data.token)
       localStorage.setItem("user", JSON.stringify(data.user))
       // Redirect based on role
-      if (data.user.role === "admin") {
-        router.push("/dashboard/admin")
-      } else if (data.user.role === "reviewer") {
-        router.push("/dashboard/reviewer")
-      } else {
-        router.push("/dashboard/researcher")
-      }
+      const redirect = searchParams.get("redirect");
+      if (redirect) router.push(redirect);
+      else if (data.user.role === "admin") router.push("/admin")
+      else if (data.user.role === "reviewer") router.push("/reviewer")
+      else router.push("/researcher")
     } catch (err) {
       alert("Registration error")
     }
