@@ -2,6 +2,7 @@
 
 import type React from "react"
 
+import { useSearchParams } from "next/navigation";
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -10,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Award, Eye, EyeOff } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useRedirectIfAuthenticated } from "@/hooks/use-redirect-if-authenticated"
 
 export default function LoginPage() {
