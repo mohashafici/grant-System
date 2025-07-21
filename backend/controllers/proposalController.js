@@ -3,6 +3,7 @@ const Review = require('../models/Review');
 const path = require('path');
 const fs = require('fs');
 const Grant = require('../models/Grant');
+const { supabase } = require('../supabase');
 
 // Simple spell check function using a dictionary approach
 function spellCheckWithDictionary(text) {
@@ -87,6 +88,21 @@ function spellCheckWithDictionary(text) {
   return errors;
 }
 
+// Helper to upload a file buffer to Supabase Storage
+async function uploadToSupabase(file, folder) {
+  const fileName = `${folder}_${Date.now()}_${file.name}`;
+  const { data, error } = await supabase.storage
+    .from('uploads') // your bucket name
+    .upload(fileName, file.data, {
+      contentType: file.mimetype,
+      upsert: false,
+    });
+  if (error) throw error;
+  // Get public URL
+  const { publicUrl } = supabase.storage.from('uploads').getPublicUrl(fileName).data;
+  return publicUrl;
+}
+
 // POST /api/proposals - Submit new proposal
 exports.submitProposal = async (req, res, next) => {
   try {
@@ -116,42 +132,23 @@ exports.submitProposal = async (req, res, next) => {
     const filePaths = {};
     
     if (req.files) {
-      // Create uploads directory if it doesn't exist
-      const uploadsDir = path.join(__dirname, '../uploads');
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
-      }
-
-      // Handle proposal document
+      // Proposal Document
       if (req.files.proposalDocument) {
-        const file = req.files.proposalDocument;
-        const fileName = `proposal_${Date.now()}_${file.name}`;
-        const filePath = path.join(uploadsDir, fileName);
-        await file.mv(filePath);
-        filePaths.proposalDocument = fileName;
+        filePaths.proposalDocument = await uploadToSupabase(req.files.proposalDocument, 'proposal');
       }
-
-      // Handle CV/Resume
+      // CV/Resume
       if (req.files.cvResume) {
-        const file = req.files.cvResume;
-        const fileName = `cv_${Date.now()}_${file.name}`;
-        const filePath = path.join(uploadsDir, fileName);
-        await file.mv(filePath);
-        filePaths.cvResume = fileName;
+        filePaths.cvResume = await uploadToSupabase(req.files.cvResume, 'cv');
       }
-
-      // Handle additional documents
+      // Additional Documents
       if (req.files.additionalDocuments) {
         const additionalDocs = Array.isArray(req.files.additionalDocuments) 
           ? req.files.additionalDocuments 
           : [req.files.additionalDocuments];
-        
         filePaths.additionalDocuments = [];
         for (const file of additionalDocs) {
-          const fileName = `additional_${Date.now()}_${file.name}`;
-          const filePath = path.join(uploadsDir, fileName);
-          await file.mv(filePath);
-          filePaths.additionalDocuments.push(fileName);
+          const url = await uploadToSupabase(file, 'additional');
+          filePaths.additionalDocuments.push(url);
         }
       }
     }
@@ -233,8 +230,8 @@ exports.submitProposal = async (req, res, next) => {
     // Recommendation
     let recommendation = "Not Recommended for Acceptance";
     if (score >= 60) recommendation = "Recommended for Acceptance";
-    else if (score < 50) recommendation = "Not Recommended for Acceptance";
-    else recommendation = "Borderline/Needs Revision";
+    else   recommendation = "Not Recommended for Acceptance";
+
 
     // Save to proposal
     proposal.recommendedScore = score;

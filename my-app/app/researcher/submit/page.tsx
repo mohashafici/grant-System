@@ -77,7 +77,12 @@ export default function ResearcherSubmitPage() {
 
   // Set grant when selected (no auto-fill)
   const handleGrantChange = (grantId: string) => {
-    setFormData((prev) => ({ ...prev, grant: grantId }))
+    const grant = grants.find((g) => g._id === grantId);
+    setFormData((prev) => ({
+      ...prev,
+      grant: grantId,
+      budget: grant ? grant.funding?.toString() || "" : "",
+    }));
   }
 
   // Get selected grant info for display
@@ -148,8 +153,18 @@ export default function ResearcherSubmitPage() {
     setSubmitSuccess(false)
     
     // Validate required fields
-    if (!formData.title || !formData.abstract || !formData.deadline || !formData.budget || !formData.category || !formData.grant) {
+    if (!formData.title || !formData.abstract || !formData.deadline || !formData.category) {
       setSubmitError("Please fill all required fields.")
+      setSubmitting(false)
+      return
+    }
+    if (!formData.grant) {
+      setSubmitError("Please select a grant.")
+      setSubmitting(false)
+      return
+    }
+    if (!selectedGrant || !selectedGrant.funding) {
+      setSubmitError("Budget could not be determined from the selected grant.")
       setSubmitting(false)
       return
     }
@@ -169,7 +184,7 @@ export default function ResearcherSubmitPage() {
       formDataToSend.append('title', formData.title)
       formDataToSend.append('abstract', formData.abstract)
       formDataToSend.append('deadline', formData.deadline)
-      formDataToSend.append('funding', formData.budget)
+      formDataToSend.append('funding', selectedGrant.funding.toString())
       formDataToSend.append('category', formData.category)
       formDataToSend.append('grant', formData.grant)
       formDataToSend.append('objectives', formData.objectives)
@@ -361,9 +376,9 @@ export default function ResearcherSubmitPage() {
               <Input
                 id="budget"
                 type="number"
-                placeholder="Enter amount in USD"
-                value={formData.budget}
-                onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                placeholder="Total funding of selected grant"
+                value={selectedGrant && selectedGrant.funding ? selectedGrant.funding.toString() : ""}
+                readOnly
               />
             </div>
             <div className="space-y-2">

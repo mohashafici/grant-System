@@ -245,7 +245,7 @@ function ProposalDetailsModal({ proposal, onClose }: { proposal: any; onClose: (
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => window.open(`http://localhost:5000/uploads/${proposal.proposalDocument}`, '_blank')}
+                      onClick={() => window.open(proposal.proposalDocument, '_blank')}
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Download
@@ -262,7 +262,7 @@ function ProposalDetailsModal({ proposal, onClose }: { proposal: any; onClose: (
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => window.open(`http://localhost:5000/uploads/${proposal.cvResume}`, '_blank')}
+                      onClick={() => window.open(proposal.cvResume, '_blank')}
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Download
@@ -280,7 +280,7 @@ function ProposalDetailsModal({ proposal, onClose }: { proposal: any; onClose: (
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => window.open(`http://localhost:5000/uploads/${doc}`, '_blank')}
+                        onClick={() => window.open(doc, '_blank')}
                       >
                         <Download className="w-4 h-4 mr-2" />
                         Download
@@ -462,7 +462,7 @@ export default function ResearcherProposalsPage() {
               <SelectItem value="Under Review">Under Review</SelectItem>
               <SelectItem value="Approved">Approved</SelectItem>
               <SelectItem value="Rejected">Rejected</SelectItem>
-              <SelectItem value="Needs Revision">Needs Revision</SelectItem>
+              {/* <SelectItem value="Needs Revision">Needs Revision</SelectItem> */}
             </SelectContent>
           </Select>
         </div>

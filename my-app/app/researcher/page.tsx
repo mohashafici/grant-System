@@ -189,10 +189,10 @@ export default function ResearcherDashboardPage() {
                   <CardTitle>Recent Proposals</CardTitle>
                   <CardDescription>Your latest grant submissions</CardDescription>
                 </div>
-                <Link href="/researcher/submit">
+                <Link href="/researcher/grants">
                   <Button className="bg-blue-600 hover:bg-blue-700">
                     <Plus className="w-4 h-4 mr-2" />
-                    New Proposal
+                    Browse new grants
           </Button>
                 </Link>
               </CardHeader>
@@ -259,10 +259,10 @@ export default function ResearcherDashboardPage() {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Link href="/researcher/submit">
+                <Link href="/researcher/grants">
                   <Button variant="outline" className="w-full justify-start bg-transparent">
                     <Plus className="w-4 h-4 mr-2" />
-                    Start New Proposal
+                    Browse New grants
                   </Button>
                 </Link>
                 <Link href="/researcher/proposals">

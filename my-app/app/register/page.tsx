@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Award, Eye, EyeOff } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -27,11 +28,17 @@ export default function RegisterPage() {
   })
   const router = useRouter()
   const searchParams = useSearchParams();
+  const { toast } = useToast();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
+    // Check for empty required fields
+    if (!registerData.firstName || !registerData.lastName || !registerData.email || !registerData.password || !registerData.confirmPassword || !registerData.role || !registerData.institution) {
+      toast({ title: "Please fill all required fields.", description: "All fields marked with * are required.", });
+      return
+    }
     if (registerData.password !== registerData.confirmPassword) {
-      alert("Passwords do not match")
+      toast({ title: "Passwords do not match.", description: "Please make sure both passwords are identical.", });
       return
     }
     try {
@@ -42,20 +49,23 @@ export default function RegisterPage() {
       })
       const data = await res.json()
       if (!res.ok) {
-        alert(data.message || "Registration failed")
+        toast({ title: "Registration failed", description: data.message || "An error occurred during registration.", });
         return
       }
       // Save token and user info
       localStorage.setItem("token", data.token)
       localStorage.setItem("user", JSON.stringify(data.user))
+      toast({ title: "Account created successfully!", description: "Welcome to the Grant Portal.", });
       // Redirect based on role
       const redirect = searchParams.get("redirect");
-      if (redirect) router.push(redirect);
-      else if (data.user.role === "admin") router.push("/admin")
-      else if (data.user.role === "reviewer") router.push("/reviewer")
-      else router.push("/researcher")
+      setTimeout(() => {
+        if (redirect) router.push(redirect);
+        else if (data.user.role === "admin") router.push("/admin")
+        else if (data.user.role === "reviewer") router.push("/reviewer")
+        else router.push("/researcher")
+      }, 1200);
     } catch (err) {
-      alert("Registration error")
+      toast({ title: "Registration error", description: "A network or server error occurred. Please try again.", });
     }
   }
 
