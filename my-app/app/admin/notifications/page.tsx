@@ -49,6 +49,7 @@ import {
   Clock,
 } from "lucide-react"
 import AdminLayout from "@/components/layouts/AdminLayout"
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 const notifications = [
   {
