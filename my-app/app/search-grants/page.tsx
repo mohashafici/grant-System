@@ -56,12 +56,14 @@ export default function SearchGrantsPage() {
   const [sortBy, setSortBy] = useState("deadline");
   const [applicantsMap, setApplicantsMap] = useState<{ [grantId: string]: number }>({});
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   useEffect(() => {
     const fetchGrants = async () => {
       setLoading(true);
       setError("");
       try {
-        const res = await fetch("http://localhost:5000/api/grants");
+        const res = await fetch(`${API_BASE_URL}/grants`);
         if (!res.ok) throw new Error("Failed to fetch grants");
         let data = await res.json();
         // Only show active grants
@@ -72,7 +74,7 @@ export default function SearchGrantsPage() {
         await Promise.all(
           data.map(async (grant: any) => {
             try {
-              const res = await fetch(`http://localhost:5000/api/proposals/grant/${grant._id}`);
+              const res = await fetch(`${API_BASE_URL}/proposals/grant/${grant._id}`);
               if (res.ok) {
                 const proposals = await res.json();
                 applicantsObj[grant._id] = proposals.length;

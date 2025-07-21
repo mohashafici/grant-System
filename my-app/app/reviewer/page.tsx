@@ -406,13 +406,15 @@ export default function ReviewerDashboardPage() {
   const [selectedReview, setSelectedReview] = useState<any | null>(null)
   const [viewProposal, setViewProposal] = useState<any | null>(null)
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   useEffect(() => {
     const fetchAssigned = async () => {
       setLoading(true)
       setError("")
       try {
         const token = localStorage.getItem("token")
-        const res = await fetch("http://localhost:5000/api/reviews/assigned", {
+        const res = await fetch(`${API_BASE_URL}/reviews/assigned`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (!res.ok) throw new Error("Failed to fetch assigned reviews")
@@ -435,7 +437,7 @@ export default function ReviewerDashboardPage() {
   const handleSubmitReview = async (reviewData: any) => {
     try {
       const token = localStorage.getItem("token")
-      const res = await fetch(`http://localhost:5000/api/reviews/${selectedReview.proposal._id}`, {
+      const res = await fetch(`${API_BASE_URL}/reviews/${selectedReview.proposal._id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -446,7 +448,7 @@ export default function ReviewerDashboardPage() {
       if (!res.ok) throw new Error("Failed to submit review")
       
       // Refresh the reviews list
-      const refreshRes = await fetch("http://localhost:5000/api/reviews/assigned", {
+      const refreshRes = await fetch(`${API_BASE_URL}/reviews/assigned`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (refreshRes.ok) {

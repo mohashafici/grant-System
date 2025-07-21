@@ -30,6 +30,7 @@ export default function ProposalDetailsPage() {
   const [proposal, setProposal] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
     const fetchProposal = async () => {
@@ -37,7 +38,7 @@ export default function ProposalDetailsPage() {
       setError("");
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`http://localhost:5000/api/proposals/mine/${id}`, {
+        const res = await fetch(`${API_BASE_URL}/proposals/mine/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to fetch proposal details");
@@ -171,7 +172,7 @@ export default function ProposalDetailsPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => window.open(`http://localhost:5000/uploads/${proposal.proposalDocument}`, '_blank')}
+                              onClick={() => window.open(proposal.proposalDocument, '_blank')}
                             >
                               <Download className="w-4 h-4 mr-2" />
                               Download
@@ -187,7 +188,7 @@ export default function ProposalDetailsPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => window.open(`http://localhost:5000/uploads/${proposal.cvResume}`, '_blank')}
+                              onClick={() => window.open(proposal.cvResume, '_blank')}
                             >
                               <Download className="w-4 h-4 mr-2" />
                               Download
@@ -203,7 +204,7 @@ export default function ProposalDetailsPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => window.open(`http://localhost:5000/uploads/${doc}`, '_blank')}
+                              onClick={() => window.open(doc, '_blank')}
                             >
                               <Download className="w-4 h-4 mr-2" />
                               Download

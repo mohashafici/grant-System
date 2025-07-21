@@ -17,9 +17,11 @@ export default function AdminResourcesPage() {
   });
   const [submitting, setSubmitting] = useState(false);
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   const fetchResources = () => {
     setLoading(true);
-    fetch("http://localhost:5000/api/resources")
+    fetch(`${API_BASE_URL}/resources`)
       .then(res => res.json())
       .then(data => { setResources(data); setLoading(false); })
       .catch(err => { setError("Failed to load resources"); setLoading(false); });
@@ -39,7 +41,7 @@ export default function AdminResourcesPage() {
     setError("");
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/resources", {
+      const res = await fetch(`${API_BASE_URL}/resources`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -65,7 +67,7 @@ export default function AdminResourcesPage() {
     setError("");
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:5000/api/resources/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/resources/${id}`, {
         method: "DELETE",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });

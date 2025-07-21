@@ -47,8 +47,10 @@ export default function AnnouncementsPage() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   useEffect(() => {
-    fetch("http://localhost:5000/api/announcements")
+    fetch(`${API_BASE_URL}/announcements`)
       .then(res => res.json())
       .then(data => {
         // Convert date strings to Date objects if needed

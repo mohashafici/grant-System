@@ -25,9 +25,11 @@ export default function AdminAnnouncementsPage() {
   });
   const [submitting, setSubmitting] = useState(false);
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   const fetchAnnouncements = () => {
     setLoading(true);
-    fetch("http://localhost:5000/api/announcements")
+    fetch(`${API_BASE_URL}/announcements`)
       .then(res => res.json())
       .then(data => { setAnnouncements(data); setLoading(false); })
       .catch(() => { setError("Failed to load announcements"); setLoading(false); });
@@ -40,33 +42,37 @@ export default function AdminAnnouncementsPage() {
     setForm(f => ({ ...f, [name]: type === "checkbox" ? checked : value }));
   };
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    const token = localStorage.getItem("token");
-    const body = { ...form, tags: form.tags.split(",").map(t => t.trim()).filter(Boolean) };
-    const res = await fetch("http://localhost:5000/api/announcements", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(body),
-    });
-    if (res.ok) {
-      toast({ title: "Announcement created" });
+    setError("");
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/announcements`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          ...form,
+          tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to add announcement");
       setForm({ title: "", excerpt: "", content: "", category: "", priority: "Low", tags: "", author: "", pinned: false });
       fetchAnnouncements();
-    } else {
-      toast({ title: "Failed to create announcement", variant: "destructive" });
+    } catch (err) {
+      setError("Failed to add announcement");
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
   const handleDelete = async id => {
     if (!window.confirm("Delete this announcement?")) return;
     const token = localStorage.getItem("token");
-    const res = await fetch(`http://localhost:5000/api/announcements/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/announcements/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });

@@ -41,8 +41,10 @@ export default function ResourcesPage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   useEffect(() => {
-    fetch("http://localhost:5000/api/resources")
+    fetch(`${API_BASE_URL}/resources`)
       .then(res => res.json())
       .then(data => { setResources(data); setLoading(false); })
       .catch(err => { setError("Failed to load resources"); setLoading(false); });

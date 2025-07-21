@@ -31,8 +31,10 @@ export default function CommunityPage() {
   const [showForm, setShowForm] = useState(false);
   const [user, setUser] = useState(null);
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   useEffect(() => {
-    fetch("http://localhost:5000/api/community")
+    fetch(`${API_BASE_URL}/community`)
       .then(res => res.json())
       .then(data => { setThreads(data); setLoading(false); })
       .catch(() => { setError("Failed to load threads"); setLoading(false); });
@@ -55,7 +57,7 @@ export default function CommunityPage() {
     e.preventDefault();
     setSubmitting(true);
     const token = localStorage.getItem("token");
-    const res = await fetch("http://localhost:5000/api/community", {
+    const res = await fetch(`${API_BASE_URL}/community`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -69,7 +71,7 @@ export default function CommunityPage() {
       setShowForm(false);
       // Refresh threads
       setLoading(true);
-      fetch("http://localhost:5000/api/community")
+      fetch(`${API_BASE_URL}/community`)
         .then(res => res.json())
         .then(data => { setThreads(data); setLoading(false); });
     } else {

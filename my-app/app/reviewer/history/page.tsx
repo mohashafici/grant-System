@@ -82,13 +82,15 @@ export default function ReviewHistoryPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   useEffect(() => {
     const fetchReviews = async () => {
       setLoading(true)
       setError("")
       try {
         const token = localStorage.getItem("token")
-        const res = await fetch("http://localhost:5000/api/reviews/assigned", {
+        const res = await fetch(`${API_BASE_URL}/reviews/assigned`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (!res.ok) throw new Error("Failed to fetch reviews")

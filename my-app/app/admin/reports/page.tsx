@@ -169,6 +169,8 @@ export default function AdminReportsPage() {
   const [error, setError] = useState("")
   const [exportLoading, setExportLoading] = useState(false)
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
@@ -180,7 +182,7 @@ export default function AdminReportsPage() {
         }
 
         // Fetch evaluation reports
-        const evalRes = await fetch("http://localhost:5000/api/reports/evaluation", {
+        const evalRes = await fetch(`${API_BASE_URL}/reports/evaluation`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (!evalRes.ok) throw new Error("Failed to fetch evaluation reports")
@@ -188,7 +190,7 @@ export default function AdminReportsPage() {
         setEvaluationReports(evalData)
 
         // Fetch analytics
-        const analyticsRes = await fetch("http://localhost:5000/api/reports/analytics", {
+        const analyticsRes = await fetch(`${API_BASE_URL}/reports/analytics`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (!analyticsRes.ok) throw new Error("Failed to fetch analytics")
@@ -197,7 +199,7 @@ export default function AdminReportsPage() {
         setCategoryData(analyticsData.categoryData || [])
 
         // Fetch reviewer performance
-        const perfRes = await fetch("http://localhost:5000/api/reports/reviewer-performance", {
+        const perfRes = await fetch(`${API_BASE_URL}/reports/reviewer-performance`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (!perfRes.ok) throw new Error("Failed to fetch reviewer performance")
@@ -235,7 +237,7 @@ export default function AdminReportsPage() {
     setReport(null)
     try {
       const token = localStorage.getItem("token")
-      const res = await fetch("http://localhost:5000/api/reports/generate", {
+      const res = await fetch(`${API_BASE_URL}/reports/generate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -265,7 +267,7 @@ export default function AdminReportsPage() {
     setExportLoading(true)
     try {
       const token = localStorage.getItem("token")
-      const res = await fetch(`http://localhost:5000/api/reports/export?year=${year}`, {
+      const res = await fetch(`${API_BASE_URL}/reports/export?year=${year}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error("Failed to export report")

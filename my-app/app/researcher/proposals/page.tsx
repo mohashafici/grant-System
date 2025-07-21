@@ -372,13 +372,15 @@ export default function ResearcherProposalsPage() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedProposal, setSelectedProposal] = useState(null)
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   useEffect(() => {
     const fetchProposals = async () => {
       setLoading(true)
       setError("")
       try {
         const token = localStorage.getItem("token")
-        const res = await fetch("http://localhost:5000/api/proposals/mine", {
+        const res = await fetch(`${API_BASE_URL}/proposals/mine`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (!res.ok) throw new Error("Failed to fetch proposals")
@@ -392,7 +394,7 @@ export default function ResearcherProposalsPage() {
     }
     const fetchGrants = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/grants");
+        const res = await fetch(`${API_BASE_URL}/grants`);
         const data = await res.json();
         setGrants(data);
       } catch {
@@ -412,7 +414,7 @@ export default function ResearcherProposalsPage() {
   const handleDelete = async (id: string) => {
     try {
       const token = localStorage.getItem("token")
-      const res = await fetch(`http://localhost:5000/api/proposals/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/proposals/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       })

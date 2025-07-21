@@ -277,6 +277,8 @@ export default function AdminProposalsPage() {
   const [sortOrder, setSortOrder] = useState("desc");
   const [scoreFilter, setScoreFilter] = useState("all");
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   // Fetch proposals and reviewers
   useEffect(() => {
     const fetchProposals = async () => {
@@ -285,7 +287,7 @@ export default function AdminProposalsPage() {
       try {
         const token = localStorage.getItem("token");
         // Fetch all grants first
-        const grantsRes = await fetch("http://localhost:5000/api/grants", {
+        const grantsRes = await fetch(`${API_BASE_URL}/grants`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!grantsRes.ok) throw new Error("Failed to fetch grants");
@@ -293,7 +295,7 @@ export default function AdminProposalsPage() {
         // Fetch proposals for each grant
         const allProposals: any[] = [];
         for (const grant of grants) {
-          const proposalsRes = await fetch(`http://localhost:5000/api/proposals/grant/${grant._id}`, {
+          const proposalsRes = await fetch(`${API_BASE_URL}/proposals/grant/${grant._id}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (proposalsRes.ok) {
@@ -313,7 +315,7 @@ export default function AdminProposalsPage() {
     const fetchReviewers = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:5000/api/users/reviewers", {
+        const res = await fetch(`${API_BASE_URL}/users/reviewers`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to fetch reviewers");
@@ -384,7 +386,7 @@ export default function AdminProposalsPage() {
     setAssignError("");
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:5000/api/proposals/${selectedProposal._id}/assign-reviewer`, {
+      const res = await fetch(`${API_BASE_URL}/proposals/${selectedProposal._id}/assign-reviewer`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -398,13 +400,13 @@ export default function AdminProposalsPage() {
       setSelectedReviewer("");
       // Re-fetch proposals
       setLoading(true);
-      const grantsRes = await fetch("http://localhost:5000/api/grants", {
+      const grantsRes = await fetch(`${API_BASE_URL}/grants`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const grants = await grantsRes.json();
       const allProposals: any[] = [];
       for (const grant of grants) {
-        const proposalsRes = await fetch(`http://localhost:5000/api/proposals/grant/${grant._id}`, {
+        const proposalsRes = await fetch(`${API_BASE_URL}/proposals/grant/${grant._id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (proposalsRes.ok) {

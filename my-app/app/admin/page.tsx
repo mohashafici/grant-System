@@ -184,20 +184,21 @@ export default function AdminDashboard() {
   const [reviewers, setReviewers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
       const token = localStorage.getItem("token")
       // Fetch all grants
-      const grantsRes = await fetch("http://localhost:5000/api/grants", {
+      const grantsRes = await fetch(`${API_BASE_URL}/grants`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const grants = await grantsRes.json()
       // Fetch all proposals for each grant
       let allProposals: any[] = []
       for (const grant of grants) {
-        const proposalsRes = await fetch(`http://localhost:5000/api/proposals/grant/${grant._id}`, {
+        const proposalsRes = await fetch(`${API_BASE_URL}/proposals/grant/${grant._id}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (proposalsRes.ok) {
@@ -209,7 +210,7 @@ export default function AdminDashboard() {
       }
       setProposals(allProposals)
       // Fetch reviewers
-      const reviewersRes = await fetch("http://localhost:5000/api/users/reviewers", {
+      const reviewersRes = await fetch(`${API_BASE_URL}/users/reviewers`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (reviewersRes.ok) {

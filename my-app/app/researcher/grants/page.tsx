@@ -94,18 +94,20 @@ export default function BrowseGrants() {
   const [isApplyDialogOpen, setIsApplyDialogOpen] = useState(false);
   const [proposals, setProposals] = useState<Proposal[]>([]);
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         // Fetch grants
-        const grantsRes = await fetch("http://localhost:5000/api/grants");
+        const grantsRes = await fetch(`${API_BASE_URL}/grants`);
         const grantsData = await grantsRes.json();
         // Fetch proposals for current user
         const token = localStorage.getItem("token");
         let proposalsData = [];
         if (token) {
-          const proposalsRes = await fetch("http://localhost:5000/api/proposals/mine", {
+          const proposalsRes = await fetch(`${API_BASE_URL}/proposals/mine`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (proposalsRes.ok) {

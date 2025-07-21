@@ -35,13 +35,15 @@ export default function ResearcherProfilePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   useEffect(() => {
     const fetchProfile = async () => {
       setLoading(true)
       setError("")
       try {
         const token = localStorage.getItem("token")
-        const res = await fetch("http://localhost:5000/api/users/me", {
+        const res = await fetch(`${API_BASE_URL}/users/me`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (!res.ok) throw new Error("Failed to fetch profile")
@@ -59,7 +61,7 @@ export default function ResearcherProfilePage() {
   const handleSave = async () => {
     try {
       const token = localStorage.getItem("token")
-      const res = await fetch("http://localhost:5000/api/users/me", {
+      const res = await fetch(`${API_BASE_URL}/users/me`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

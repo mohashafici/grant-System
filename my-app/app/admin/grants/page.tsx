@@ -71,10 +71,12 @@ export default function ManageGrantsPage() {
     }
   }, [grants])
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   const fetchGrants = async () => {
     setLoading(true)
     try {
-      const res = await fetch("http://localhost:5000/api/grants")
+      const res = await fetch(`${API_BASE_URL}/grants`)
       const data = await res.json()
       setGrants(data)
     } finally {
@@ -87,7 +89,7 @@ export default function ManageGrantsPage() {
     let stats = {}
     let rejectedSum = 0
     await Promise.all(grants.map(async (grant) => {
-      const res = await fetch(`http://localhost:5000/api/proposals/grant/${grant._id}`, {
+      const res = await fetch(`${API_BASE_URL}/proposals/grant/${grant._id}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       const proposals = await res.json()
@@ -112,7 +114,7 @@ export default function ManageGrantsPage() {
           onClick={async () => {
             try {
               const token = localStorage.getItem("token")
-              const res = await fetch(`http://localhost:5000/api/grants/${id}`, {
+              const res = await fetch(`${API_BASE_URL}/grants/${id}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` },
               })
@@ -374,7 +376,7 @@ function CreateGrantModal({ open, onClose, onGrantChanged }: { open: boolean; on
     setError("")
     try {
       const token = localStorage.getItem("token")
-      const res = await fetch("http://localhost:5000/api/grants", {
+      const res = await fetch(`${API_BASE_URL}/grants`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -512,7 +514,7 @@ function EditGrantModal({ grant, onClose, onGrantChanged }: { grant: any; onClos
     setError("")
     try {
       const token = localStorage.getItem("token")
-      const res = await fetch(`http://localhost:5000/api/grants/${grant._id}`, {
+      const res = await fetch(`${API_BASE_URL}/grants/${grant._id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

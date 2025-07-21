@@ -42,12 +42,14 @@ export default function GrantCalendarPage() {
   const [error, setError] = useState("");
   const [selectedGrant, setSelectedGrant] = useState<any | null>(null);
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   useEffect(() => {
     const fetchGrants = async () => {
       setLoading(true);
       setError("");
       try {
-        const res = await fetch("http://localhost:5000/api/grants");
+        const res = await fetch(`${API_BASE_URL}/grants`);
         if (!res.ok) throw new Error("Failed to fetch grants");
         let data = await res.json();
         // Only show active grants

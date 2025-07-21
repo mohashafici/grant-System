@@ -34,6 +34,8 @@ export default function ResearcherDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
@@ -43,7 +45,7 @@ export default function ResearcherDashboardPage() {
         
         // Fetch user profile
         setProfileLoading(true);
-        const profileRes = await fetch("http://localhost:5000/api/users/me", {
+        const profileRes = await fetch(`${API_BASE_URL}/users/me`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (profileRes.ok) {
@@ -56,7 +58,7 @@ export default function ResearcherDashboardPage() {
         setProfileLoading(false);
 
         // Fetch proposals
-        const proposalsRes = await fetch("http://localhost:5000/api/proposals/mine", {
+        const proposalsRes = await fetch(`${API_BASE_URL}/proposals/mine`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (!proposalsRes.ok) throw new Error("Failed to fetch proposals")
@@ -64,7 +66,7 @@ export default function ResearcherDashboardPage() {
         setProposals(proposalsData)
 
         // Fetch grants
-        const grantsRes = await fetch("http://localhost:5000/api/grants");
+        const grantsRes = await fetch(`${API_BASE_URL}/grants`);
         const grantsData = await grantsRes.json();
         setGrants(grantsData);
       } catch (err: any) {

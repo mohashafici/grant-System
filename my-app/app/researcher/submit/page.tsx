@@ -54,6 +54,7 @@ export default function ResearcherSubmitPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const grantIdFromQuery = searchParams.get("grantId")
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const progress = (currentStep / steps.length) * 100
 
@@ -61,7 +62,7 @@ export default function ResearcherSubmitPage() {
     // Fetch grants for dropdown
     const fetchGrants = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/grants")
+        const res = await fetch(`${API_BASE_URL}/grants`)
         const data = await res.json()
         // Filter to show only active grants
         const activeGrants = data.filter((grant: any) => grant.status === "Active")
@@ -210,7 +211,7 @@ export default function ResearcherSubmitPage() {
         formDataToSend.append(`additionalDocuments`, file)
       })
 
-      const res = await fetch("http://localhost:5000/api/proposals", {
+      const res = await fetch(`${API_BASE_URL}/proposals`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

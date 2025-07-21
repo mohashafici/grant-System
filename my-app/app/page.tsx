@@ -30,6 +30,8 @@ export default function LandingPage() {
   const [loadingFeatured, setLoadingFeatured] = useState(true);
   const [errorFeatured, setErrorFeatured] = useState("");
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   // Carousel images with professional/academic themes
   const carouselImages = [
     {
@@ -88,7 +90,7 @@ export default function LandingPage() {
   }
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/grants")
+    fetch(`${API_BASE_URL}/grants`)
       .then(res => res.json())
       .then(data => {
         setFeaturedGrants(data.filter((g: any) => g.status === "Active").slice(0, 3));

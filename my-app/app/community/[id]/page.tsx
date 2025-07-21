@@ -18,11 +18,12 @@ export default function ThreadDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [user, setUser] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
     if (!threadId) return;
     setLoading(true);
-    fetch(`http://localhost:5000/api/community/${threadId}`)
+    fetch(`${API_BASE_URL}/community/${threadId}`)
       .then(res => res.json())
       .then(data => { setThread(data); setLoading(false); })
       .catch(() => { setError("Failed to load thread"); setLoading(false); });
@@ -40,7 +41,7 @@ export default function ThreadDetailPage() {
     e.preventDefault();
     setSubmitting(true);
     const token = localStorage.getItem("token");
-    const res = await fetch(`http://localhost:5000/api/community/${threadId}/reply`, {
+    const res = await fetch(`${API_BASE_URL}/community/${threadId}/reply`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -52,7 +53,7 @@ export default function ThreadDetailPage() {
       toast({ title: "Reply posted" });
       setReply("");
       // Refresh thread
-      fetch(`http://localhost:5000/api/community/${threadId}`)
+      fetch(`${API_BASE_URL}/community/${threadId}`)
         .then(res => res.json())
         .then(data => setThread(data));
     } else {
