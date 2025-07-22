@@ -320,14 +320,14 @@ export default function BrowseGrants() {
                                   <p className="text-sm text-gray-600">{selectedGrant.status || ''}</p>
                                 </div>
                               </div>
-                              <div>
+                                <div>
                                 <Label className="font-semibold">Description</Label>
                                 <p className="text-sm text-gray-600 mt-1">{selectedGrant.description || ''}</p>
-                              </div>
+                                  </div>
                               <div>
                                 <Label className="font-semibold">Requirements</Label>
                                 <p className="text-sm text-gray-600 mt-1">{selectedGrant.requirements || ''}</p>
-                              </div>
+                                </div>
                             </TabsContent>
 
                             {/* <TabsContent value="requirements" className="space-y-4">
@@ -344,26 +344,26 @@ export default function BrowseGrants() {
                                 </ul>
                               </div>
                               {selectedGrant?.eligibility && (
-                                <div>
-                                  <Label className="font-semibold">Eligibility</Label>
+                              <div>
+                                <Label className="font-semibold">Eligibility</Label>
                                   <p className="text-sm text-gray-600 mt-1">{selectedGrant.eligibility}</p>
-                                </div>
+                              </div>
                               )}
                             </TabsContent> */}
 
                             {/* <TabsContent value="details" className="space-y-4">
                               <div className="grid grid-cols-2 gap-4">
                                 {selectedGrant.contactEmail && (
-                                  <div>
-                                    <Label className="font-semibold">Contact Email</Label>
+                                <div>
+                                  <Label className="font-semibold">Contact Email</Label>
                                     <p className="text-sm text-gray-600">{selectedGrant.contactEmail}</p>
-                                  </div>
+                                </div>
                                 )}
                                 {selectedGrant.applications && (
-                                  <div>
-                                    <Label className="font-semibold">Current Applications</Label>
+                                <div>
+                                  <Label className="font-semibold">Current Applications</Label>
                                     <p className="text-sm text-gray-600">{selectedGrant.applications} submitted</p>
-                                  </div>
+                                </div>
                                 )}
                               </div>
                             </TabsContent> */}

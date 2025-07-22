@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { Suspense } from "react"
 
 import { useSearchParams } from "next/navigation";
 import { useState } from "react"
@@ -14,7 +15,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { useRedirectIfAuthenticated } from "@/hooks/use-redirect-if-authenticated"
 
-export default function LoginPage() {
+function LoginContent() {
   useRedirectIfAuthenticated()
   const [showPassword, setShowPassword] = useState(false)
   const [loginData, setLoginData] = useState({
@@ -41,7 +42,7 @@ export default function LoginPage() {
       // Save JWT and user info
       localStorage.setItem("token", data.token)
       localStorage.setItem("user", JSON.stringify(data.user))
-      toast({ title: "Login successful!", description: "Welcome back.", duration: 2000 })
+      toast({ title: "Login Successful!", description: "Welcome back. You will be redirected shortly.", duration: 2000 })
       // Redirect based on role
       const redirect = searchParams.get("redirect");
       if (redirect) router.push(redirect);
@@ -49,7 +50,7 @@ export default function LoginPage() {
       else if (data.user.role === "reviewer") router.push("/reviewer")
       else router.push("/researcher")
     } catch (err: any) {
-      toast({ title: "Login failed", description: err.message, duration: 3000 })
+      toast({ title: "Login Failed", description: err.message, variant: "destructive", duration: 4000 })
     } finally {
       setLoading(false)
     }
@@ -117,7 +118,19 @@ export default function LoginPage() {
                 </Link> */}
               </div>
               <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}>
-                {loading ? "Signing in..." : "Sign In"}
+                {loading ? (
+                  <>
+                    <span className="animate-spin mr-2">
+                      <svg className="w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    </span>
+                    <span>Signing In...</span>
+                  </>
+                ) : (
+                  "Sign In"
+                )}
               </Button>
             </form>
             <div className="text-center mt-4">
@@ -129,10 +142,18 @@ export default function LoginPage() {
 
         <div className="text-center mt-6">
           <Link href="/" className="text-sm text-blue-600 hover:underline">
-             Back to Home
+            &#127942; Back to Home
           </Link>
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
   )
 }

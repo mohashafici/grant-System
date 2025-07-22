@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,7 +22,7 @@ const steps = [
   { id: 5, title: "Review & Submit", description: "Final review before submission" },
 ]
 
-export default function ResearcherSubmitPage() {
+function SubmitPageContent() {
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
     title: "",
@@ -778,5 +778,13 @@ export default function ResearcherSubmitPage() {
         </div>
       </>
     </ResearcherLayout>
+  )
+}
+
+export default function ResearcherSubmitPage() {
+  return (
+    <Suspense>
+      <SubmitPageContent />
+    </Suspense>
   )
 }

@@ -19,21 +19,21 @@ exports.createUser = async (req, res, next) => {
       return res.status(409).json({ message: 'Email already registered.' });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Create the user
-    const user = await User.create({
+    // Create a new user instance. The pre-save hook in User.js will hash the password.
+    const user = new User({
       firstName,
       lastName,
       email,
-      password: hashedPassword,
+      password, // Pass plain-text password
       role,
       institution,
       department,
     });
 
-    // Return user data without password, but include the temporary password
+    // Save the user to the database, which will trigger the pre-save hook
+    await user.save();
+
+    // Return user data without password
     const userResponse = {
       id: user._id,
       firstName: user.firstName,

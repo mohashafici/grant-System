@@ -136,13 +136,13 @@ export default function GrantCalendarPage() {
             {dayGrants.slice(0, 2).map((grant) => (
               <Dialog key={grant._id || grant.id}>
                 <DialogTrigger asChild>
-                  <div
+              <div
                     className={`text-xs p-1 rounded truncate cursor-pointer ${getStatusColor("open")}`}
-                    title={`${grant.title} - ${grant.funder}`}
+                title={`${grant.title} - ${grant.funder}`}
                     onClick={() => setSelectedGrant(grant)}
-                  >
-                    {grant.title}
-                  </div>
+              >
+                {grant.title}
+              </div>
                 </DialogTrigger>
                 {selectedGrant && selectedGrant._id === grant._id && (
                   <DialogContent className="max-w-2xl">
@@ -253,7 +253,7 @@ export default function GrantCalendarPage() {
                   {[
                     ...grants
                       .filter((grant) => grant.deadline && new Date(grant.deadline) > new Date())
-                      .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime())
+                    .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime())
                       .slice(0, 5),
                     ...grants
                       .filter((grant) => grant.status === "Closed")
@@ -265,30 +265,30 @@ export default function GrantCalendarPage() {
                         <div
                           className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-sm cursor-pointer"
                           onClick={() => setSelectedGrant(grant)}
-                        >
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <h3 className="font-semibold text-gray-900">{grant.title}</h3>
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold text-gray-900">{grant.title}</h3>
                               <Badge className={getStatusColor(grant.status || "open")}>{grant.status || "Open"}</Badge>
-                            </div>
-                            <div className="flex items-center gap-4 text-sm text-gray-600">
-                              {grant.funder && <span>{grant.funder}</span>}
-                              <span className="flex items-center">
-                                <DollarSign className="w-4 h-4 mr-1" />
-                                {grant.funding ? `$${grant.funding.toLocaleString()}` : grant.amount || "-"}
-                              </span>
-                              <span className="flex items-center">
-                                <Calendar className="w-4 h-4 mr-1" />
-                                {grant.deadline ? new Date(grant.deadline).toLocaleDateString() : "-"}
-                              </span>
-                            </div>
                           </div>
-                          <div className="flex gap-2">
-                            <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                              View
-                            </Button>
+                          <div className="flex items-center gap-4 text-sm text-gray-600">
+                              {grant.funder && <span>{grant.funder}</span>}
+                            <span className="flex items-center">
+                              <DollarSign className="w-4 h-4 mr-1" />
+                                {grant.funding ? `$${grant.funding.toLocaleString()}` : grant.amount || "-"}
+                            </span>
+                            <span className="flex items-center">
+                              <Calendar className="w-4 h-4 mr-1" />
+                                {grant.deadline ? new Date(grant.deadline).toLocaleDateString() : "-"}
+                            </span>
                           </div>
                         </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                            View
+                          </Button>
+                        </div>
+                      </div>
                       </DialogTrigger>
                       {selectedGrant && selectedGrant._id === grant._id && (
                         <DialogContent className="max-w-2xl">
@@ -323,7 +323,7 @@ export default function GrantCalendarPage() {
                         </DialogContent>
                       )}
                     </Dialog>
-                  ))}
+                    ))}
                 </div>
               </CardContent>
             </Card>

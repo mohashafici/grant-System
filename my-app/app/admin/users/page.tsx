@@ -78,7 +78,7 @@ function CreateUserModal({ onClose, onUserCreated }: { onClose: () => void; onUs
     setLoading(true)
     try {
       const token = localStorage.getItem("token")
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -224,7 +224,7 @@ function UserDetailsModal({ userId, onClose }: { userId: string; onClose: () => 
       setLoading(true)
       try {
         const token = localStorage.getItem("token")
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/${userId}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (!res.ok) throw new Error("Failed to fetch user details")
@@ -308,7 +308,7 @@ function EditUserModal({ userId, onClose, onUserUpdated }: { userId: string; onC
       setLoading(true)
       try {
         const token = localStorage.getItem("token")
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/${userId}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (!res.ok) throw new Error("Failed to fetch user details")
@@ -340,7 +340,7 @@ function EditUserModal({ userId, onClose, onUserUpdated }: { userId: string; onC
     setSaving(true)
     try {
       const token = localStorage.getItem("token")
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/${userId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${userId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(userData),
@@ -456,7 +456,7 @@ export default function ManageUsersPage() {
       setError("")
       try {
         const token = localStorage.getItem("token")
-        const res = await fetch(`${API_BASE_URL}/api/users`, {
+        const res = await fetch(`${API_BASE_URL}/users`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (!res.ok) throw new Error("Failed to fetch users")

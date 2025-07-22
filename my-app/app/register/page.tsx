@@ -1,5 +1,7 @@
 "use client"
 
+import { Suspense } from "react"
+
 import type React from "react"
 
 import { useState } from "react"
@@ -13,7 +15,7 @@ import { Award, Eye, EyeOff } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
 
-export default function RegisterPage() {
+function RegisterContent() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [registerData, setRegisterData] = useState({
@@ -236,5 +238,13 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterContent />
+    </Suspense>
   )
 }

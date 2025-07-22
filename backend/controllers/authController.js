@@ -54,11 +54,11 @@ exports.login = async (req, res, next) => {
     }
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials.' });
+      return res.status(401).json({ message: 'No account found with that email address.' });
     }
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials.' });
+      return res.status(401).json({ message: 'Incorrect password. Please try again.' });
     }
     const token = generateToken(user);
     res.json({
