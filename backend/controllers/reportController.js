@@ -309,3 +309,71 @@ exports.exportReport = async (req, res, next) => {
     next(err);
   }
 }; 
+
+// GET /api/reports/user-stats - Per-user stats for a given month/year
+exports.getUserStats = async (req, res, next) => {
+  try {
+    const { year, month } = req.query;
+    const y = parseInt(year) || new Date().getFullYear();
+    const m = parseInt(month) || (new Date().getMonth() + 1);
+    const startDate = new Date(y, m - 1, 1);
+    const endDate = new Date(y, m, 1);
+    const proposals = await Proposal.find({
+      $or: [
+        { dateSubmitted: { $gte: startDate, $lt: endDate } },
+        { createdAt: { $gte: startDate, $lt: endDate } }
+      ]
+    });
+    const users = await User.find({ role: 'researcher' });
+    const userMap = {};
+    users.forEach(u => {
+      userMap[u._id] = { id: u._id, name: u.firstName + ' ' + u.lastName, applications: 0, approved: 0, funding: 0 };
+    });
+    proposals.forEach(p => {
+      if (userMap[p.researcher]) {
+        userMap[p.researcher].applications++;
+        if (p.status === 'Approved') {
+          userMap[p.researcher].approved++;
+          userMap[p.researcher].funding += p.funding || 0;
+        }
+      }
+    });
+    res.json(Object.values(userMap));
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /api/reports/grant-stats - Per-grant stats for a given month/year
+exports.getGrantStats = async (req, res, next) => {
+  try {
+    const { year, month } = req.query;
+    const y = parseInt(year) || new Date().getFullYear();
+    const m = parseInt(month) || (new Date().getMonth() + 1);
+    const startDate = new Date(y, m - 1, 1);
+    const endDate = new Date(y, m, 1);
+    const proposals = await Proposal.find({
+      $or: [
+        { dateSubmitted: { $gte: startDate, $lt: endDate } },
+        { createdAt: { $gte: startDate, $lt: endDate } }
+      ]
+    });
+    const grants = await Grant.find();
+    const grantMap = {};
+    grants.forEach(g => {
+      grantMap[g._id] = { id: g._id, title: g.title, status: g.status, deadline: g.deadline, applications: 0, approved: 0, funding: 0 };
+    });
+    proposals.forEach(p => {
+      if (grantMap[p.grant]) {
+        grantMap[p.grant].applications++;
+        if (p.status === 'Approved') {
+          grantMap[p.grant].approved++;
+          grantMap[p.grant].funding += p.funding || 0;
+        }
+      }
+    });
+    res.json(Object.values(grantMap));
+  } catch (err) {
+    next(err);
+  }
+}; 

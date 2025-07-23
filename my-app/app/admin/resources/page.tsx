@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export default function AdminResourcesPage() {
   const [resources, setResources] = useState<any[]>([]);
@@ -80,6 +81,10 @@ export default function AdminResourcesPage() {
 
   return (
     <AdminLayout active="resources">
+      <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4 flex items-center">
+        <SidebarTrigger />
+        <h1 className="text-2xl font-bold text-gray-900 ml-4">Manage Resources</h1>
+      </header>
       <div className="container mx-auto py-8 max-w-3xl">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">Admin: Manage Resources</h1>
         <form onSubmit={handleSubmit} className="mb-8 p-4 border rounded bg-white shadow space-y-4">

@@ -178,7 +178,70 @@ function ProposalViewModal({ proposal, onClose }: { proposal: any; onClose: () =
         )}
 
         {/* System Recommendation Section */}
-        {(typeof proposal.recommendedScore === 'number' && proposal.recommendation) && (
+        {(typeof proposal.gptScore === 'number' && proposal.gptRecommendation) ? (
+          <Card className="border-2 border-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50 my-6">
+            <CardHeader>
+              <CardTitle className="text-blue-900 flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                GPT Reviewer Analysis
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Overall Score */}
+              <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                <div>
+                  <h4 className="font-semibold text-gray-800">GPT Reviewer Score</h4>
+                  <p className="text-sm text-gray-600">AI-based evaluation of proposal quality</p>
+                </div>
+                <div className="text-right">
+                  <div className={`text-3xl font-bold ${
+                    proposal.gptScore >= 80 ? 'text-green-600' :
+                    proposal.gptScore >= 60 ? 'text-yellow-600' :
+                    'text-red-600'
+                  }`}>
+                    {proposal.gptScore}/100
+                  </div>
+                  <div className={`text-sm font-medium ${
+                    proposal.gptScore >= 80 ? 'text-green-700' :
+                    proposal.gptScore >= 60 ? 'text-yellow-700' :
+                    'text-red-700'
+                  }`}>
+                    {proposal.gptScore >= 80 ? 'Excellent' :
+                     proposal.gptScore >= 60 ? 'Good' :
+                     proposal.gptScore >= 40 ? 'Fair' : 'Poor'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Score Progress Bar */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium text-gray-700">Score Breakdown</span>
+                  <span className="text-gray-500">{proposal.gptScore}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div 
+                    className={`h-3 rounded-full transition-all duration-500 ${
+                      proposal.gptScore >= 80 ? 'bg-gradient-to-r from-green-400 to-green-600' :
+                      proposal.gptScore >= 60 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
+                      'bg-gradient-to-r from-red-400 to-red-600'
+                    }`}
+                    style={{ width: `${proposal.gptScore}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* Recommendation Summary */}
+              <div className="p-4 bg-white rounded-lg border">
+                <h4 className="font-semibold text-gray-800 mb-2">GPT Recommendation</h4>
+                <p className="text-gray-700 leading-relaxed">{proposal.gptRecommendation}</p>
+                {proposal.gptExplanation && (
+                  <div className="mt-2 text-sm text-gray-600">{proposal.gptExplanation}</div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ) : (typeof proposal.recommendedScore === 'number' && proposal.recommendation) && (
           <Card className="border-2 border-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50 my-6">
             <CardHeader>
               <CardTitle className="text-blue-900 flex items-center gap-2">
@@ -336,12 +399,12 @@ export default function AdminProposalsPage() {
     // Apply score filter
     if (scoreFilter !== "all") {
       filtered = filtered.filter(proposal => {
-        if (typeof proposal.recommendedScore !== 'number') return false;
+        if (typeof proposal.gptScore !== 'number') return false;
         switch (scoreFilter) {
-          case "excellent": return proposal.recommendedScore >= 80;
-          case "good": return proposal.recommendedScore >= 60 && proposal.recommendedScore < 80;
-          case "fair": return proposal.recommendedScore >= 40 && proposal.recommendedScore < 60;
-          case "poor": return proposal.recommendedScore < 40;
+          case "excellent": return proposal.gptScore >= 80;
+          case "good": return proposal.gptScore >= 60 && proposal.gptScore < 80;
+          case "fair": return proposal.gptScore >= 40 && proposal.gptScore < 60;
+          case "poor": return proposal.gptScore < 40;
           default: return true;
         }
       });
@@ -533,23 +596,40 @@ export default function AdminProposalsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {typeof proposal.recommendedScore === 'number' ? (
+                          {typeof proposal.gptScore === 'number' ? (
                             <div className="flex items-center space-x-2">
                               <div className={`w-3 h-3 rounded-full ${
-                                proposal.recommendedScore >= 80 ? 'bg-green-500' :
-                                proposal.recommendedScore >= 60 ? 'bg-yellow-500' :
+                                proposal.gptScore >= 80 ? 'bg-green-500' :
+                                proposal.gptScore >= 60 ? 'bg-yellow-500' :
                                 'bg-red-500'
                               }`}></div>
                               <span className={`font-semibold ${
-                                proposal.recommendedScore >= 80 ? 'text-green-700' :
-                                proposal.recommendedScore >= 60 ? 'text-yellow-700' :
+                                proposal.gptScore >= 80 ? 'text-green-700' :
+                                proposal.gptScore >= 60 ? 'text-yellow-700' :
                                 'text-red-700'
                               }`}>
-                                {proposal.recommendedScore}/100
+                                {proposal.gptScore}/100
                               </span>
                             </div>
                           ) : (
-                            <span className="text-gray-400 text-sm">Not scored</span>
+                            typeof proposal.recommendedScore === 'number' ? (
+                              <div className="flex items-center space-x-2">
+                                <div className={`w-3 h-3 rounded-full ${
+                                  proposal.recommendedScore >= 80 ? 'bg-green-500' :
+                                  proposal.recommendedScore >= 60 ? 'bg-yellow-500' :
+                                  'bg-red-500'
+                                }`}></div>
+                                <span className={`font-semibold ${
+                                  proposal.recommendedScore >= 80 ? 'text-green-700' :
+                                  proposal.recommendedScore >= 60 ? 'text-yellow-700' :
+                                  'text-red-700'
+                                }`}>
+                                  {proposal.recommendedScore}/100
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400 text-sm">Not scored</span>
+                            )
                           )}
                         </TableCell>
                         <TableCell>

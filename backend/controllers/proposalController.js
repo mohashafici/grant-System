@@ -4,6 +4,13 @@ const path = require('path');
 const fs = require('fs');
 const Grant = require('../models/Grant');
 const { supabase } = require('../supabase');
+const { OpenAI } = require('openai');
+const { gptReviewProposal } = require('../services/GptProposalReview');
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY, // Make sure to set this in .env
+});
+
 
 // Simple spell check function using a dictionary approach
 function spellCheckWithDictionary(text) {
@@ -179,64 +186,72 @@ exports.submitProposal = async (req, res, next) => {
     });
 
     // --- Advanced Recommendation Algorithm ---
-    let score = 0;
-    const abstractLower = abstract.toLowerCase();
+    // let score = 0;
+    // const abstractLower = abstract.toLowerCase();
 
-    // 1. Keywords (innovation, impact, feasibility): +10 each if present (max 30)
-    const keywords = ["innovation", "impact", "feasibility"];
-    for (const keyword of keywords) {
-      if (abstractLower.includes(keyword)) score += 10;
-    }
+    // // 1. Keywords (innovation, impact, feasibility): +10 each if present (max 30)
+    // const keywords = ["innovation", "impact", "feasibility"];
+    // for (const keyword of keywords) {
+    //   if (abstractLower.includes(keyword)) score += 10;
+    // }
 
-    // 2. Budget feasibility: +20 if proposal.budget <= grantFundingAmount
-    let grantDoc;
-    try {
-      grantDoc = await Grant.findById(grant);
-    } catch (e) {
-      return res.status(500).json({ message: 'Error fetching grant for recommendation.' });
-    }
-    if (grantDoc && parseInt(funding) <= grantDoc.funding) {
-      score += 20;
-    }
+    // // 2. Budget feasibility: +20 if proposal.budget <= grantFundingAmount
+    // // let grantDoc;
+    // // try {
+    // //   grantDoc = await Grant.findById(grant);
+    // // } catch (e) {
+    // //   return res.status(500).json({ message: 'Error fetching grant for recommendation.' });
+    // // }
+    // // if (grantDoc && parseInt(funding) <= grantDoc.funding) {
+    // //   score += 20;
+    // // }
 
-    // 3. Word count: +10 if abstract has at least 200 words
-    const wordCount = abstract.trim().split(/\s+/).length;
-    if (wordCount >= 200) score += 10;
+    // // 3. Word count: +10 if abstract has at least 200 words
+    // const wordCount = abstract.trim().split(/\s+/).length;
+    // if (wordCount >= 200) score += 10;
 
-    // 4. Clarity / Readability: +10 if average sentence length < 20 words
-    const sentences = abstract.split(/[.!?]/).filter(s => s.trim().length > 0);
-    const avgSentenceLength = sentences.length > 0 ? wordCount / sentences.length : wordCount;
-    if (avgSentenceLength < 20) score += 10;
+    // // 4. Clarity / Readability: +10 if average sentence length < 20 words
+    // const sentences = abstract.split(/[.!?]/).filter(s => s.trim().length > 0);
+    // const avgSentenceLength = sentences.length > 0 ? wordCount / sentences.length : wordCount;
+    // if (avgSentenceLength < 20) score += 10;
 
-    // 5. Structure detection: +2 for each section found (max 10)
-    const structureSections = ["introduction", "methodology", "outcomes", "impact", "budget"];
-    let structureScore = 0;
-    for (const section of structureSections) {
-      if (abstractLower.includes(section)) structureScore += 2;
-    }
-    score += Math.min(structureScore, 10);
+    // // 5. Structure detection: +2 for each section found (max 10)
+    // const structureSections = ["introduction", "methodology", "outcomes", "impact", "budget"];
+    // let structureScore = 0;
+    // for (const section of structureSections) {
+    //   if (abstractLower.includes(section)) structureScore += 2;
+    // }
+    // score += Math.min(structureScore, 10);
 
-    // 6. Domain relevance: +10 if domain-specific keywords found
-    const domainKeywords = ["renewable", "solar", "energy"];
-    if (domainKeywords.some(k => abstractLower.includes(k))) score += 10;
+    // // 6. Domain relevance: +10 if domain-specific keywords found
+    // const domainKeywords = ["renewable", "solar", "energy"];
+    // if (domainKeywords.some(k => abstractLower.includes(k))) score += 10;
 
-    // 7. Grammar/spelling: +10 if ≤5 spelling errors
-    const spellingErrors = spellCheckWithDictionary(abstract);
-    if (spellingErrors <= 5) score += 10;
+    // // 7. Grammar/spelling: +10 if ≤5 spelling errors
+    // const spellingErrors = spellCheckWithDictionary(abstract);
+    // if (spellingErrors <= 5) score += 10;
 
-    // Cap score at 100
-    score = Math.min(score, 100);
+    // // Cap score at 100
+    // score = Math.min(score, 100);
 
-    // Recommendation
-    let recommendation = "Not Recommended for Acceptance";
-    if (score >= 60) recommendation = "Recommended for Acceptance";
-    else   recommendation = "Not Recommended for Acceptance";
+    // // Recommendation
+    // let recommendation = "Not Recommended for Acceptance";
+    // if (score >= 50) recommendation = "Recommended for Acceptance";
+    // else   recommendation = "Not Recommended for Acceptance";
 
 
-    // Save to proposal
-    proposal.recommendedScore = score;
-    proposal.recommendation = recommendation;
-    await proposal.save();
+    // // Save to proposal
+    // proposal.recommendedScore = score;
+    // proposal.recommendation = recommendation;
+    // await proposal.save();
+
+      // --- GPT-4 Evaluation (DISABLED: using letter/manual recommendation) ---
+      // const gptResult = await gptReviewProposal({ abstract, objectives });
+      // proposal.gptScore = gptResult.score;
+      // proposal.gptRecommendation = gptResult.recommendation;
+      // proposal.gptExplanation = gptResult.explanation;
+      // await proposal.save();
+        
 
     res.status(201).json(proposal);
   } catch (err) {

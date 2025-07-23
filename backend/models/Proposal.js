@@ -94,12 +94,38 @@ const ProposalSchema = new mongoose.Schema({
     required: true,
   },
   // Recommendation fields
-  recommendedScore: {
-    type: Number,
-  },
-  recommendation: {
-    type: String,
-  },
+  // recommendedScore: {
+  //   type: Number,
+  // },
+  // recommendation: {
+  //   type: String,
+  // },
+  // Recommendation fields
+recommendedScore: {
+  type: Number,
+},
+recommendation: {
+  type: String,
+},
+
+// GPT evaluation fields
+gptScore: {
+  type: Number,
+  default: 0,
+},
+gptRecommendation: {
+  type: String,
+  default: "",
+},
+gptExplanation: {
+  type: String,
+  default: "",
+},
+topRecommended: {
+  type: Boolean,
+  default: false,
+},
+
 }, { timestamps: true });
 
 module.exports = mongoose.model('Proposal', ProposalSchema);

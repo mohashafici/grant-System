@@ -38,28 +38,28 @@ const values = [
 
 const teamMembers = [
   {
-    name: "Ali Rezaei",
+    name: "Mohamed Shafici Abdirahmaan",
     role: "Lead Full Stack Developer",
     image: "/placeholder-user.jpg",
-    bio: "Ali architected and built the core backend and frontend systems for the grant platform.",
+    bio: "Mohamed architected and built the core backend and frontend systems for the grant platform.",
   },
   {
-    name: "Sara Kim",
+    name: "Abdirisaaq Calas Ali",
     role: "UI/UX Designer & Frontend Engineer",
     image: "/placeholder-user.jpg",
     bio: "Sara designed the user experience and implemented the responsive UI for all user roles.",
   },
   {
-    name: "Mohammed Al-Farsi",
+    name: "Mohammed Abdi Ali",
     role: "DevOps & Security Engineer",
     image: "/placeholder-user.jpg",
     bio: "Mohammed set up CI/CD, cloud infrastructure, and ensured platform security and reliability.",
   },
   {
-    name: "Emily Zhang",
+    name: " Abdishakuur Mohamed",
     role: "Product Manager & QA Lead",
     image: "/placeholder-user.jpg",
-    bio: "Emily coordinated development, managed requirements, and led testing for a robust launch.",
+    bio: "Abdishakuur coordinated development, managed requirements, and led testing for a robust launch.",
   },
 ];
 

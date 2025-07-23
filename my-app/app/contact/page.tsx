@@ -46,12 +46,30 @@ export default function ContactPage() {
     category: "",
     message: "",
   })
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log("Contact form submitted:", formData)
-    // Handle form submission
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setSuccess(false);
+    setError("");
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (!res.ok) throw new Error("Failed to send message");
+      setSuccess(true);
+      setFormData({ name: "", email: "", subject: "", category: "", message: "" });
+    } catch (err: any) {
+      setError(err.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -209,10 +227,11 @@ export default function ContactPage() {
                     />
                   </div>
 
-                  <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-                    <Send className="w-4 h-4 mr-2" />
-                    Send Message
+                  <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}>
+                    {loading ? "Sending..." : "Send Message"}
                   </Button>
+                  {success && <div className="text-green-600 text-center mt-2">Message sent successfully!</div>}
+                  {error && <div className="text-red-600 text-center mt-2">{error}</div>}
                 </form>
               </CardContent>
             </Card>

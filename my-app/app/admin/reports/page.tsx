@@ -168,6 +168,9 @@ export default function AdminReportsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [exportLoading, setExportLoading] = useState(false)
+  const [userStats, setUserStats] = useState([]);
+  const [grantStats, setGrantStats] = useState([]);
+  const [statsLoading, setStatsLoading] = useState(false);
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -214,6 +217,18 @@ export default function AdminReportsPage() {
     }
     fetchData()
   }, [])
+
+  useEffect(() => {
+    setStatsLoading(true);
+    const token = localStorage.getItem("token");
+    Promise.all([
+      fetch(`${API_BASE_URL}/reports/user-stats?year=${year}&month=${month}`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()),
+      fetch(`${API_BASE_URL}/reports/grant-stats?year=${year}&month=${month}`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()),
+    ]).then(([users, grants]) => {
+      setUserStats(users);
+      setGrantStats(grants);
+    }).finally(() => setStatsLoading(false));
+  }, [year, month]);
 
   const filteredReports = evaluationReports.filter((report) => {
     const matchesSearch = report.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -312,6 +327,17 @@ export default function AdminReportsPage() {
   const avgReviewTime = reviewersWithTime.length > 0 ? 
     Math.round(reviewersWithTime.reduce((sum, r) => sum + (r.avgTime || 0), 0) / reviewersWithTime.length) : 0;
 
+  // Add month names for selector
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"
+  ];
+
+  // Calculate activeGrants and closedGrants for the selected month from grantStats
+  const selectedStartDate = new Date(year, month - 1, 1);
+  const selectedEndDate = new Date(year, month, 1);
+  const activeGrants = grantStats.filter(g => g.status !== 'Closed' && new Date(g.deadline) >= selectedStartDate).length;
+  const closedGrants = grantStats.filter(g => g.status === 'Closed' && new Date(g.deadline) < selectedEndDate).length;
+
   return (
     <AdminLayout active="reports">
       <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4 flex items-center">
@@ -331,9 +357,19 @@ export default function AdminReportsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="2024">2024</SelectItem>
-                <SelectItem value="2023">2023</SelectItem>
-                <SelectItem value="2022">2022</SelectItem>
+                <SelectItem value="2024">2025</SelectItem>
+                <SelectItem value="2023">2024</SelectItem>
+                <SelectItem value="2022">2023</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={month} onValueChange={setMonth}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {monthNames.map((name, idx) => (
+                  <SelectItem key={idx + 1} value={idx + 1}>{name}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Button 
@@ -397,10 +433,10 @@ export default function AdminReportsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Active Reviewers</p>
-                  <p className="text-2xl font-bold">{activeReviewers}</p>
+                  <p className="text-sm text-gray-600">Active Grants</p>
+                  <p className="text-2xl font-bold">{activeGrants}</p>
                 </div>
-                <Users className="w-8 h-8 text-purple-600" />
+                <Award className="w-8 h-8 text-purple-600" />
               </div>
             </CardContent>
           </Card>
@@ -408,10 +444,10 @@ export default function AdminReportsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Avg Review Time</p>
-                  <p className="text-2xl font-bold">{avgReviewTime}d</p>
+                  <p className="text-sm text-gray-600">Closed Grants</p>
+                  <p className="text-2xl font-bold">{closedGrants}</p>
                 </div>
-                <Clock className="w-8 h-8 text-orange-600" />
+                <Award className="w-8 h-8 text-orange-600" />
               </div>
             </CardContent>
           </Card>
@@ -423,6 +459,8 @@ export default function AdminReportsPage() {
             <TabsTrigger value="applications">Applications</TabsTrigger>
             <TabsTrigger value="funding">Funding</TabsTrigger>
             <TabsTrigger value="reviewers">Reviewers</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="grants">Grants</TabsTrigger>
           </TabsList>
 
           <TabsContent value="applications" className="space-y-4">
@@ -566,6 +604,74 @@ export default function AdminReportsPage() {
                     </ResponsiveContainer>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="users" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>User Activity (Monthly)</CardTitle>
+                <CardDescription>Applications, approvals, and funding by user</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {statsLoading ? (
+                  <div className="py-8 text-center text-gray-500">Loading user stats...</div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>User</TableHead>
+                        <TableHead>Applications</TableHead>
+                        <TableHead>Approved</TableHead>
+                        <TableHead>Funding</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {userStats.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell>{user.name}</TableCell>
+                          <TableCell>{user.applications}</TableCell>
+                          <TableCell>{user.approved}</TableCell>
+                          <TableCell>${user.funding?.toLocaleString()}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="grants" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Grant Performance (Monthly)</CardTitle>
+                <CardDescription>Applications, approvals, and funding by grant</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {statsLoading ? (
+                  <div className="py-8 text-center text-gray-500">Loading grant stats...</div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Grant</TableHead>
+                        <TableHead>Applications</TableHead>
+                        <TableHead>Approved</TableHead>
+                        <TableHead>Funding</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {grantStats.map((grant) => (
+                        <TableRow key={grant.id}>
+                          <TableCell>{grant.title}</TableCell>
+                          <TableCell>{grant.applications}</TableCell>
+                          <TableCell>{grant.approved}</TableCell>
+                          <TableCell>${grant.funding?.toLocaleString()}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

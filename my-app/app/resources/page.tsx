@@ -83,7 +83,7 @@ export default function ResourcesPage() {
                 {Array.isArray(resource.tags) && resource.tags.length > 0 && (
                   <span>Tags: {resource.tags.join(", ")}</span>
                 )}
-              </div>
+            </div>
             </div>
           ))}
         </div>

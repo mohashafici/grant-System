@@ -13,5 +13,9 @@ router.get('/reviewer-performance', auth, authorizeRoles('admin'), reportControl
 router.get('/export', auth, authorizeRoles('admin'), reportController.exportReport);
 // POST /api/reports/generate
 router.post('/generate', auth, authorizeRoles('admin'), reportController.generateReport);
+// GET /api/reports/user-stats
+router.get('/user-stats', auth, authorizeRoles('admin'), reportController.getUserStats);
+// GET /api/reports/grant-stats
+router.get('/grant-stats', auth, authorizeRoles('admin'), reportController.getGrantStats);
 
 module.exports = router; 

@@ -32,6 +32,8 @@ function RegisterContent() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -44,6 +46,8 @@ function RegisterContent() {
       toast({ title: "Passwords do not match.", description: "Please make sure both passwords are identical.", });
       return
     }
+    setLoading(true);
+    setSuccess(false);
     try {
       const res = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
@@ -52,12 +56,14 @@ function RegisterContent() {
       })
       const data = await res.json()
       if (!res.ok) {
+        setLoading(false);
         toast({ title: "Registration failed", description: data.message || "An error occurred during registration.", });
         return
       }
       // Save token and user info
       localStorage.setItem("token", data.token)
       localStorage.setItem("user", JSON.stringify(data.user))
+      setSuccess(true);
       toast({ title: "Account created successfully!", description: "Welcome to the Grant Portal.", });
       // Redirect based on role
       const redirect = searchParams.get("redirect");
@@ -68,8 +74,10 @@ function RegisterContent() {
         else router.push("/researcher")
       }, 1200);
     } catch (err) {
+      setLoading(false);
       toast({ title: "Registration error", description: "A network or server error occurred. Please try again.", });
     }
+    setLoading(false);
   }
 
   return (
@@ -220,9 +228,10 @@ function RegisterContent() {
                 </Link>
                 .
               </div>
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-                Create Account
+              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading || success}>
+                {loading ? "Creating..." : success ? "Created successfully!" : "Create Account"}
               </Button>
+              {success && <div className="text-green-600 text-center mt-2">Account created successfully!</div>}
             </form>
             <div className="text-center mt-4">
               <span className="text-sm text-gray-600">Already have an account? </span>

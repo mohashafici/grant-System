@@ -179,7 +179,11 @@ export default function ManageGrantsPage() {
     <AdminLayout active="grants">
       <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4 flex items-center">
         <SidebarTrigger />
-        <h1 className="text-2xl font-bold text-gray-900 ml-4">Manage Grants</h1>
+        <h1 className="text-2xl font-bold text-gray-900 ml-4 flex items-center gap-2">
+          {/* Example: If you have an icon, make it larger */}
+          {/* <SomeIcon className="h-8 w-8 text-blue-600" /> */}
+          Grants Management
+        </h1>
         <Button className="ml-auto bg-blue-600 hover:bg-blue-700" onClick={() => setCreateModalOpen(true)}>
           <Plus className="w-4 h-4 mr-2" />
           Add Grant
