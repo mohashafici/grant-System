@@ -384,7 +384,7 @@ export default function AdminReportsPage() {
         </div>
 
         {/* Key Metrics */}
-        <div className="grid md:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -565,7 +565,7 @@ export default function AdminReportsPage() {
                 <div className="space-y-4">
                   {/* Reviewer Performance Table */}
                   <div className="overflow-x-auto">
-                    <Table>
+                    <Table className="min-w-[900px]">
                       <TableHeader>
                         <TableRow>
                           <TableHead>Reviewer</TableHead>
@@ -617,7 +617,7 @@ export default function AdminReportsPage() {
                 {statsLoading ? (
                   <div className="py-8 text-center text-gray-500">Loading user stats...</div>
                 ) : (
-                  <Table>
+                  <Table className="min-w-[900px]">
                     <TableHeader>
                       <TableRow>
                         <TableHead>User</TableHead>
@@ -651,7 +651,7 @@ export default function AdminReportsPage() {
                 {statsLoading ? (
                   <div className="py-8 text-center text-gray-500">Loading grant stats...</div>
                 ) : (
-                  <Table>
+                  <Table className="min-w-[900px]">
                     <TableHeader>
                       <TableRow>
                         <TableHead>Grant</TableHead>

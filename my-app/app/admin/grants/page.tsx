@@ -220,72 +220,74 @@ export default function ManageGrantsPage() {
             <CardDescription>Manage all funding opportunities and their applications</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Grant Title</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Funding</TableHead>
-                  <TableHead>Deadline</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Applications</TableHead>
-                  <TableHead>Approved</TableHead>
-                  <TableHead>Rejected</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredGrants.map((grant) => (
-                  <TableRow key={grant._id}>
-                    <TableCell className="font-medium">{grant.title}</TableCell>
-                    <TableCell>
-                      <Badge className={getCategoryColor(grant.category)}>{grant.category}</Badge>
-                    </TableCell>
-                    <TableCell className="font-semibold text-blue-600">{grant.funding}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center">
-                        <Calendar className="w-4 h-4 mr-1 text-gray-400" />
-                        {grant.deadline}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(grant.status)}>{grant.status}</Badge>
-                    </TableCell>
-                    <TableCell>{grantStats[grant._id]?.applicants ?? 0}</TableCell>
-                    <TableCell>{grantStats[grant._id]?.approved ?? 0}</TableCell>
-                    <TableCell>{grantStats[grant._id]?.rejected ?? 0}</TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        {/* <Button size="sm" variant="outline">
-                          <Eye className="w-4 h-4 mr-1" />
-                          View
-                        </Button> */}
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button size="sm" variant="outline" onClick={() => setSelectedGrant(grant)}>
-                              <Edit className="w-4 h-4 mr-1" />
-                              Edit
-                            </Button>
-                          </DialogTrigger>
-                          {selectedGrant && (
-                            <EditGrantModal grant={selectedGrant} onClose={() => setSelectedGrant(null)} onGrantChanged={fetchGrants} />
-                          )}
-                        </Dialog>
-                        <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => handleDelete(grant._id)}>
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          Delete
-                        </Button>
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table className="min-w-[800px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Grant Title</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Funding</TableHead>
+                    <TableHead>Deadline</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Applications</TableHead>
+                    <TableHead>Approved</TableHead>
+                    <TableHead>Rejected</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredGrants.map((grant) => (
+                    <TableRow key={grant._id}>
+                      <TableCell className="font-medium">{grant.title}</TableCell>
+                      <TableCell>
+                        <Badge className={getCategoryColor(grant.category)}>{grant.category}</Badge>
+                      </TableCell>
+                      <TableCell className="font-semibold text-blue-600">{grant.funding}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <Calendar className="w-4 h-4 mr-1 text-gray-400" />
+                          {grant.deadline}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(grant.status)}>{grant.status}</Badge>
+                      </TableCell>
+                      <TableCell>{grantStats[grant._id]?.applicants ?? 0}</TableCell>
+                      <TableCell>{grantStats[grant._id]?.approved ?? 0}</TableCell>
+                      <TableCell>{grantStats[grant._id]?.rejected ?? 0}</TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          {/* <Button size="sm" variant="outline">
+                            <Eye className="w-4 h-4 mr-1" />
+                            View
+                          </Button> */}
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button size="sm" variant="outline" onClick={() => setSelectedGrant(grant)}>
+                                <Edit className="w-4 h-4 mr-1" />
+                                Edit
+                              </Button>
+                            </DialogTrigger>
+                            {selectedGrant && (
+                              <EditGrantModal grant={selectedGrant} onClose={() => setSelectedGrant(null)} onGrantChanged={fetchGrants} />
+                            )}
+                          </Dialog>
+                          <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => handleDelete(grant._id)}>
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
 
         {/* Grant Statistics */}
-        <div className="grid md:grid-cols-5 gap-6 mt-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mt-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Grants</CardTitle>
