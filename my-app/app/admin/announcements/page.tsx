@@ -89,10 +89,7 @@ export default function AdminAnnouncementsPage() {
 
   return (
     <Layout>
-      <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4 flex items-center">
-        <SidebarTrigger />
-        <h1 className="text-2xl font-bold text-gray-900 ml-4">Manage Announcements</h1>
-      </header>
+      {/* Remove the header with SidebarTrigger from this page. The layout will provide the header and sidebar trigger. */}
       <div className="max-w-3xl mx-auto py-8">
         <h1 className="text-3xl font-bold mb-6">Manage Announcements</h1>
         <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 mb-8 space-y-4 border">

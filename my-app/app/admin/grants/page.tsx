@@ -176,19 +176,7 @@ export default function ManageGrantsPage() {
   const totalFunding = grants.reduce((sum, grant) => sum + (Number(grant.funding) || 0), 0)
 
   return (
-    <AdminLayout active="grants">
-      <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4 flex items-center">
-        <SidebarTrigger className="h-8 w-8" />
-        <h1 className="text-2xl font-bold text-gray-900 ml-4 flex items-center gap-2">
-          {/* Example: If you have an icon, make it larger */}
-          {/* <SomeIcon className="h-8 w-8 text-blue-600" /> */}
-          Grants Management
-        </h1>
-        <Button className="ml-auto bg-blue-600 hover:bg-blue-700" onClick={() => setCreateModalOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Grant
-        </Button>
-      </header>
+    <AdminLayout active="grants" title="Grants Management">
       <main className="p-6">
         {/* Search and Filter */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">

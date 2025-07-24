@@ -533,27 +533,7 @@ export default function ManageUsersPage() {
     <AdminLayout active="users">
       <div className="flex min-h-screen bg-gray-50">
         <div className="flex-1">
-          <header className="bg-white border-b px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <SidebarTrigger />
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Manage Users</h1>
-                  <p className="text-gray-600">View and manage user accounts</p>
-                </div>
-              </div>
-              <Dialog open={createUserOpen} onOpenChange={setCreateUserOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Add New User
-                  </Button>
-                </DialogTrigger>
-                <CreateUserModal onClose={() => setCreateUserOpen(false)} onUserCreated={handleUserUpdated} />
-              </Dialog>
-            </div>
-          </header>
-
+          {/* Remove the header with SidebarTrigger from this page. The layout will provide the header and sidebar trigger. */}
           <main className="p-6">
             {loading ? (
               <div className="py-16 text-center text-gray-500 text-lg">Loading users...</div>
