@@ -264,6 +264,8 @@ function SubmitPageContent() {
                   <SelectItem value="Environment">Environment & Sustainability</SelectItem>
                   <SelectItem value="Social Sciences">Social Sciences</SelectItem>
                   <SelectItem value="Education">Education</SelectItem>
+                  <SelectItem value="Others">Others</SelectItem>
+
                 </SelectContent>
               </Select>
             </div>
