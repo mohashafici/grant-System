@@ -178,7 +178,7 @@ export default function ManageGrantsPage() {
   return (
     <AdminLayout active="grants">
       <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4 flex items-center">
-        <SidebarTrigger />
+        <SidebarTrigger className="h-8 w-8" />
         <h1 className="text-2xl font-bold text-gray-900 ml-4 flex items-center gap-2">
           {/* Example: If you have an icon, make it larger */}
           {/* <SomeIcon className="h-8 w-8 text-blue-600" /> */}

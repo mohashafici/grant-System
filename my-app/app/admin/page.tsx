@@ -287,7 +287,7 @@ export default function AdminDashboard() {
   return (
     <AdminLayout active="dashboard">
       <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4 flex items-center">
-        <SidebarTrigger />
+        <SidebarTrigger className="h-8 w-8" />
         <h1 className="text-2xl font-bold text-gray-900 ml-4">Admin Dashboard</h1>
       </header>
       <main className="p-6">
