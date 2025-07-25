@@ -399,70 +399,70 @@ export default function AdminDashboard() {
           <CardContent>
             <div className="overflow-x-auto">
               <Table className="min-w-[700px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Proposal Title</TableHead>
-                    <TableHead>Researcher</TableHead>
-                    <TableHead>Institution</TableHead>
-                    <TableHead>Submission Date</TableHead>
-                    <TableHead>Funding</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Reviewer</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {proposals.map((submission) => (
-                    <TableRow key={submission._id}>
-                      <TableCell className="font-medium">{submission.title}</TableCell>
-                      <TableCell>
-                        {submission.researcher?.firstName} {submission.researcher?.lastName}
-                      </TableCell>
-                      <TableCell>{submission.researcher?.institution}</TableCell>
-                      <TableCell>{submission.dateSubmitted ? new Date(submission.dateSubmitted).toLocaleDateString() : ''}</TableCell>
-                      <TableCell className="font-semibold text-blue-600">${submission.funding?.toLocaleString()}</TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(submission.status)}>{submission.status}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        {submission.reviewer
-                          ? reviewers.find((r) => r._id === submission.reviewer)?.firstName + ' ' + reviewers.find((r) => r._id === submission.reviewer)?.lastName
-                          : "Not assigned"}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Proposal Title</TableHead>
+                  <TableHead>Researcher</TableHead>
+                  <TableHead>Institution</TableHead>
+                  <TableHead>Submission Date</TableHead>
+                  <TableHead>Funding</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Reviewer</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {proposals.map((submission) => (
+                  <TableRow key={submission._id}>
+                    <TableCell className="font-medium">{submission.title}</TableCell>
+                    <TableCell>
+                      {submission.researcher?.firstName} {submission.researcher?.lastName}
+                    </TableCell>
+                    <TableCell>{submission.researcher?.institution}</TableCell>
+                    <TableCell>{submission.dateSubmitted ? new Date(submission.dateSubmitted).toLocaleDateString() : ''}</TableCell>
+                    <TableCell className="font-semibold text-blue-600">${submission.funding?.toLocaleString()}</TableCell>
+                    <TableCell>
+                      <Badge className={getStatusColor(submission.status)}>{submission.status}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {submission.reviewer
+                        ? reviewers.find((r) => r._id === submission.reviewer)?.firstName + ' ' + reviewers.find((r) => r._id === submission.reviewer)?.lastName
+                        : "Not assigned"}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => setViewProposal(submission)}
+                            >
+                              <Eye className="w-4 h-4 mr-1" />
+                              View
+                            </Button>
+                          </DialogTrigger>
+                          {viewProposal && viewProposal._id === submission._id && (
+                            <ProposalViewModal
+                              proposal={viewProposal}
+                              reviewer={reviewers.find((r) => r._id === viewProposal.reviewer)}
+                              onClose={() => setViewProposal(null)}
+                            />
+                          )}
+                        </Dialog>
+                        {submission.status === "Pending Assignment" && (
                           <Dialog>
                             <DialogTrigger asChild>
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => setViewProposal(submission)}
+                              <Button
+                                size="sm"
+                                className="bg-blue-600 hover:bg-blue-700"
+                                onClick={() => setSelectedSubmission(submission)}
                               >
-                                <Eye className="w-4 h-4 mr-1" />
-                                View
+                                <UserPlus className="w-4 h-4 mr-1" />
+                                Assign
                               </Button>
                             </DialogTrigger>
-                            {viewProposal && viewProposal._id === submission._id && (
-                              <ProposalViewModal
-                                proposal={viewProposal}
-                                reviewer={reviewers.find((r) => r._id === viewProposal.reviewer)}
-                                onClose={() => setViewProposal(null)}
-                              />
-                            )}
-                          </Dialog>
-                          {submission.status === "Pending Assignment" && (
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  className="bg-blue-600 hover:bg-blue-700"
-                                  onClick={() => setSelectedSubmission(submission)}
-                                >
-                                  <UserPlus className="w-4 h-4 mr-1" />
-                                  Assign
-                                </Button>
-                              </DialogTrigger>
-                              {selectedSubmission && (
+                            {selectedSubmission && (
                                 // The AssignReviewerModal component was removed, so this will cause an error.
                                 // Assuming the intent was to re-add it or remove this block if not needed.
                                 // For now, commenting out the call to avoid errors.
@@ -471,15 +471,15 @@ export default function AdminDashboard() {
                                 //   onClose={() => setSelectedSubmission(null)}
                                 // />
                                 <div>Assign functionality not implemented</div>
-                              )}
-                            </Dialog>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                            )}
+                          </Dialog>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
             </div>
           </CardContent>
         </Card>

@@ -201,6 +201,25 @@ export default function ManageGrantsPage() {
             </SelectContent>
           </Select>
         </div>
+        {/* Add New Grant Button below search/filter bar, aligned right */}
+        <div className="mb-6 flex justify-end">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={() => setCreateModalOpen(true)}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add New Grant
+              </Button>
+            </DialogTrigger>
+            <CreateGrantModal
+              open={createModalOpen}
+              onClose={() => setCreateModalOpen(false)}
+              onGrantChanged={fetchGrants}
+            />
+          </Dialog>
+        </div>
         {/* Grants Table */}
         <Card>
           <CardHeader>
@@ -343,18 +362,12 @@ export default function ManageGrantsPage() {
           </Card>
         </div>
       </main>
-      <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
-        <CreateGrantModal
-          open={createModalOpen}
-          onClose={() => setCreateModalOpen(false)}
-          onGrantChanged={fetchGrants}
-        />
-      </Dialog>
     </AdminLayout>
   )
 }
 
 function CreateGrantModal({ open, onClose, onGrantChanged }: { open: boolean; onClose: () => void; onGrantChanged: () => void }) {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [grantData, setGrantData] = useState({
     title: "",
     description: "",
@@ -367,34 +380,51 @@ function CreateGrantModal({ open, onClose, onGrantChanged }: { open: boolean; on
   const { toast } = useToast()
 
   const handleSubmit = async () => {
-    setError("")
+    setError("");
+    // Frontend validation for required fields
+    if (
+      !grantData.title.trim() ||
+      !grantData.description.trim() ||
+      !grantData.category.trim() ||
+      !grantData.funding ||
+      isNaN(Number(grantData.funding)) ||
+      Number(grantData.funding) <= 0 ||
+      !grantData.deadline ||
+      isNaN(new Date(grantData.deadline).getTime()) ||
+      !grantData.requirements.trim()
+    ) {
+      setError("Please fill all required fields with valid values.");
+      return;
+    }
     try {
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("token");
+      const payload = {
+        ...grantData,
+        funding: Number(grantData.funding),
+        deadline: new Date(grantData.deadline).toISOString(),
+      };
       const res = await fetch(`${API_BASE_URL}/grants`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          ...grantData,
-          funding: Number(grantData.funding),
-          deadline: new Date(grantData.deadline),
-        }),
-      })
+        body: JSON.stringify(payload),
+      });
+      let data = null;
+      try { data = await res.clone().json(); } catch {}
       if (res.ok) {
-        setError("")
-        toast({ title: "Grant created!", description: "The grant was created successfully.", duration: 3000, position: "top-center" })
-        onGrantChanged()
-        onClose()
+        setError("");
+        toast({ title: "Grant created!", description: "The grant was created successfully.", duration: 3000 });
+        onGrantChanged();
+        onClose();
       } else {
-        const data = await res.json()
-        setError(data.message || "Failed to create grant")
-        toast({ title: "Create failed", description: data.message || "Failed to create grant", duration: 3000, position: "top-center" })
+        setError((data && data.message) || "Failed to create grant");
+        toast({ title: "Create failed", description: (data && data.message) || "Failed to create grant", duration: 3000 });
       }
-    } catch {
-      setError("Error creating grant")
-      toast({ title: "Create failed", description: "Error creating grant", duration: 3000, position: "top-center" })
+    } catch (err) {
+      setError("Error creating grant");
+      toast({ title: "Create failed", description: "Error creating grant", duration: 3000 });
     }
   }
 
@@ -493,6 +523,7 @@ function CreateGrantModal({ open, onClose, onGrantChanged }: { open: boolean; on
 }
 
 function EditGrantModal({ grant, onClose, onGrantChanged }: { grant: any; onClose: () => void; onGrantChanged: () => void }) {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [grantData, setGrantData] = useState({
     title: grant.title,
     description: grant.description,
@@ -505,34 +536,51 @@ function EditGrantModal({ grant, onClose, onGrantChanged }: { grant: any; onClos
   const { toast } = useToast()
 
   const handleSubmit = async () => {
-    setError("")
+    setError("");
+    // Frontend validation for required fields
+    if (
+      !grantData.title.trim() ||
+      !grantData.description.trim() ||
+      !grantData.category.trim() ||
+      !grantData.funding ||
+      isNaN(Number(grantData.funding)) ||
+      Number(grantData.funding) <= 0 ||
+      !grantData.deadline ||
+      isNaN(new Date(grantData.deadline).getTime()) ||
+      !grantData.requirements.trim()
+    ) {
+      setError("Please fill all required fields with valid values.");
+      return;
+    }
     try {
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("token");
+      const payload = {
+        ...grantData,
+        funding: Number(grantData.funding),
+        deadline: new Date(grantData.deadline).toISOString(),
+      };
       const res = await fetch(`${API_BASE_URL}/grants/${grant._id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          ...grantData,
-          funding: Number(grantData.funding),
-          deadline: new Date(grantData.deadline),
-        }),
-      })
+        body: JSON.stringify(payload),
+      });
+      let data = null;
+      try { data = await res.clone().json(); } catch {}
       if (res.ok) {
-        setError("")
-        toast({ title: "Grant updated!", description: "The grant was updated successfully.", duration: 3000, position: "top-center" })
-        onGrantChanged()
-        onClose()
+        setError("");
+        toast({ title: "Grant updated!", description: "The grant was updated successfully.", duration: 3000 });
+        onGrantChanged();
+        onClose();
       } else {
-        const data = await res.json()
-        setError(data.message || "Failed to update grant")
-        toast({ title: "Update failed", description: data.message || "Failed to update grant", duration: 3000, position: "top-center" })
+        setError((data && data.message) || "Failed to update grant");
+        toast({ title: "Update failed", description: (data && data.message) || "Failed to update grant", duration: 3000 });
       }
-    } catch {
-      setError("Error updating grant")
-      toast({ title: "Update failed", description: "Error updating grant", duration: 3000, position: "top-center" })
+    } catch (err) {
+      setError("Error updating grant");
+      toast({ title: "Update failed", description: "Error updating grant", duration: 3000 });
     }
   }
 

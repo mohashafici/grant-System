@@ -539,191 +539,191 @@ export default function ManageUsersPage() {
               <div className="py-16 text-center text-gray-500 text-lg">Loading users...</div>
             ) : (
               <>
-                {/* Search and Filters */}
-                <div className="flex flex-col lg:flex-row gap-4 mb-6">
-                  <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input
-                      placeholder="Search users by name, email, or institution..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                  <div className="flex gap-3">
-                    <Select value={roleFilter} onValueChange={setRoleFilter}>
-                      <SelectTrigger className="w-[150px]">
-                        <Filter className="w-4 h-4 mr-2" />
-                        <SelectValue placeholder="Role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Roles</SelectItem>
-                        <SelectItem value="Researcher">Researcher</SelectItem>
-                        <SelectItem value="Reviewer">Reviewer</SelectItem>
-                        <SelectItem value="Admin">Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
+            {/* Search and Filters */}
+            <div className="flex flex-col lg:flex-row gap-4 mb-6">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Search users by name, email, or institution..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <div className="flex gap-3">
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                  <SelectTrigger className="w-[150px]">
+                    <Filter className="w-4 h-4 mr-2" />
+                    <SelectValue placeholder="Role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Roles</SelectItem>
+                    <SelectItem value="Researcher">Researcher</SelectItem>
+                    <SelectItem value="Reviewer">Reviewer</SelectItem>
+                    <SelectItem value="Admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
 
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-[150px]">
-                        <SelectValue placeholder="Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Status</SelectItem>
-                        <SelectItem value="Active">Active</SelectItem>
-                        <SelectItem value="Inactive">Inactive</SelectItem>
-                        <SelectItem value="Pending">Pending</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-                {/* Users Table */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>User Accounts</CardTitle>
-                    <CardDescription>
-                      Showing {filteredUsers.length} of {users.length} users
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>User</TableHead>
-                          <TableHead>Role</TableHead>
-                          <TableHead>Institution</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Join Date</TableHead>
-                          <TableHead>Last Login</TableHead>
-                          <TableHead>Activity</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredUsers.map((user) => (
-                          <TableRow key={user.id}>
-                            <TableCell>
-                              <div className="flex items-center space-x-3">
-                                <Avatar className="w-8 h-8">
-                                  <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                                  <AvatarFallback>
-                                    {user.name
-                                      .split(" ")
-                                      .map((n) => n[0])
-                                      .join("")}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <div className="font-medium">{user.name}</div>
-                                  <div className="text-sm text-gray-500">{user.email}</div>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge className={getRoleColor(user.role)}>{user.role}</Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div>
-                                <div className="font-medium">{user.institution}</div>
-                                <div className="text-sm text-gray-500">{user.department}</div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge className={getStatusColor(user.status)}>{user.status}</Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center text-sm">
-                                <Calendar className="w-4 h-4 mr-1 text-gray-400" />
-                                {user.joinDate}
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-sm">{user.lastLogin}</TableCell>
-                            <TableCell>
-                              <div className="text-sm">
-                                {user.role === "Researcher" && (
-                                  <span>
-                                    {user.proposals} proposals, {user.approved} approved
-                                  </span>
-                                )}
-                                {user.role === "Reviewer" && <span>{user.reviews || 0} reviews completed</span>}
-                                {user.role === "Admin" && <span>System administrator</span>}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex space-x-2">
-                                <Dialog open={viewUserId === user.id} onOpenChange={open => !open && setViewUserId(null)}>
-                                  <DialogTrigger asChild>
-                                    <Button size="sm" variant="outline" onClick={() => setViewUserId(user.id)}>
-                                      <Eye className="w-4 h-4 mr-1" />
-                                      View
-                                    </Button>
-                                  </DialogTrigger>
-                                  {viewUserId === user.id && <UserDetailsModal userId={user.id} onClose={() => setViewUserId(null)} />}
-                                </Dialog>
-                                <Dialog open={editUserId === user.id} onOpenChange={open => !open && setEditUserId(null)}>
-                                  <DialogTrigger asChild>
-                                    <Button size="sm" variant="outline" onClick={() => setEditUserId(user.id)}>
-                                      <Edit className="w-4 h-4 mr-1" />
-                                      Edit
-                                    </Button>
-                                  </DialogTrigger>
-                                  {editUserId === user.id && <EditUserModal userId={user.id} onClose={() => setEditUserId(null)} onUserUpdated={handleUserUpdated} />}
-                                </Dialog>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
+            {/* Users Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>User Accounts</CardTitle>
+                <CardDescription>
+                  Showing {filteredUsers.length} of {users.length} users
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Institution</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Join Date</TableHead>
+                      <TableHead>Last Login</TableHead>
+                      <TableHead>Activity</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="w-8 h-8">
+                              <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                              <AvatarFallback>
+                                {user.name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium">{user.name}</div>
+                              <div className="text-sm text-gray-500">{user.email}</div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getRoleColor(user.role)}>{user.role}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{user.institution}</div>
+                            <div className="text-sm text-gray-500">{user.department}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getStatusColor(user.status)}>{user.status}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center text-sm">
+                            <Calendar className="w-4 h-4 mr-1 text-gray-400" />
+                            {user.joinDate}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm">{user.lastLogin}</TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {user.role === "Researcher" && (
+                              <span>
+                                {user.proposals} proposals, {user.approved} approved
+                              </span>
+                            )}
+                            {user.role === "Reviewer" && <span>{user.reviews || 0} reviews completed</span>}
+                            {user.role === "Admin" && <span>System administrator</span>}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Dialog open={viewUserId === user.id} onOpenChange={open => !open && setViewUserId(null)}>
+                              <DialogTrigger asChild>
+                                <Button size="sm" variant="outline" onClick={() => setViewUserId(user.id)}>
+                                  <Eye className="w-4 h-4 mr-1" />
+                                  View
+                                </Button>
+                              </DialogTrigger>
+                              {viewUserId === user.id && <UserDetailsModal userId={user.id} onClose={() => setViewUserId(null)} />}
+                            </Dialog>
+                            <Dialog open={editUserId === user.id} onOpenChange={open => !open && setEditUserId(null)}>
+                              <DialogTrigger asChild>
+                                <Button size="sm" variant="outline" onClick={() => setEditUserId(user.id)}>
+                                  <Edit className="w-4 h-4 mr-1" />
+                                  Edit
+                                </Button>
+                              </DialogTrigger>
+                              {editUserId === user.id && <EditUserModal userId={user.id} onClose={() => setEditUserId(null)} onUserUpdated={handleUserUpdated} />}
+                            </Dialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
 
-                {/* User Statistics */}
-                <div className="grid md:grid-cols-4 gap-6 mt-8">
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{users.length}</div>
-                      <p className="text-xs text-muted-foreground">
-                        {users.filter((u) => u.status === "Active").length} active
-                      </p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Researchers</CardTitle>
-                      <Shield className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{users.filter((u) => u.role === "Researcher").length}</div>
-                      <p className="text-xs text-muted-foreground">Active researchers</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Reviewers</CardTitle>
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{users.filter((u) => u.role === "Reviewer").length}</div>
-                      <p className="text-xs text-muted-foreground">Active reviewers</p>
-                    </CardContent>
-                  </Card>
-                  {/* <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">New This Month</CardTitle>
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">3</div>
-                      <p className="text-xs text-muted-foreground">New registrations</p>
-                    </CardContent>
-                  </Card> */}
-                </div>
+            {/* User Statistics */}
+            <div className="grid md:grid-cols-4 gap-6 mt-8">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{users.length}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {users.filter((u) => u.status === "Active").length} active
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Researchers</CardTitle>
+                  <Shield className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{users.filter((u) => u.role === "Researcher").length}</div>
+                  <p className="text-xs text-muted-foreground">Active researchers</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Reviewers</CardTitle>
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{users.filter((u) => u.role === "Reviewer").length}</div>
+                  <p className="text-xs text-muted-foreground">Active reviewers</p>
+                </CardContent>
+              </Card>
+              {/* <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">New This Month</CardTitle>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">3</div>
+                  <p className="text-xs text-muted-foreground">New registrations</p>
+                </CardContent>
+              </Card> */}
+            </div>
               </>
             )}
           </main>
