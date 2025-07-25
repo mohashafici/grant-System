@@ -203,7 +203,7 @@ export default function ManageGrantsPage() {
         </div>
         {/* Add New Grant Button below search/filter bar, aligned right */}
         <div className="mb-6 flex justify-end">
-          <Dialog>
+          <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
             <DialogTrigger asChild>
               <Button
                 className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -214,7 +214,6 @@ export default function ManageGrantsPage() {
               </Button>
             </DialogTrigger>
             <CreateGrantModal
-              open={createModalOpen}
               onClose={() => setCreateModalOpen(false)}
               onGrantChanged={fetchGrants}
             />
@@ -366,7 +365,7 @@ export default function ManageGrantsPage() {
   )
 }
 
-function CreateGrantModal({ open, onClose, onGrantChanged }: { open: boolean; onClose: () => void; onGrantChanged: () => void }) {
+function CreateGrantModal({ onClose, onGrantChanged }: { onClose: () => void; onGrantChanged: () => void }) {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [grantData, setGrantData] = useState({
     title: "",
@@ -375,9 +374,10 @@ function CreateGrantModal({ open, onClose, onGrantChanged }: { open: boolean; on
     funding: "",
     deadline: "",
     requirements: "",
-  })
-  const [error, setError] = useState("")
-  const { toast } = useToast()
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleSubmit = async () => {
     setError("");
@@ -396,6 +396,7 @@ function CreateGrantModal({ open, onClose, onGrantChanged }: { open: boolean; on
       setError("Please fill all required fields with valid values.");
       return;
     }
+    setLoading(true);
     try {
       const token = localStorage.getItem("token");
       const payload = {
@@ -416,15 +417,26 @@ function CreateGrantModal({ open, onClose, onGrantChanged }: { open: boolean; on
       if (res.ok) {
         setError("");
         toast({ title: "Grant created!", description: "The grant was created successfully.", duration: 3000 });
+        setLoading(false);
         onGrantChanged();
         onClose();
+        setGrantData({
+          title: "",
+          description: "",
+          category: "",
+          funding: "",
+          deadline: "",
+          requirements: "",
+        });
       } else {
         setError((data && data.message) || "Failed to create grant");
         toast({ title: "Create failed", description: (data && data.message) || "Failed to create grant", duration: 3000 });
+        setLoading(false);
       }
     } catch (err) {
       setError("Error creating grant");
       toast({ title: "Create failed", description: "Error creating grant", duration: 3000 });
+      setLoading(false);
     }
   }
 
@@ -510,10 +522,17 @@ function CreateGrantModal({ open, onClose, onGrantChanged }: { open: boolean; on
         </div>
 
         <div className="flex space-x-3">
-          <Button onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700">
-            Create Grant
+          <Button onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700" disabled={loading}>
+            {loading ? "Creating..." : "Create Grant"}
           </Button>
-          <Button variant="outline" onClick={onClose}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setLoading(false);
+              setError("");
+              onClose();
+            }}
+          >
             Cancel
           </Button>
         </div>
@@ -553,7 +572,7 @@ function EditGrantModal({ grant, onClose, onGrantChanged }: { grant: any; onClos
       return;
     }
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token")
       const payload = {
         ...grantData,
         funding: Number(grantData.funding),
