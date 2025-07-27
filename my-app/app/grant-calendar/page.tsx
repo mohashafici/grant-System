@@ -110,6 +110,52 @@ export default function GrantCalendarPage() {
     });
   }
 
+  // Get grants closing in the next 30 days
+  const getUpcomingGrants = () => {
+    const today = new Date();
+    const thirtyDaysFromNow = new Date(today.getTime() + (30 * 24 * 60 * 60 * 1000));
+    
+    return grants.filter((grant) => {
+      if (!grant.deadline) return false;
+      const grantDate = new Date(grant.deadline);
+      return grantDate >= today && grantDate <= thirtyDaysFromNow;
+    }).sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
+  }
+
+  // Get current month statistics
+  const getCurrentMonthStats = () => {
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+    
+    const monthGrants = grants.filter((grant) => {
+      if (!grant.deadline) return false;
+      const grantDate = new Date(grant.deadline);
+      return grantDate.getMonth() === currentMonth && grantDate.getFullYear() === currentYear;
+    });
+
+    const openingGrants = monthGrants.filter((grant) => {
+      const grantDate = new Date(grant.deadline);
+      const today = new Date();
+      return grantDate > today;
+    });
+
+    const closingGrants = monthGrants.filter((grant) => {
+      const grantDate = new Date(grant.deadline);
+      const today = new Date();
+      return grantDate <= today;
+    });
+
+    const totalFunding = monthGrants.reduce((sum, grant) => {
+      return sum + (grant.funding || 0);
+    }, 0);
+
+    return {
+      opening: openingGrants.length,
+      closing: closingGrants.length,
+      totalFunding: totalFunding
+    };
+  }
+
   const renderCalendarGrid = () => {
     const daysInMonth = getDaysInMonth(currentDate)
     const firstDay = getFirstDayOfMonth(currentDate)
@@ -249,17 +295,13 @@ export default function GrantCalendarPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* Show 5 upcoming (active) and 2 closed grants */}
-                  {[
-                    ...grants
-                      .filter((grant) => grant.deadline && new Date(grant.deadline) > new Date())
-                    .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime())
-                      .slice(0, 5),
-                    ...grants
-                      .filter((grant) => grant.status === "Closed")
-                      .sort((a, b) => new Date(b.deadline).getTime() - new Date(a.deadline).getTime())
-                      .slice(0, 2),
-                  ].map((grant) => (
+                  {getUpcomingGrants().length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                      <p>No grants closing in the next 30 days</p>
+                    </div>
+                  ) : (
+                    getUpcomingGrants().slice(0, 7).map((grant) => (
                     <Dialog key={grant._id || grant.id}>
                       <DialogTrigger asChild>
                         <div
@@ -323,7 +365,8 @@ export default function GrantCalendarPage() {
                         </DialogContent>
                       )}
                     </Dialog>
-                    ))}
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -338,15 +381,22 @@ export default function GrantCalendarPage() {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">Opening</span>
-                  <span className="font-semibold text-green-600">12 grants</span>
+                  <span className="font-semibold text-green-600">{getCurrentMonthStats().opening} grants</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">Closing</span>
-                  <span className="font-semibold text-red-600">8 grants</span>
+                  <span className="font-semibold text-red-600">{getCurrentMonthStats().closing} grants</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">Total Funding</span>
-                  <span className="font-semibold text-blue-600">$45M</span>
+                  <span className="font-semibold text-blue-600">
+                    ${getCurrentMonthStats().totalFunding >= 1000000 
+                      ? `${(getCurrentMonthStats().totalFunding / 1000000).toFixed(1)}M`
+                      : getCurrentMonthStats().totalFunding >= 1000 
+                        ? `${(getCurrentMonthStats().totalFunding / 1000).toFixed(0)}K`
+                        : getCurrentMonthStats().totalFunding.toLocaleString()
+                    }
+                  </span>
                 </div>
               </CardContent>
             </Card>

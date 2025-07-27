@@ -53,6 +53,7 @@ app.use('/api/resources', require('./routes/resourceRoutes'));
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/community', communityRoutes);
 app.use('/api/contact', require('./routes/contactRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 // Future: app.use('/api/reviews', require('./routes/reviewRoutes'));
 
 // Error handler

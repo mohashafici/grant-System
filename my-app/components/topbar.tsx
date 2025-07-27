@@ -1,4 +1,6 @@
 import React from "react";
+import NotificationBell from "./notification-bell";
+import { ProfileMenu } from "./profile-menu";
 
 export function Topbar({ userName, userRole, userEmail }: { userName: string; userRole: string; userEmail: string }) {
   return (
@@ -7,7 +9,10 @@ export function Topbar({ userName, userRole, userEmail }: { userName: string; us
         <div className="font-semibold text-lg text-gray-900">{userName}</div>
         <div className="text-xs text-gray-500">{userRole} &bull; {userEmail}</div>
       </div>
-      {/* Add profile menu or notifications here if needed */}
+      <div className="flex items-center gap-2">
+        <NotificationBell />
+        <ProfileMenu userName={userName} userRole={userRole} userEmail={userEmail} />
+      </div>
     </header>
   );
 } 

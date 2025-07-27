@@ -55,6 +55,7 @@ export default function SearchGrantsPage() {
   const [selectedGrant, setSelectedGrant] = useState<any | null>(null);
   const [sortBy, setSortBy] = useState("deadline");
   const [applicantsMap, setApplicantsMap] = useState<{ [grantId: string]: number }>({});
+  const [displayedGrants, setDisplayedGrants] = useState(3); // Show 3 grants initially
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -100,6 +101,11 @@ export default function SearchGrantsPage() {
     setBookmarkedGrants((prev) => (prev.includes(grantId) ? prev.filter((id) => id !== grantId) : [...prev, grantId]))
   }
 
+  // Reset displayed grants when search or filters change
+  useEffect(() => {
+    setDisplayedGrants(3);
+  }, [searchQuery, filters]);
+
   const filteredGrants = grants.filter((grant) => {
     const matchesSearch =
       searchQuery === "" ||
@@ -127,6 +133,11 @@ export default function SearchGrantsPage() {
   })
 
   const categories = [...new Set(grants.map((g) => g.category).filter(Boolean))]
+
+  // Function to load more grants
+  const loadMoreGrants = () => {
+    setDisplayedGrants(prev => prev + 3);
+  };
 
   // Sorting logic
   const sortedGrants = [...filteredGrants].sort((a, b) => {
@@ -256,7 +267,7 @@ export default function SearchGrantsPage() {
               {/* Results Summary */}
               <div className="flex items-center justify-between mb-6">
                 <p className="text-gray-600">
-                  Showing {filteredGrants.length} of {grants.length} grants
+                  Showing {Math.min(displayedGrants, filteredGrants.length)} of {filteredGrants.length} grants
                 </p>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-600">Sort by:</span>
@@ -277,7 +288,7 @@ export default function SearchGrantsPage() {
 
             {/* Grant Results */}
             <div className="grid gap-6">
-              {sortedGrants.map((grant) => (
+              {sortedGrants.slice(0, displayedGrants).map((grant) => (
                 <Card key={grant._id || grant.id} className="hover:shadow-lg transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
@@ -408,10 +419,15 @@ export default function SearchGrantsPage() {
             )}
 
             {/* Load More */}
-            {filteredGrants.length > 0 && (
+            {filteredGrants.length > displayedGrants && (
               <div className="text-center mt-8">
-                <Button variant="outline" size="lg">
-                  Load More Grants
+                <Button 
+                  variant="outline" 
+                  size="lg"
+                  onClick={loadMoreGrants}
+                  className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+                >
+                  Load More Grants ({filteredGrants.length - displayedGrants} remaining)
                 </Button>
               </div>
             )}

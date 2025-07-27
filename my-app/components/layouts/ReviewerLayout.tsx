@@ -1,5 +1,6 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import ProfileMenu from "@/components/profile-menu";
+import NotificationBell from "@/components/notification-bell";
 import SidebarInset from "@/components/ui/sidebar-inset";
 import {
   Sidebar,
@@ -66,6 +67,7 @@ export default function ReviewerLayout({ active, children }: { active: string; c
       </Sidebar>
       <SidebarInset>
         <header className="sticky top-0 z-20 bg-white border-b px-6 py-4 flex justify-end items-center gap-4">
+          <NotificationBell />
           <ProfileMenu profileHref="/reviewer/profile" />
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>

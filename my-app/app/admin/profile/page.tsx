@@ -62,18 +62,32 @@ export default function AdminProfilePage() {
   const handleSave = async () => {
     try {
       const token = localStorage.getItem("token")
+      
+      // Create update data, excluding empty password
+      const updateData = { ...form };
+      if (!updateData.password || updateData.password.trim() === '') {
+        delete updateData.password;
+      }
+      
       const res = await fetch(`${API_BASE_URL}/users/me`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify(updateData),
       })
-      if (!res.ok) throw new Error("Failed to update profile")
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to update profile");
+      }
+      
       const updated = await res.json()
       setProfile(updated)
       setIsEditing(false)
+      // Clear password field after successful update
+      setForm(prev => ({ ...prev, password: "" }))
       toast({ title: "Profile updated!", description: "Your profile was updated successfully." })
     } catch (err: any) {
       toast({ title: "Profile update failed", description: err.message || "Error saving profile", variant: "destructive" })

@@ -47,7 +47,7 @@ const teamMembers = [
     name: "Abdirisaaq Calas Ali",
     role: "UI/UX Designer & Frontend Engineer",
     image: "/placeholder-user.jpg",
-    bio: "Sara designed the user experience and implemented the responsive UI for all user roles.",
+    bio: "Abdirisaaq designed the user experience and implemented the responsive UI for all user roles.",
   },
   {
     name: "Mohammed Abdi Ali",
@@ -130,7 +130,7 @@ export default function AboutPage() {
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div>
                 <img
-                  src="/me.jpeg?height=400&width=500&text=Research+Team+Meeting"
+                  src="/me.jpeg?height=700&width=500&text=Research+Team+Meeting"
                   alt="Research team meeting"
                   className="w-full h-64 object-cover rounded-lg"
                 />

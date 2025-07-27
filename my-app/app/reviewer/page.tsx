@@ -635,7 +635,7 @@ export default function ReviewerDashboardPage() {
                         <TableHead>Proposal Title</TableHead>
                         <TableHead>Researcher</TableHead>
                         <TableHead>Decision</TableHead>
-                        <TableHead>Score</TableHead>
+                        {/* <TableHead>Score</TableHead> */}
                         <TableHead>Review Date</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
@@ -656,12 +656,12 @@ export default function ReviewerDashboardPage() {
                               {review.decision}
                             </Badge>
                           </TableCell>
-                          <TableCell>
+                          {/* <TableCell>
                             <div className="flex items-center">
                               <Star className="w-4 h-4 text-yellow-500 mr-1" />
                               {review.score}/10
                             </div>
-                          </TableCell>
+                          </TableCell> */}
                           <TableCell>
                             {review.reviewDate ? new Date(review.reviewDate).toLocaleDateString() : 'N/A'}
                           </TableCell>

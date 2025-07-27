@@ -29,6 +29,9 @@ export default function LandingPage() {
   const [featuredGrants, setFeaturedGrants] = useState<any[]>([]);
   const [loadingFeatured, setLoadingFeatured] = useState(true);
   const [errorFeatured, setErrorFeatured] = useState("");
+  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -82,6 +85,43 @@ export default function LandingPage() {
     setCurrentSlide((prev) => (prev - 1 + carouselImages.length) % carouselImages.length)
   }
 
+  // Debounced search suggestions
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchQuery.trim().length >= 2) {
+        generateSearchSuggestions(searchQuery);
+      } else {
+        setSearchSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  // Generate search suggestions based on query
+  const generateSearchSuggestions = async (query: string) => {
+    if (!query.trim()) return;
+    
+    setIsSearching(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/grants?limit=5&search=${encodeURIComponent(query)}`);
+      if (response.ok) {
+        const data = await response.json();
+        const suggestions = data
+          .filter((g: any) => g.status === "Active")
+          .slice(0, 5)
+          .map((g: any) => g.title);
+        setSearchSuggestions(suggestions);
+        setShowSuggestions(true);
+      }
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
@@ -89,14 +129,60 @@ export default function LandingPage() {
     }
   }
 
+  const handleSuggestionClick = (suggestion: string) => {
+    setSearchQuery(suggestion);
+    setShowSuggestions(false);
+    window.location.href = `/search-grants?q=${encodeURIComponent(suggestion)}`
+  }
+
+  // Optimized featured grants loading with error handling and caching
   useEffect(() => {
-    fetch(`${API_BASE_URL}/grants`)
-      .then(res => res.json())
-      .then(data => {
-        setFeaturedGrants(data.filter((g: any) => g.status === "Active").slice(0, 3));
+    const loadFeaturedGrants = async () => {
+      try {
+        // Check if we have cached data
+        const cached = sessionStorage.getItem('featuredGrants');
+        const cacheTime = sessionStorage.getItem('featuredGrantsTime');
+        
+        if (cached && cacheTime && (Date.now() - parseInt(cacheTime)) < 300000) { // 5 minutes cache
+          setFeaturedGrants(JSON.parse(cached));
+          setLoadingFeatured(false);
+          return;
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+        const response = await fetch(`${API_BASE_URL}/grants?limit=3&status=Active`, {
+          signal: controller.signal,
+          headers: {
+            'Cache-Control': 'max-age=300', // 5 minutes cache
+          }
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const activeGrants = data.filter((g: any) => g.status === "Active").slice(0, 3);
+        
+        setFeaturedGrants(activeGrants);
         setLoadingFeatured(false);
-      })
-      .catch(() => { setErrorFeatured("Failed to load featured grants"); setLoadingFeatured(false); });
+        
+        // Cache the results
+        sessionStorage.setItem('featuredGrants', JSON.stringify(activeGrants));
+        sessionStorage.setItem('featuredGrantsTime', Date.now().toString());
+        
+      } catch (error: any) {
+        console.error('Error loading featured grants:', error);
+        setErrorFeatured("Failed to load featured grants");
+        setLoadingFeatured(false);
+      }
+    };
+
+    loadFeaturedGrants();
   }, []);
 
   return (
@@ -177,11 +263,51 @@ export default function LandingPage() {
                   placeholder="Search grants by keyword, discipline, or funder..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => searchQuery.trim().length >= 2 && setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                   className="pl-10 h-12 text-lg"
                 />
+                
+                {/* Search Suggestions */}
+                {showSuggestions && searchSuggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 mt-1 max-h-60 overflow-y-auto">
+                    {isSearching ? (
+                      <div className="p-3 text-center text-gray-500">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mx-auto"></div>
+                        <span className="ml-2">Searching...</span>
+                      </div>
+                    ) : (
+                      searchSuggestions.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => handleSuggestionClick(suggestion)}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                        >
+                          <div className="flex items-center">
+                            <Search className="w-4 h-4 text-gray-400 mr-3" />
+                            <span className="text-gray-700">{suggestion}</span>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
-              <Button type="submit" size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8">
-                Search
+              <Button 
+                type="submit" 
+                size="lg" 
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+                disabled={isSearching}
+              >
+                {isSearching ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Searching...
+                  </>
+                ) : (
+                  'Search'
+                )}
               </Button>
             </div>
           </form>
@@ -275,10 +401,32 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {loadingFeatured && <div className="text-center py-8 text-gray-500">Loading featured grants...</div>}
+          {loadingFeatured && (
+            <div className="grid md:grid-cols-3 gap-8">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardContent className="p-6">
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="h-4 bg-gray-200 rounded w-24"></div>
+                        <div className="h-4 bg-gray-200 rounded w-20"></div>
+                      </div>
+                      <div className="h-6 bg-gray-200 rounded w-full mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-32 mb-3"></div>
+                      <div className="flex items-center justify-between">
+                        <div className="h-4 bg-gray-200 rounded w-20"></div>
+                        <div className="h-4 bg-gray-200 rounded w-24"></div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
           {errorFeatured && <div className="text-center py-8 text-red-600">{errorFeatured}</div>}
-          <div className="grid md:grid-cols-3 gap-8">
-            {featuredGrants.map((grant) => (
+          {!loadingFeatured && !errorFeatured && (
+            <div className="grid md:grid-cols-3 gap-8">
+              {featuredGrants.map((grant) => (
               <Card key={grant._id || grant.id} className="hover:shadow-lg transition-shadow">
               <CardContent className="p-6">
                 <div className="mb-4">
@@ -300,7 +448,8 @@ export default function LandingPage() {
               </CardContent>
             </Card>
             ))}
-          </div>
+            </div>
+          )}
         </div>
       </section>
 

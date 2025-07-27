@@ -133,14 +133,18 @@ exports.updateProfile = async (req, res, next) => {
   try {
     const updateFields = { ...req.body };
 
+    // Remove password field if it's empty to avoid hashing empty string
+    if (updateFields.password === '') {
+      delete updateFields.password;
+    }
+
     // If password is being updated, hash it
     if (updateFields.password) {
-      const bcrypt = require('bcryptjs');
       const salt = await bcrypt.genSalt(10);
       updateFields.password = await bcrypt.hash(updateFields.password, salt);
     }
 
-    // Handle profile image upload
+    // Handle profile image upload (only if files are present)
     if (req.files && req.files.profileImage) {
       const path = require('path');
       const fs = require('fs');
@@ -155,6 +159,14 @@ exports.updateProfile = async (req, res, next) => {
       updateFields.profileImage = fileName;
     }
 
+    // Check if email is being updated and if it's already taken by another user
+    if (updateFields.email) {
+      const existingUser = await User.findOne({ email: updateFields.email, _id: { $ne: req.user.id } });
+      if (existingUser) {
+        return res.status(409).json({ message: 'Email already registered by another user.' });
+      }
+    }
+
     const user = await User.findByIdAndUpdate(
       req.user.id,
       updateFields,
@@ -163,6 +175,7 @@ exports.updateProfile = async (req, res, next) => {
     if (!user) return res.status(404).json({ message: 'User not found.' });
     res.json(user);
   } catch (err) {
+    console.error('Profile update error:', err);
     next(err);
   }
 }; 

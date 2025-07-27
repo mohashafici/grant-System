@@ -1,5 +1,6 @@
 const Review = require('../models/Review');
 const Proposal = require('../models/Proposal');
+const NotificationService = require('../services/notificationService');
 
 // POST /api/reviews/:proposalId - Submit review
 exports.submitReview = async (req, res, next) => {
@@ -39,7 +40,18 @@ exports.submitReview = async (req, res, next) => {
       proposalStatus = 'Needs Revision';
     }
     
-    await Proposal.findByIdAndUpdate(req.params.proposalId, { status: proposalStatus });
+    const proposal = await Proposal.findByIdAndUpdate(req.params.proposalId, { status: proposalStatus });
+    
+    // Send notifications
+    try {
+      // Notify admins about completed review
+      await NotificationService.notifyReviewCompleted(review, proposal);
+      
+      // Notify researcher about status change
+      await NotificationService.notifyProposalStatusUpdate(proposal, 'Under Review', proposalStatus);
+    } catch (error) {
+      console.error('Error sending review notifications:', error);
+    }
     
     res.json(review);
   } catch (err) {

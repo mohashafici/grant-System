@@ -133,6 +133,7 @@ export default function ReviewHistoryPage() {
 
   const totalReviews = reviews.length
   const approvedReviews = reviews.filter((r) => r.decision === "Approved").length
+  const rejectedReviews = reviews.filter((r) => r.decision === "Rejected").length
   const averageScore = (reviews.reduce((sum, r) => sum + (parseFloat(r.score) || 0), 0) / (totalReviews || 1)).toFixed(1)
 
   return (
@@ -161,15 +162,37 @@ export default function ReviewHistoryPage() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Approved</CardTitle>
-                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                  <CheckCircle className="h-4 w-4 text-green-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{approvedReviews}</div>
+                  <div className="text-2xl font-bold text-green-600">{approvedReviews}</div>
                   <p className="text-xs text-muted-foreground">
                     {Math.round((approvedReviews / totalReviews) * 100)}% approval rate
                   </p>
                 </CardContent>
               </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Rejected</CardTitle>
+                  <XCircle className="h-4 w-4 text-red-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-red-600">{rejectedReviews}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {Math.round((rejectedReviews / totalReviews) * 100)}% rejection rate
+                  </p>
+                </CardContent>
+              </Card>
+              {/* <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Average Score</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-blue-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-blue-600">{averageScore}</div>
+                  <p className="text-xs text-muted-foreground">Out of 10</p>
+                </CardContent>
+              </Card> */}
             </div>
 
             {/* Search and Filter */}
@@ -193,7 +216,7 @@ export default function ReviewHistoryPage() {
                     <SelectItem value="all">All Decisions</SelectItem>
                     <SelectItem value="Approved">Approved</SelectItem>
                     <SelectItem value="Rejected">Rejected</SelectItem>
-                    <SelectItem value="Revisions Requested">Revisions Requested</SelectItem>
+                    {/* <SelectItem value="Revisions Requested">Revisions Requested</SelectItem> */}
                   </SelectContent>
                 </Select>
 
@@ -232,7 +255,7 @@ export default function ReviewHistoryPage() {
                         <TableHead>Researcher</TableHead>
                         <TableHead>Category</TableHead>
                         <TableHead>Review Date</TableHead>
-                        <TableHead>Score</TableHead>
+                        {/* <TableHead>Score</TableHead> */}
                         <TableHead>Decision</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
@@ -262,9 +285,9 @@ export default function ReviewHistoryPage() {
                               {review.reviewDate ? new Date(review.reviewDate).toLocaleDateString() : ''}
                             </div>
                           </TableCell>
-                          <TableCell>
+                          {/* <TableCell>
                             <div className="text-lg font-bold text-blue-600">{review.score}</div>
-                          </TableCell>
+                          </TableCell> */}
                           <TableCell>
                             <Badge className={getDecisionColor(review.decision)}>
                               {review.decision === "Approved" ? (

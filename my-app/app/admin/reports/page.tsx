@@ -566,7 +566,7 @@ export default function AdminReportsPage() {
                           <TableHead>Reviewer</TableHead>
                           <TableHead>Reviews Completed</TableHead>
                           <TableHead>Total Assigned</TableHead>
-                          <TableHead>Avg Score</TableHead>
+                          {/* <TableHead>Avg Score</TableHead> */}
                           <TableHead>Avg Time (days)</TableHead>
                           <TableHead>On-Time Rate</TableHead>
                         </TableRow>
@@ -577,7 +577,7 @@ export default function AdminReportsPage() {
                             <TableCell className="font-medium">{reviewer.name}</TableCell>
                             <TableCell>{reviewer.reviews}</TableCell>
                             <TableCell>{reviewer.totalAssigned}</TableCell>
-                            <TableCell>{reviewer.averageScore}/10</TableCell>
+                            {/* <TableCell>{reviewer.averageScore}/10</TableCell> */}
                             <TableCell>{reviewer.avgTime}d</TableCell>
                             <TableCell>{reviewer.onTimeRate}%</TableCell>
                           </TableRow>

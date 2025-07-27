@@ -1,10 +1,45 @@
 const Grant = require('../models/Grant');
+const User = require('../models/User');
+const NotificationService = require('../services/notificationService');
 
-// GET /api/grants - Get all grants
+// GET /api/grants - Get all grants with search, filtering, and pagination
 exports.getAllGrants = async (req, res, next) => {
   try {
+    const { search, status, limit, category } = req.query;
     const now = new Date();
-    let grants = await Grant.find().sort({ createdDate: -1 });
+    
+    // Build query
+    let query = {};
+    
+    // Status filter
+    if (status) {
+      query.status = status;
+    }
+    
+    // Category filter
+    if (category) {
+      query.category = category;
+    }
+    
+    // Search functionality
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { category: { $regex: search, $options: 'i' } },
+        { funder: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    // Execute query with limit
+    let grantsQuery = Grant.find(query).sort({ createdDate: -1 });
+    
+    if (limit) {
+      grantsQuery = grantsQuery.limit(parseInt(limit));
+    }
+    
+    let grants = await grantsQuery;
+    
     // Update status to 'Closed' if deadline has passed and status is not already 'Closed'
     const updates = [];
     grants.forEach(grant => {
@@ -13,11 +48,13 @@ exports.getAllGrants = async (req, res, next) => {
         updates.push(grant.save());
       }
     });
+    
     if (updates.length > 0) {
       await Promise.all(updates);
       // Re-fetch grants to ensure up-to-date status
-      grants = await Grant.find().sort({ createdDate: -1 });
+      grants = await grantsQuery;
     }
+    
     res.json(grants);
   } catch (err) {
     next(err);
@@ -40,6 +77,15 @@ exports.createGrant = async (req, res, next) => {
       requirements,
       status,
     });
+
+    // Notify researchers about new grant
+    try {
+      const researchers = await User.find({ role: 'researcher' });
+      await NotificationService.notifyNewGrant(grant, researchers);
+    } catch (error) {
+      console.error('Error notifying researchers about new grant:', error);
+    }
+
     res.status(201).json(grant);
   } catch (err) {
     next(err);
