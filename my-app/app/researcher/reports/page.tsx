@@ -44,8 +44,11 @@ import {
   AlertTriangle,
 } from "lucide-react"
 import ResearcherLayout from "@/components/layouts/ResearcherLayout"
+import { authStorage } from "@/lib/auth"
+import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 
 export default function ResearcherReportsPage() {
+  useAuthRedirect(["researcher"])
   const [reports, setReports] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -56,7 +59,7 @@ export default function ResearcherReportsPage() {
       setLoading(true)
       setError("")
       try {
-        const token = localStorage.getItem("token")
+        const token = authStorage.getToken()
         const res = await fetch("http://localhost:5000/api/reports/mine", {
           headers: { Authorization: `Bearer ${token}` },
         })
@@ -157,9 +160,10 @@ export default function ResearcherReportsPage() {
       milestoneStatus: "",
     })
 
-    const handleSubmit = () => {
-      console.log("Submitting report:", reportData)
-      onClose()
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setSubmitting(true);
+      setError("");
     }
 
     return (

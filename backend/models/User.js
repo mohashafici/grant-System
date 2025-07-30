@@ -41,6 +41,49 @@ const UserSchema = new mongoose.Schema({
   profileImage: {
     type: String, // File path or URL
   },
+  // Status field for user account
+  status: {
+    type: String,
+    enum: ['active', 'inactive', 'pending'],
+    default: 'active',
+  },
+  // Email verification fields
+  isEmailVerified: {
+    type: Boolean,
+    default: false,
+  },
+  emailVerificationToken: {
+    type: String,
+  },
+  emailVerificationExpires: {
+    type: Date,
+  },
+  // Audit trail fields
+  lastModifiedBy: {
+    adminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    adminName: {
+      type: String,
+    },
+    adminEmail: {
+      type: String,
+    },
+    modifiedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    changes: [{
+      field: String,
+      oldValue: String,
+      newValue: String,
+      changedAt: {
+        type: Date,
+        default: Date.now,
+      }
+    }]
+  }
 }, { timestamps: true });
 
 UserSchema.pre('save', async function (next) {

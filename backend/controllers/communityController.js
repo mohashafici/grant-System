@@ -24,28 +24,74 @@ exports.getThread = async (req, res) => {
 // Create a new thread
 exports.createThread = async (req, res) => {
   try {
-    const thread = new Thread(req.body);
+    const { title, domain, content, author, authorEmail } = req.body;
+    
+    // Validate required fields
+    if (!title || !content || !author || !authorEmail) {
+      return res.status(400).json({ 
+        message: 'Please provide title, content, author name, and author email' 
+      });
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(authorEmail)) {
+      return res.status(400).json({ 
+        message: 'Please provide a valid email address' 
+      });
+    }
+
+    const thread = new Thread({
+      title: title.trim(),
+      domain: domain || 'General',
+      content: content.trim(),
+      author: author.trim(),
+      authorEmail: authorEmail.trim(),
+      replies: []
+    });
+    
     await thread.save();
     res.status(201).json(thread);
   } catch (err) {
-    res.status(400).json({ error: 'Invalid data' });
+    console.error('Thread creation error:', err);
+    res.status(400).json({ message: 'Failed to create thread. Please try again.' });
   }
 };
 
 // Add a reply to a thread
 exports.addReply = async (req, res) => {
   try {
+    const { author, authorEmail, content } = req.body;
+    
+    // Validate required fields
+    if (!author || !authorEmail || !content) {
+      return res.status(400).json({ 
+        message: 'Please provide author name, author email, and content' 
+      });
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(authorEmail)) {
+      return res.status(400).json({ 
+        message: 'Please provide a valid email address' 
+      });
+    }
+
     const thread = await Thread.findById(req.params.id);
-    if (!thread) return res.status(404).json({ error: 'Not found' });
+    if (!thread) return res.status(404).json({ message: 'Thread not found' });
+    
     thread.replies.push({
-      author: req.body.author,
-      content: req.body.content,
+      author: author.trim(),
+      authorEmail: authorEmail.trim(),
+      content: content.trim(),
       createdAt: new Date()
     });
     thread.updatedAt = new Date();
     await thread.save();
     res.status(201).json(thread);
   } catch (err) {
-    res.status(400).json({ error: 'Invalid data' });
+    console.error('Reply creation error:', err);
+    res.status(400).json({ message: 'Failed to add reply. Please try again.' });
   }
 }; 

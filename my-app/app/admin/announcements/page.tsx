@@ -7,10 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { authStorage } from "@/lib/auth"
+import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 
 const priorities = ["Low", "Medium", "High"];
 
 export default function AdminAnnouncementsPage() {
+  useAuthRedirect(["admin"])
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -48,7 +51,7 @@ export default function AdminAnnouncementsPage() {
     setSubmitting(true);
     setError("");
     try {
-      const token = localStorage.getItem("token");
+      const token = authStorage.getToken();
       const res = await fetch(`${API_BASE_URL}/announcements`, {
         method: "POST",
         headers: {
@@ -72,7 +75,7 @@ export default function AdminAnnouncementsPage() {
 
   const handleDelete = async id => {
     if (!window.confirm("Delete this announcement?")) return;
-    const token = localStorage.getItem("token");
+    const token = authStorage.getToken();
     const res = await fetch(`${API_BASE_URL}/announcements/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },

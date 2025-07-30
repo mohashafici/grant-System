@@ -35,11 +35,9 @@ const ProposalSchema = new mongoose.Schema({
   },
   deadline: {
     type: Date,
-    required: true,
   },
   funding: {
     type: Number,
-    required: true,
   },
   progress: {
     type: Number,
@@ -47,7 +45,6 @@ const ProposalSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    required: true,
   },
   // Budget breakdown fields
   personnelCosts: {
@@ -93,38 +90,6 @@ const ProposalSchema = new mongoose.Schema({
     ref: 'Grant',
     required: true,
   },
-  // Recommendation fields
-  // recommendedScore: {
-  //   type: Number,
-  // },
-  // recommendation: {
-  //   type: String,
-  // },
-  // Recommendation fields
-recommendedScore: {
-  type: Number,
-},
-recommendation: {
-  type: String,
-},
-
-// GPT evaluation fields
-gptScore: {
-  type: Number,
-  default: 0,
-},
-gptRecommendation: {
-  type: String,
-  default: "",
-},
-gptExplanation: {
-  type: String,
-  default: "",
-},
-topRecommended: {
-  type: Boolean,
-  default: false,
-},
 
 }, { timestamps: true });
 

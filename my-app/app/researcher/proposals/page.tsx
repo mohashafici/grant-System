@@ -47,6 +47,8 @@ import {
   Clipboard,
 } from "lucide-react"
 import ResearcherLayout from "@/components/layouts/ResearcherLayout"
+import { authStorage } from "@/lib/auth"
+import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 
 // function ResearcherSidebar() {
 //   return (
@@ -364,6 +366,7 @@ const getStatusIcon = (status: string) => {
 }
 
 export default function ResearcherProposalsPage() {
+  useAuthRedirect(["researcher"])
   const [proposals, setProposals] = useState<any[]>([])
   const [grants, setGrants] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -379,7 +382,7 @@ export default function ResearcherProposalsPage() {
       setLoading(true)
       setError("")
       try {
-        const token = localStorage.getItem("token")
+        const token = authStorage.getToken()
         const res = await fetch(`${API_BASE_URL}/proposals/mine`, {
           headers: { Authorization: `Bearer ${token}` },
         })
@@ -413,7 +416,7 @@ export default function ResearcherProposalsPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      const token = localStorage.getItem("token")
+      const token = authStorage.getToken()
       const res = await fetch(`${API_BASE_URL}/proposals/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },

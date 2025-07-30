@@ -1,6 +1,5 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { Bell, Check, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -11,6 +10,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
+import { useEffect, useState } from "react"
+import { authStorage } from "@/lib/auth"
 import { useToast } from "@/hooks/use-toast"
 
 interface Notification {
@@ -35,7 +36,7 @@ export default function NotificationBell() {
   // Fetch notifications
   const fetchNotifications = async () => {
     try {
-      const token = localStorage.getItem("token")
+      const token = authStorage.getToken()
       if (!token) return
 
       const response = await fetch(`${API_BASE_URL}/notifications?limit=10`, {
@@ -54,7 +55,7 @@ export default function NotificationBell() {
   // Fetch unread count
   const fetchUnreadCount = async () => {
     try {
-      const token = localStorage.getItem("token")
+      const token = authStorage.getToken()
       if (!token) return
 
       const response = await fetch(`${API_BASE_URL}/notifications/unread-count`, {
@@ -73,7 +74,7 @@ export default function NotificationBell() {
   // Mark notification as read
   const markAsRead = async (notificationId: string) => {
     try {
-      const token = localStorage.getItem("token")
+      const token = authStorage.getToken()
       const response = await fetch(`${API_BASE_URL}/notifications/${notificationId}/read`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` }
@@ -94,7 +95,7 @@ export default function NotificationBell() {
   const markAllAsRead = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem("token")
+      const token = authStorage.getToken()
       const response = await fetch(`${API_BASE_URL}/notifications/mark-all-read`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` }
@@ -123,7 +124,7 @@ export default function NotificationBell() {
   // Delete notification
   const deleteNotification = async (notificationId: string) => {
     try {
-      const token = localStorage.getItem("token")
+      const token = authStorage.getToken()
       const response = await fetch(`${API_BASE_URL}/notifications/${notificationId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }

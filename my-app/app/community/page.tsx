@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { toast } from "@/components/ui/use-toast";
 import Link from "next/link";
 import PublicNavbar from "@/components/public-navbar";
@@ -26,6 +28,8 @@ export default function CommunityPage() {
     title: "",
     domain: domains[0],
     content: "",
+    authorName: "",
+    authorEmail: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -44,6 +48,12 @@ export default function CommunityPage() {
       try {
         const payload = JSON.parse(atob(token.split(".")[1]));
         setUser(payload);
+        // Pre-fill form with user data if logged in
+        setForm(f => ({
+          ...f,
+          authorName: payload.name || payload.email || "",
+          authorEmail: payload.email || "",
+        }));
       } catch {}
     }
   }, []);
@@ -55,19 +65,42 @@ export default function CommunityPage() {
 
   const handleSubmit = async e => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!form.title.trim() || !form.content.trim() || !form.authorName.trim() || !form.authorEmail.trim()) {
+      toast({ title: "Please fill all required fields", variant: "destructive" });
+      return;
+    }
+
     setSubmitting(true);
     const token = localStorage.getItem("token");
+    
+    const threadData = {
+      title: form.title,
+      domain: form.domain,
+      content: form.content,
+      author: form.authorName,
+      authorEmail: form.authorEmail,
+    };
+
+    const headers = {
+      "Content-Type": "application/json",
+    };
+
+    // Add authorization if user is logged in
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
     const res = await fetch(`${API_BASE_URL}/community`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ ...form, author: user?.name || user?.email || "User" }),
+      headers,
+      body: JSON.stringify(threadData),
     });
+    
     if (res.ok) {
-      toast({ title: "Thread created" });
-      setForm({ title: "", domain: domains[0], content: "" });
+      toast({ title: "Thread created successfully!" });
+      setForm({ title: "", domain: domains[0], content: "", authorName: "", authorEmail: "" });
       setShowForm(false);
       // Refresh threads
       setLoading(true);
@@ -75,7 +108,8 @@ export default function CommunityPage() {
         .then(res => res.json())
         .then(data => { setThreads(data); setLoading(false); });
     } else {
-      toast({ title: "Failed to create thread", variant: "destructive" });
+      const errorData = await res.json();
+      toast({ title: "Failed to create thread", description: errorData.message || "Please try again", variant: "destructive" });
     }
     setSubmitting(false);
   };
@@ -109,24 +143,102 @@ export default function CommunityPage() {
         <div className="bg-white border border-blue-100 rounded-lg p-8 shadow-sm mb-8">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold text-gray-900">Forum Threads</h2>
-            {user ? (
-              <Button onClick={() => setShowForm(f => !f)}>{showForm ? "Cancel" : "Start a New Thread"}</Button>
-            ) : (
-              <Link href="/login?redirect=/community">
-                <Button>Start a New Thread</Button>
-              </Link>
-            )}
+            <Button onClick={() => setShowForm(f => !f)} className="bg-blue-600 hover:bg-blue-700">
+              {showForm ? "Cancel" : "Start a New Thread"}
+            </Button>
           </div>
-          {showForm && user && (
-            <form onSubmit={handleSubmit} className="mb-6 space-y-3">
-              <div className="flex gap-2">
-                <Input name="title" value={form.title} onChange={handleChange} placeholder="Thread title" required />
-                <select name="domain" value={form.domain} onChange={handleChange} className="border rounded px-2">
-                  {domains.map(d => <option key={d}>{d}</option>)}
-                </select>
+          
+          {showForm && (
+            <form onSubmit={handleSubmit} className="mb-6 space-y-4 p-6 bg-gray-50 rounded-lg border">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="authorName" className="text-sm font-medium text-gray-700">Your Name *</Label>
+                  <Input 
+                    id="authorName"
+                    name="authorName" 
+                    value={form.authorName} 
+                    onChange={handleChange} 
+                    placeholder="Enter your name" 
+                    required 
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="authorEmail" className="text-sm font-medium text-gray-700">Your Email *</Label>
+                  <Input 
+                    id="authorEmail"
+                    name="authorEmail" 
+                    type="email"
+                    value={form.authorEmail} 
+                    onChange={handleChange} 
+                    placeholder="Enter your email" 
+                    required 
+                    className="mt-1"
+                  />
+                </div>
               </div>
-              <textarea name="content" value={form.content} onChange={handleChange} required placeholder="What do you want to ask or share?" className="w-full border rounded p-2 min-h-[80px]" />
-              <Button type="submit" disabled={submitting}>{submitting ? "Posting..." : "Post Thread"}</Button>
+              
+              <div>
+                <Label htmlFor="title" className="text-sm font-medium text-gray-700">Thread Title *</Label>
+                <Input 
+                  id="title"
+                  name="title" 
+                  value={form.title} 
+                  onChange={handleChange} 
+                  placeholder="What's your question or topic?" 
+                  required 
+                  className="mt-1"
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="domain" className="text-sm font-medium text-gray-700">Research Domain</Label>
+                  <select 
+                    id="domain"
+                    name="domain" 
+                    value={form.domain} 
+                    onChange={handleChange} 
+                    className="w-full mt-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {domains.map(d => <option key={d}>{d}</option>)}
+                  </select>
+                </div>
+                <div className="flex items-end">
+                  {!user && (
+                    <p className="text-xs text-gray-500">
+                      💡 <Link href="/register" className="text-blue-600 hover:underline">Register</Link> to save your info and get notifications
+                    </p>
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="content" className="text-sm font-medium text-gray-700">Your Question or Discussion *</Label>
+                <RichTextEditor
+                  value={form.content}
+                  onChange={(value) => setForm(f => ({ ...f, content: value }))}
+                  placeholder="Share your question, experience, or start a discussion. Use the toolbar above for formatting."
+                  className="mt-1"
+                  minHeight="120px"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Use the toolbar above to format your text with bold, italic, quotes, and lists
+                </p>
+              </div>
+              
+              <div className="flex gap-3">
+                <Button type="submit" disabled={submitting} className="bg-blue-600 hover:bg-blue-700">
+                  {submitting ? "Posting..." : "Post Thread"}
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setShowForm(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
             </form>
           )}
           {loading && <div className="text-gray-500 py-8">Loading threads...</div>}

@@ -1,5 +1,5 @@
 import AdminSidebar from "@/components/sidebar/AdminSidebar";
-import ProfileMenu from "@/components/profile-menu";
+import { ProfileMenu } from "@/components/profile-menu"
 import NotificationBell from "@/components/notification-bell";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import SidebarInset from "@/components/ui/sidebar-inset";
@@ -14,7 +14,7 @@ export default function AdminLayout({ active, children, title }: { active: strin
           {title && <h1 className="text-2xl font-bold text-gray-900 ml-4">{title}</h1>}
           <div className="ml-auto flex items-center gap-2">
             <NotificationBell />
-            <ProfileMenu profileHref="/admin/profile" />
+            <ProfileMenu />
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>

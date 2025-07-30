@@ -12,7 +12,9 @@ router.get('/mine', auth, getMyProposals);
 router.get('/mine/:id', auth, getMyProposalById);
 
 // GET /api/proposals/grant/:grantId - Admin view proposals by grant
-router.get('/grant/:grantId', auth, authorizeRoles('admin'), getProposalsByGrant);
+router.get('/grant/:grantId', auth, authorizeRoles('admin'), (req, res, next) => {
+  getProposalsByGrant(req, res, next);
+});
 
 // PUT /api/proposals/:proposalId/assign-reviewer - Assign reviewer to proposal
 router.put('/:proposalId/assign-reviewer', auth, authorizeRoles('admin'), assignReviewer);

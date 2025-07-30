@@ -4,97 +4,8 @@ const path = require('path');
 const fs = require('fs');
 const Grant = require('../models/Grant');
 const { supabase } = require('../supabase');
-const { OpenAI } = require('openai');
-const { gptReviewProposal } = require('../services/GptProposalReview');
 const NotificationService = require('../services/notificationService');
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // Make sure to set this in .env
-});
-
-
-// Simple spell check function using a dictionary approach
-function spellCheckWithDictionary(text) {
-  // Common English words dictionary (simplified)
-  const commonWords = new Set([
-    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by',
-    'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did',
-    'will', 'would', 'could', 'should', 'may', 'might', 'can', 'must', 'shall',
-    'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they',
-    'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'her', 'its', 'our', 'their',
-    'research', 'innovation', 'technology', 'development', 'analysis', 'study', 'project',
-    'methodology', 'approach', 'implementation', 'evaluation', 'assessment', 'review',
-    'funding', 'grant', 'proposal', 'application', 'submission', 'deadline', 'timeline',
-    'objectives', 'goals', 'outcomes', 'results', 'impact', 'benefits', 'advantages',
-    'challenges', 'solutions', 'strategies', 'techniques', 'methods', 'processes',
-    'data', 'information', 'knowledge', 'expertise', 'experience', 'background',
-    'education', 'training', 'qualifications', 'certifications', 'publications',
-    'conferences', 'workshops', 'seminars', 'collaborations', 'partnerships',
-    'industry', 'academic', 'scientific', 'technical', 'professional', 'expert',
-    'specialist', 'consultant', 'advisor', 'mentor', 'supervisor', 'director',
-    'manager', 'coordinator', 'facilitator', 'researcher', 'scientist', 'engineer',
-    'developer', 'designer', 'analyst', 'evaluator', 'reviewer', 'assessor',
-    'innovative', 'creative', 'original', 'novel', 'unique', 'advanced', 'modern',
-    'cutting-edge', 'state-of-the-art', 'breakthrough', 'revolutionary', 'transformative',
-    'sustainable', 'environmental', 'ecological', 'green', 'renewable', 'energy',
-    'efficient', 'effective', 'productive', 'successful', 'profitable', 'valuable',
-    'important', 'significant', 'crucial', 'essential', 'vital', 'necessary',
-    'required', 'mandatory', 'compulsory', 'obligatory', 'standard', 'normal',
-    'typical', 'conventional', 'traditional', 'established', 'proven', 'tested',
-    'verified', 'validated', 'confirmed', 'approved', 'accepted', 'endorsed',
-    'recommended', 'suggested', 'proposed', 'planned', 'scheduled', 'organized',
-    'structured', 'systematic', 'methodical', 'logical', 'rational', 'reasonable',
-    'practical', 'feasible', 'achievable', 'attainable', 'realistic', 'viable',
-    'workable', 'manageable', 'controllable', 'measurable', 'quantifiable',
-    'observable', 'detectable', 'identifiable', 'recognizable', 'distinguishable',
-    'comparable', 'similar', 'related', 'connected', 'linked', 'associated',
-    'correlated', 'dependent', 'independent', 'autonomous', 'self-contained',
-    'integrated', 'unified', 'coordinated', 'synchronized', 'harmonized',
-    'optimized', 'maximized', 'minimized', 'reduced', 'increased', 'enhanced',
-    'improved', 'upgraded', 'updated', 'modified', 'adjusted', 'adapted',
-    'customized', 'personalized', 'tailored', 'designed', 'developed', 'created',
-    'built', 'constructed', 'assembled', 'produced', 'manufactured', 'generated',
-    'created', 'established', 'founded', 'launched', 'initiated', 'started',
-    'begun', 'commenced', 'undertaken', 'pursued', 'conducted', 'performed',
-    'executed', 'implemented', 'carried', 'completed', 'finished', 'accomplished',
-    'achieved', 'attained', 'reached', 'obtained', 'gained', 'acquired',
-    'secured', 'obtained', 'received', 'accepted', 'approved', 'granted',
-    'awarded', 'allocated', 'assigned', 'distributed', 'provided', 'supplied',
-    'delivered', 'transferred', 'conveyed', 'transmitted', 'communicated',
-    'shared', 'exchanged', 'traded', 'bought', 'sold', 'purchased', 'acquired',
-    'invested', 'funded', 'financed', 'sponsored', 'supported', 'backed',
-    'endorsed', 'recommended', 'suggested', 'proposed', 'advocated', 'promoted',
-    'marketed', 'advertised', 'publicized', 'announced', 'declared', 'stated',
-    'expressed', 'conveyed', 'communicated', 'transmitted', 'delivered', 'presented',
-    'demonstrated', 'illustrated', 'exemplified', 'showcased', 'highlighted',
-    'emphasized', 'stressed', 'underscored', 'reinforced', 'strengthened',
-    'enhanced', 'improved', 'upgraded', 'refined', 'polished', 'perfected',
-    'optimized', 'maximized', 'minimized', 'reduced', 'increased', 'enhanced',
-    'improved', 'upgraded', 'updated', 'modified', 'adjusted', 'adapted',
-    'customized', 'personalized', 'tailored', 'designed', 'developed', 'created',
-    'built', 'constructed', 'assembled', 'produced', 'manufactured', 'generated'
-  ]);
-
-  const words = text.toLowerCase().split(/\s+/);
-  let errors = 0;
-  
-  for (const word of words) {
-    // Clean the word (remove punctuation)
-    const cleanWord = word.replace(/[^\w]/g, '');
-    
-    // Skip empty words, numbers, and very short words
-    if (cleanWord.length === 0 || /^\d+$/.test(cleanWord) || cleanWord.length <= 2) {
-      continue;
-    }
-    
-    // Check if word is in dictionary
-    if (!commonWords.has(cleanWord)) {
-      errors++;
-    }
-  }
-  
-  return errors;
-}
 
 // Helper to upload a file buffer to Supabase Storage
 async function uploadToSupabase(file, folder) {
@@ -114,26 +25,60 @@ async function uploadToSupabase(file, folder) {
 // POST /api/proposals - Submit new proposal
 exports.submitProposal = async (req, res, next) => {
   try {
-    const { 
-      title, 
-      abstract, 
-      deadline, 
-      funding, 
-      category, 
-      grant,
-      objectives,
-      methodology,
-      timeline,
-      expectedOutcomes,
-      personnelCosts,
-      equipmentCosts,
-      materialsCosts,
-      travelCosts,
-      otherCosts
-    } = req.body;
+    // Extract data from FormData (express-fileupload puts form fields in req.body)
+    const title = req.body.title;
+    const abstract = req.body.abstract;
+    const grant = req.body.grant;
+    const objectives = req.body.objectives;
+    const methodology = req.body.methodology;
+    const timeline = req.body.timeline;
+    const expectedOutcomes = req.body.expectedOutcomes;
+    const personnelCosts = req.body.personnelCosts;
+    const equipmentCosts = req.body.equipmentCosts;
+    const materialsCosts = req.body.materialsCosts;
+    const travelCosts = req.body.travelCosts;
+    const otherCosts = req.body.otherCosts;
 
-    if (!title || !abstract || !deadline || !funding || !category || !grant || !objectives || !methodology || !timeline) {
-      return res.status(400).json({ message: 'Please fill all required fields.' });
+    // Detailed validation with specific field messages
+    const missingFields = [];
+    if (!title || !title.trim()) missingFields.push('title');
+    if (!abstract || !abstract.trim()) missingFields.push('abstract');
+    if (!grant) missingFields.push('grant');
+    if (!objectives || !objectives.trim()) missingFields.push('objectives');
+    if (!methodology || !methodology.trim()) missingFields.push('methodology');
+    if (!timeline || !timeline.trim()) missingFields.push('timeline');
+
+    if (missingFields.length > 0) {
+      return res.status(400).json({ 
+        message: `Please fill all required fields. Missing: ${missingFields.join(', ')}` 
+      });
+    }
+
+    // Get grant details to auto-fill category, funding, and deadline
+    const grantDetails = await Grant.findById(grant);
+    if (!grantDetails) {
+      return res.status(400).json({ message: 'Selected grant not found.' });
+    }
+
+    // Validate budget breakdown - at least one category must be filled
+    const totalBudget = (parseInt(personnelCosts) || 0) + (parseInt(equipmentCosts) || 0) + 
+                       (parseInt(materialsCosts) || 0) + (parseInt(travelCosts) || 0) + 
+                       (parseInt(otherCosts) || 0);
+    
+    if (totalBudget === 0) {
+      return res.status(400).json({ message: 'Please fill at least one budget breakdown category.' });
+    }
+
+    // Validate that total budget equals grant funding
+    if (totalBudget !== parseInt(grantDetails.funding)) {
+      return res.status(400).json({ 
+        message: `Total budget ($${totalBudget.toLocaleString()}) must equal grant funding ($${grantDetails.funding.toLocaleString()}).` 
+      });
+    }
+
+    // Validate proposal document is uploaded
+    if (!req.files || !req.files.proposalDocument) {
+      return res.status(400).json({ message: 'Proposal document is required.' });
     }
 
     // Handle file uploads
@@ -168,9 +113,9 @@ exports.submitProposal = async (req, res, next) => {
       methodology,
       timeline,
       expectedOutcomes,
-      deadline,
-      funding: parseInt(funding),
-      category,
+      deadline: grantDetails.deadline, // Use grant deadline
+      funding: grantDetails.funding, // Use grant funding
+      category: grantDetails.category, // Use grant category
       grant,
       researcher: req.user.id,
       status: 'Under Review',
@@ -186,67 +131,12 @@ exports.submitProposal = async (req, res, next) => {
       ...filePaths
     });
 
-    // --- Advanced Recommendation Algorithm ---
-    let score = 0;
-    const abstractLower = abstract.toLowerCase();
-
-    // 1. Keywords (innovation, impact, feasibility): +10 each if present (max 30)
-    const keywords = ["innovation", "impact", "feasibility"];
-    for (const keyword of keywords) {
-      if (abstractLower.includes(keyword)) score += 10;
-    }
-
-    // 2. Word count: +10 if abstract has at least 200 words
-    const wordCount = abstract.trim().split(/\s+/).length;
-    if (wordCount >= 200) score += 10;
-
-    // 3. Clarity / Readability: +10 if average sentence length < 20 words
-    const sentences = abstract.split(/[.!?]/).filter(s => s.trim().length > 0);
-    const avgSentenceLength = sentences.length > 0 ? wordCount / sentences.length : wordCount;
-    if (avgSentenceLength < 20) score += 10;
-
-    // 4. Structure detection: +2 for each section found (max 10)
-    const structureSections = ["introduction", "methodology", "outcomes", "impact", "budget"];
-    let structureScore = 0;
-    for (const section of structureSections) {
-      if (abstractLower.includes(section)) structureScore += 2;
-    }
-    score += Math.min(structureScore, 10);
-
-    // 5. Domain relevance: +10 if domain-specific keywords found
-    const domainKeywords = ["renewable", "solar", "energy"];
-    if (domainKeywords.some(k => abstractLower.includes(k))) score += 10;
-
-    // 6. Grammar/spelling: +10 if ≤5 spelling errors
-    const spellingErrors = spellCheckWithDictionary(abstract);
-    if (spellingErrors <= 5) score += 10;
-
-    // Cap score at 100
-    score = Math.min(score, 100);
-
-    // Recommendation
-    let recommendation = "Not Recommended for Acceptance";
-    if (score >= 50) recommendation = "Recommended for Acceptance";
-
-    // Save to proposal
-    proposal.recommendedScore = score;
-    proposal.recommendation = recommendation;
-    await proposal.save();
-
     // Send notification to admins about new proposal
     try {
       await NotificationService.notifyProposalSubmitted(proposal);
     } catch (error) {
       console.error('Error sending proposal notification:', error);
     }
-
-      // --- GPT-4 Evaluation (DISABLED: using letter/manual recommendation) ---
-      // const gptResult = await gptReviewProposal({ abstract, objectives });
-      // proposal.gptScore = gptResult.score;
-      // proposal.gptRecommendation = gptResult.recommendation;
-      // proposal.gptExplanation = gptResult.explanation;
-      // await proposal.save();
-        
 
     res.status(201).json(proposal);
   } catch (err) {

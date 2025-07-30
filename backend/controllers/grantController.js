@@ -1,6 +1,6 @@
 const Grant = require('../models/Grant');
 const User = require('../models/User');
-const NotificationService = require('../services/notificationService');
+// const NotificationService = require('../services/notificationService');
 
 // GET /api/grants - Get all grants with search, filtering, and pagination
 exports.getAllGrants = async (req, res, next) => {
@@ -57,6 +57,7 @@ exports.getAllGrants = async (req, res, next) => {
     
     res.json(grants);
   } catch (err) {
+    console.error('Error in getAllGrants:', err);
     next(err);
   }
 };
@@ -78,13 +79,13 @@ exports.createGrant = async (req, res, next) => {
       status,
     });
 
-    // Notify researchers about new grant
-    try {
-      const researchers = await User.find({ role: 'researcher' });
-      await NotificationService.notifyNewGrant(grant, researchers);
-    } catch (error) {
-      console.error('Error notifying researchers about new grant:', error);
-    }
+    // Notify researchers about new grant - temporarily disabled
+    // try {
+    //   const researchers = await User.find({ role: 'researcher' });
+    //   await NotificationService.notifyNewGrant(grant, researchers);
+    // } catch (error) {
+    //   console.error('Error notifying researchers about new grant:', error);
+    // }
 
     res.status(201).json(grant);
   } catch (err) {

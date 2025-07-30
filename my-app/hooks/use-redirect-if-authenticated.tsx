@@ -1,16 +1,21 @@
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+"use client"
+
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { authStorage } from "@/lib/auth"
 
 export function useRedirectIfAuthenticated() {
-  const router = useRouter();
+  const router = useRouter()
+
   useEffect(() => {
-    const userStr = typeof window !== "undefined" ? localStorage.getItem("user") : null;
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (userStr && token) {
-      const user = JSON.parse(userStr);
-      if (user.role === "admin") router.replace("/admin");
-      else if (user.role === "reviewer") router.replace("/reviewer");
-      else router.replace("/researcher");
+    const user = authStorage.getUser()
+    const token = authStorage.getToken()
+
+    if (user && token) {
+      // Redirect based on role
+      if (user.role === "admin") router.push("/admin")
+      else if (user.role === "reviewer") router.push("/reviewer")
+      else router.push("/researcher")
     }
-  }, [router]);
+  }, [router])
 } 

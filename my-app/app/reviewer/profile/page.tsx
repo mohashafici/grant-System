@@ -49,6 +49,8 @@ import { ReviewerSidebar } from "@/components/ui/sidebar"
 import ReviewerLayout from "@/components/layouts/ReviewerLayout"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
+import { authStorage } from "@/lib/auth"
+import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 
 
 function EditProfileModal({ onClose }: { onClose: () => void }) {
@@ -59,7 +61,6 @@ function EditProfileModal({ onClose }: { onClose: () => void }) {
   })
 
   const handleSubmit = () => {
-    console.log("Updating profile:", formData)
     onClose()
   }
 
@@ -114,6 +115,7 @@ function EditProfileModal({ onClose }: { onClose: () => void }) {
 }
 
 export default function ReviewerProfilePage() {
+  useAuthRedirect(["reviewer"])
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -132,7 +134,7 @@ export default function ReviewerProfilePage() {
     const fetchProfile = async () => {
       setLoading(true);
       try {
-        const token = localStorage.getItem("token");
+        const token = authStorage.getToken();
         const res = await fetch(`${API_BASE_URL}/users/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -161,7 +163,7 @@ export default function ReviewerProfilePage() {
 
   const handleSave = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = authStorage.getToken();
       const res = await fetch(`${API_BASE_URL}/users/me`, {
         method: "PUT",
         headers: {

@@ -3,11 +3,16 @@ require('dotenv').config();
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log('MongoDB connected');
+    const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/grant-system';
+    
+    await mongoose.connect(mongoURI);
+    
+    console.log('Database connected');
+    
+    return true;
   } catch (err) {
-    console.error('MongoDB connection error:', err.message);
-    process.exit(1);
+    console.error('Database connection failed:', err.message);
+    return false;
   }
 };
 

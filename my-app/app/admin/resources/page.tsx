@@ -3,8 +3,11 @@ import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { authStorage } from "@/lib/auth"
+import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 
 export default function AdminResourcesPage() {
+  useAuthRedirect(["admin"])
   const [resources, setResources] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -41,7 +44,7 @@ export default function AdminResourcesPage() {
     setSubmitting(true);
     setError("");
     try {
-      const token = localStorage.getItem("token");
+      const token = authStorage.getToken();
       const res = await fetch(`${API_BASE_URL}/resources`, {
         method: "POST",
         headers: {
@@ -67,7 +70,7 @@ export default function AdminResourcesPage() {
     if (!window.confirm("Delete this resource?")) return;
     setError("");
     try {
-      const token = localStorage.getItem("token");
+      const token = authStorage.getToken();
       const res = await fetch(`${API_BASE_URL}/resources/${id}`, {
         method: "DELETE",
         headers: token ? { Authorization: `Bearer ${token}` } : {},

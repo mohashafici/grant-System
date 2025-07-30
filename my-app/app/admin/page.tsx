@@ -30,6 +30,7 @@ import {
 import AdminLayout from "@/components/layouts/AdminLayout"
 import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { authStorage } from "@/lib/auth"
 
 // function AssignReviewerModal({ submission, onClose }: { submission: any; onClose: () => void }) {
 //   const [selectedReviewer, setSelectedReviewer] = useState("")
@@ -189,7 +190,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
-      const token = localStorage.getItem("token")
+      const token = authStorage.getToken()
       // Fetch all grants
       const grantsRes = await fetch(`${API_BASE_URL}/grants`, {
         headers: { Authorization: `Bearer ${token}` },

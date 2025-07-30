@@ -1,39 +1,77 @@
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { User } from "lucide-react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+"use client"
 
-export default function ProfileMenu({ profileHref = "/profile", email, firstName }: { profileHref?: string, email?: string, firstName?: string }) {
-  const router = useRouter();
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { User, LogOut, Settings } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { authStorage } from "@/lib/auth"
+
+export function ProfileMenu() {
+  const [isOpen, setIsOpen] = useState(false)
+  const router = useRouter()
+  const user = authStorage.getUser()
+
+  const handleLogout = () => {
+    authStorage.clearAuth()
+    router.push("/login")
+  }
+
+  const getInitials = (firstName: string, lastName: string) => {
+    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase()
+  }
+
+  if (!user) return null
+
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
-        <button className="rounded-full bg-gray-200 p-2 hover:bg-gray-300 focus:outline-none">
-          <User className="w-6 h-6 text-gray-700" />
-        </button>
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src="/placeholder-user.jpg" alt={user.firstName} />
+            <AvatarFallback>
+              {getInitials(user.firstName, user.lastName)}
+            </AvatarFallback>
+          </Avatar>
+        </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {(email || firstName) && (
-          <div className="px-3 py-2 text-xs text-gray-700">
-            {firstName && <div className="font-semibold">{firstName}</div>}
-            {email && <div className="text-gray-500">{email}</div>}
+      <DropdownMenuContent className="w-56" align="end" forceMount>
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">
+              {user.firstName} {user.lastName}
+            </p>
+            <p className="text-xs leading-none text-muted-foreground">
+              {user.email}
+            </p>
+            <p className="text-xs leading-none text-muted-foreground capitalize">
+              {user.role}
+            </p>
           </div>
-        )}
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href={profileHref}>Profile</Link>
+        <DropdownMenuItem onClick={() => router.push(`/${user.role}/profile`)}>
+          <User className="mr-2 h-4 w-4" />
+          <span>Profile</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push(`/${user.role}`)}>
+          <Settings className="mr-2 h-4 w-4" />
+          <span>Dashboard</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() => {
-            localStorage.removeItem("token");
-            localStorage.removeItem("user");
-            router.push("/login");
-          }}
-        >
-          Logout
+        <DropdownMenuItem onClick={handleLogout}>
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Log out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+  )
 } 

@@ -29,6 +29,7 @@ import {
 } from "lucide-react"
 import ReviewerLayout from "@/components/layouts/ReviewerLayout"
 import { useAuthRedirect } from "@/hooks/use-auth-redirect"
+import { authStorage } from "@/lib/auth"
 
 function ReviewHistoryModal({ review, onClose }: { review: any, onClose: () => void }) {
   return (
@@ -89,7 +90,7 @@ export default function ReviewHistoryPage() {
       setLoading(true)
       setError("")
       try {
-        const token = localStorage.getItem("token")
+        const token = authStorage.getToken()
         const res = await fetch(`${API_BASE_URL}/reviews/assigned`, {
           headers: { Authorization: `Bearer ${token}` },
         })

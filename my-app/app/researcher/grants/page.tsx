@@ -32,6 +32,8 @@ import {
 import { Button } from "@/components/ui/button";
 import ResearcherLayout from "@/components/layouts/ResearcherLayout";
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { authStorage } from "@/lib/auth"
+import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 
 function getStatusColor(status: string) {
   switch (status) {
@@ -86,6 +88,7 @@ interface Proposal {
 }
 
 export default function BrowseGrants() {
+  useAuthRedirect(["researcher"])
   const [grants, setGrants] = useState<Grant[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -104,7 +107,7 @@ export default function BrowseGrants() {
         const grantsRes = await fetch(`${API_BASE_URL}/grants`);
         const grantsData = await grantsRes.json();
         // Fetch proposals for current user
-        const token = localStorage.getItem("token");
+        const token = authStorage.getToken();
         let proposalsData = [];
         if (token) {
           const proposalsRes = await fetch(`${API_BASE_URL}/proposals/mine`, {

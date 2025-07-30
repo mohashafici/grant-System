@@ -4,16 +4,17 @@ import type React from "react"
 import { Suspense } from "react"
 
 import { useSearchParams } from "next/navigation";
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Award, Eye, EyeOff } from "lucide-react"
+import { Award, Eye, EyeOff, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { useRedirectIfAuthenticated } from "@/hooks/use-redirect-if-authenticated"
+import { authStorage } from "@/lib/auth"
 
 function LoginContent() {
   useRedirectIfAuthenticated()
@@ -22,14 +23,82 @@ function LoginContent() {
     email: "",
     password: "",
   })
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
+  const [touched, setTouched] = useState<{ email: boolean; password: boolean }>({
+    email: false,
+    password: false,
+  })
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
   const searchParams = useSearchParams();
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+  // Validation functions
+  const validateEmail = (email: string): string => {
+    if (!email) return "Email is required"
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) return "Please enter a valid email address"
+    return ""
+  }
+
+  const validatePassword = (password: string): string => {
+    if (!password) return "Password is required"
+    if (password.length < 6) return "Password must be at least 6 characters"
+    return ""
+  }
+
+  // Real-time validation
+  useEffect(() => {
+    if (touched.email) {
+      const emailError = validateEmail(loginData.email)
+      setErrors(prev => ({ ...prev, email: emailError }))
+    }
+  }, [loginData.email, touched.email])
+
+  useEffect(() => {
+    if (touched.password) {
+      const passwordError = validatePassword(loginData.password)
+      setErrors(prev => ({ ...prev, password: passwordError }))
+    }
+  }, [loginData.password, touched.password])
+
+  const handleBlur = (field: 'email' | 'password') => {
+    setTouched(prev => ({ ...prev, [field]: true }))
+  }
+
+  const handleInputChange = (field: 'email' | 'password', value: string) => {
+    setLoginData(prev => ({ ...prev, [field]: value }))
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: "" }))
+    }
+  }
+
+  const isFormValid = () => {
+    return !validateEmail(loginData.email) && !validatePassword(loginData.password) && loginData.email && loginData.password
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validate all fields
+    const emailError = validateEmail(loginData.email)
+    const passwordError = validatePassword(loginData.password)
+    
+    setErrors({ email: emailError, password: passwordError })
+    setTouched({ email: true, password: true })
+    
+    if (emailError || passwordError) {
+      toast({ 
+        title: "Validation Error", 
+        description: "Please fix the errors above and try again.", 
+        variant: "destructive", 
+        duration: 4000 
+      })
+      return
+    }
+
     setLoading(true)
     try {
       const res = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -37,12 +106,31 @@ function LoginContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(loginData),
       })
+      
       const data = await res.json()
-      if (!res.ok) throw new Error(data.message || "Login failed")
+      
+      if (!res.ok) {
+        // Handle unverified email case
+        if (data.requiresVerification) {
+          toast({ 
+            title: "Email Verification Required", 
+            description: "Please check your email and click the verification link before logging in.", 
+            variant: "destructive", 
+            duration: 6000 
+          })
+          return
+        }
+        throw new Error(data.message || "Login failed")
+      }
+      
       // Save JWT and user info
-      localStorage.setItem("token", data.token)
-      localStorage.setItem("user", JSON.stringify(data.user))
-      toast({ title: "Login Successful!", description: "Welcome back. You will be redirected shortly.", duration: 2000 })
+      authStorage.setAuth(data.token, data.user)
+      toast({ 
+        title: "Login Successful!", 
+        description: "Welcome back. You will be redirected shortly.", 
+        duration: 2000 
+      })
+      
       // Redirect based on role
       const redirect = searchParams.get("redirect");
       if (redirect) router.push(redirect);
@@ -50,7 +138,13 @@ function LoginContent() {
       else if (data.user.role === "reviewer") router.push("/reviewer")
       else router.push("/researcher")
     } catch (err: any) {
-      toast({ title: "Login Failed", description: err.message, variant: "destructive", duration: 4000 })
+      console.error("Login error:", err)
+      toast({ 
+        title: "Login Failed", 
+        description: err.message || "An unexpected error occurred. Please try again.", 
+        variant: "destructive", 
+        duration: 4000 
+      })
     } finally {
       setLoading(false)
     }
@@ -81,14 +175,24 @@ function LoginContent() {
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="login-email">Email</Label>
-                <Input
-                  id="login-email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={loginData.email}
-                  onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="login-email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={loginData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    onBlur={() => handleBlur('email')}
+                    className={errors.email && touched.email ? "border-red-500 focus:border-red-500" : ""}
+                    required
+                  />
+                  {errors.email && touched.email && (
+                    <div className="flex items-center gap-1 mt-1 text-red-500 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{errors.email}</span>
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="login-password">Password</Label>
@@ -98,7 +202,9 @@ function LoginContent() {
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
                     value={loginData.password}
-                    onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    onBlur={() => handleBlur('password')}
+                    className={errors.password && touched.password ? "border-red-500 focus:border-red-500" : ""}
                     required
                   />
                   <Button
@@ -110,6 +216,12 @@ function LoginContent() {
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
+                  {errors.password && touched.password && (
+                    <div className="flex items-center gap-1 mt-1 text-red-500 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{errors.password}</span>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex items-center justify-between">
@@ -117,7 +229,11 @@ function LoginContent() {
                   Forgot password?
                 </Link> */}
               </div>
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}>
+              <Button 
+                type="submit" 
+                className="w-full bg-blue-600 hover:bg-blue-700" 
+                disabled={loading || !isFormValid()}
+              >
                 {loading ? (
                   <>
                     <span className="animate-spin mr-2">
@@ -132,19 +248,17 @@ function LoginContent() {
                   "Sign In"
                 )}
               </Button>
+              <div className="text-center">
+                <p className="text-sm text-gray-600">
+                  Don't have an account?{" "}
+                  <Link href="/register" className="text-blue-600 hover:underline font-medium">
+                    Sign up
+                  </Link>
+                </p>
+              </div>
             </form>
-            <div className="text-center mt-4">
-              <span className="text-sm text-gray-600">Don't have an account? </span>
-              <Link href="/register" className="text-sm text-blue-600 hover:underline">Register</Link>
-            </div>
           </CardContent>
         </Card>
-
-        <div className="text-center mt-6">
-          <Link href="/" className="text-sm text-blue-600 hover:underline">
-            &#127942; Back to Home
-          </Link>
-        </div>
       </div>
     </div>
   )

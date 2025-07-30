@@ -28,8 +28,11 @@ import {
 } from "lucide-react"
 import ResearcherLayout from "@/components/layouts/ResearcherLayout"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { authStorage } from "@/lib/auth"
+import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 
 export default function ResearcherProfilePage() {
+  useAuthRedirect(["researcher"])
   const [profileData, setProfileData] = useState<any>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -42,7 +45,7 @@ export default function ResearcherProfilePage() {
       setLoading(true)
       setError("")
       try {
-        const token = localStorage.getItem("token")
+        const token = authStorage.getToken()
         const res = await fetch(`${API_BASE_URL}/users/me`, {
           headers: { Authorization: `Bearer ${token}` },
         })
@@ -60,7 +63,7 @@ export default function ResearcherProfilePage() {
 
   const handleSave = async () => {
     try {
-      const token = localStorage.getItem("token")
+      const token = authStorage.getToken()
       const res = await fetch(`${API_BASE_URL}/users/me`, {
         method: "PUT",
         headers: {

@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FileText, Download, Calendar, DollarSign, Clipboard } from "lucide-react";
 import ResearcherLayout from "@/components/layouts/ResearcherLayout";
+import { authStorage } from "@/lib/auth"
+import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 
 function getStatusColor(status: string) {
   switch (status) {
@@ -24,6 +26,7 @@ function getStatusColor(status: string) {
 }
 
 export default function ProposalDetailsPage() {
+  useAuthRedirect(["researcher"])
   const params = useParams();
   const router = useRouter();
   const { id } = params;
@@ -37,7 +40,7 @@ export default function ProposalDetailsPage() {
       setLoading(true);
       setError("");
       try {
-        const token = localStorage.getItem("token");
+        const token = authStorage.getToken();
         const res = await fetch(`${API_BASE_URL}/proposals/mine/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });

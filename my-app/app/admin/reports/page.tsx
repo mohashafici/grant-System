@@ -63,6 +63,8 @@ import {
 } from "lucide-react"
 import AdminLayout from "@/components/layouts/AdminLayout"
 import { useToast } from "@/hooks/use-toast"
+import { authStorage } from "@/lib/auth"
+import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 
 function ReportDetailsModal({ report, onClose }: { report: any; onClose: () => void }) {
   return (
@@ -151,6 +153,7 @@ function ReportDetailsModal({ report, onClose }: { report: any; onClose: () => v
 }
 
 export default function AdminReportsPage() {
+  useAuthRedirect(["admin"])
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedReport, setSelectedReport] = useState(null)
@@ -179,7 +182,7 @@ export default function AdminReportsPage() {
       setLoading(true)
       setError("")
       try {
-        const token = localStorage.getItem("token")
+        const token = authStorage.getToken()
         if (!token) {
           throw new Error("No authentication token found")
         }
@@ -220,7 +223,7 @@ export default function AdminReportsPage() {
 
   useEffect(() => {
     setStatsLoading(true);
-    const token = localStorage.getItem("token");
+    const token = authStorage.getToken();
     Promise.all([
       fetch(`${API_BASE_URL}/reports/user-stats?year=${year}&month=${month}`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()),
       fetch(`${API_BASE_URL}/reports/grant-stats?year=${year}&month=${month}`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()),
@@ -251,7 +254,7 @@ export default function AdminReportsPage() {
     setGenerating(true)
     setReport(null)
     try {
-      const token = localStorage.getItem("token")
+      const token = authStorage.getToken()
       const res = await fetch(`${API_BASE_URL}/reports/generate`, {
         method: "POST",
         headers: {
@@ -281,7 +284,7 @@ export default function AdminReportsPage() {
   const handleExportReport = async () => {
     setExportLoading(true)
     try {
-      const token = localStorage.getItem("token")
+      const token = authStorage.getToken()
       const res = await fetch(`${API_BASE_URL}/reports/export?year=${year}`, {
         headers: { Authorization: `Bearer ${token}` },
       })

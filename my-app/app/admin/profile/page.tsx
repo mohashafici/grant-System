@@ -9,8 +9,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Save } from "lucide-react"
 import AdminLayout from "@/components/layouts/AdminLayout"
 import { useToast } from "@/hooks/use-toast"
+import { authStorage } from "@/lib/auth"
+import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 
 export default function AdminProfilePage() {
+  useAuthRedirect(["admin"])
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -31,7 +34,7 @@ export default function AdminProfilePage() {
       setLoading(true)
       setError("")
       try {
-        const token = localStorage.getItem("token")
+        const token = authStorage.getToken()
         const res = await fetch(`${API_BASE_URL}/users/me`, {
           headers: { Authorization: `Bearer ${token}` },
         })
@@ -61,7 +64,7 @@ export default function AdminProfilePage() {
 
   const handleSave = async () => {
     try {
-      const token = localStorage.getItem("token")
+      const token = authStorage.getToken()
       
       // Create update data, excluding empty password
       const updateData = { ...form };

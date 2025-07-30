@@ -126,27 +126,30 @@ export default function GrantCalendarPage() {
   const getCurrentMonthStats = () => {
     const currentMonth = currentDate.getMonth();
     const currentYear = currentDate.getFullYear();
+    const today = new Date();
     
+    // Get grants that have deadlines in the current month
     const monthGrants = grants.filter((grant) => {
       if (!grant.deadline) return false;
-      const grantDate = new Date(grant.deadline);
-      return grantDate.getMonth() === currentMonth && grantDate.getFullYear() === currentYear;
+      const deadline = new Date(grant.deadline);
+      return deadline.getMonth() === currentMonth && deadline.getFullYear() === currentYear;
     });
 
+    // Opening grants: grants with deadlines in current month that haven't passed yet
     const openingGrants = monthGrants.filter((grant) => {
-      const grantDate = new Date(grant.deadline);
-      const today = new Date();
-      return grantDate > today;
+      const deadline = new Date(grant.deadline);
+      return deadline > today;
     });
 
+    // Closing grants: grants with deadlines in current month that have already passed
     const closingGrants = monthGrants.filter((grant) => {
-      const grantDate = new Date(grant.deadline);
-      const today = new Date();
-      return grantDate <= today;
+      const deadline = new Date(grant.deadline);
+      return deadline <= today;
     });
 
+    // Total funding: sum of all grants in current month
     const totalFunding = monthGrants.reduce((sum, grant) => {
-      return sum + (grant.funding || 0);
+      return sum + (parseInt(grant.funding) || parseInt(grant.amount) || 0);
     }, 0);
 
     return {
@@ -379,25 +382,43 @@ export default function GrantCalendarPage() {
                 <CardTitle>This Month</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Opening</span>
-                  <span className="font-semibold text-green-600">{getCurrentMonthStats().opening} grants</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Closing</span>
-                  <span className="font-semibold text-red-600">{getCurrentMonthStats().closing} grants</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Total Funding</span>
-                  <span className="font-semibold text-blue-600">
-                    ${getCurrentMonthStats().totalFunding >= 1000000 
-                      ? `${(getCurrentMonthStats().totalFunding / 1000000).toFixed(1)}M`
-                      : getCurrentMonthStats().totalFunding >= 1000 
-                        ? `${(getCurrentMonthStats().totalFunding / 1000).toFixed(0)}K`
-                        : getCurrentMonthStats().totalFunding.toLocaleString()
-                    }
-                  </span>
-                </div>
+                {(() => {
+                  const stats = getCurrentMonthStats();
+                  const totalGrants = stats.opening + stats.closing;
+                  
+                  if (totalGrants === 0) {
+                    return (
+                      <div className="text-center py-4 text-gray-500">
+                        <Calendar className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                        <p>No grants this month</p>
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600">Opening</span>
+                        <span className="font-semibold text-green-600">{stats.opening} grants</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600">Closing</span>
+                        <span className="font-semibold text-red-600">{stats.closing} grants</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600">Total Funding</span>
+                        <span className="font-semibold text-blue-600">
+                          ${stats.totalFunding >= 1000000 
+                            ? `${(stats.totalFunding / 1000000).toFixed(1)}M`
+                            : stats.totalFunding >= 1000 
+                              ? `${(stats.totalFunding / 1000).toFixed(0)}K`
+                              : stats.totalFunding.toLocaleString()
+                          }
+                        </span>
+                      </div>
+                    </>
+                  );
+                })()}
               </CardContent>
             </Card>
 
