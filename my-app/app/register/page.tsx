@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Award, Eye, EyeOff, AlertCircle, CheckCircle, Mail } from "lucide-react"
+import { Award, Eye, EyeOff, AlertCircle, CheckCircle, Mail, Home } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
 import { authStorage } from "@/lib/auth"
@@ -199,6 +199,16 @@ function RegisterContent() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
+        {/* Back Home Button */}
+        <div className="mb-6">
+          <Link href="/">
+            <Button variant="ghost" className="flex items-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100">
+              <Home className="w-4 h-4" />
+              Back to Home
+            </Button>
+          </Link>
+        </div>
+        
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-3 mb-4">

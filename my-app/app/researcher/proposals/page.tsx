@@ -27,7 +27,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-  SidebarTrigger,
 } from "@/components/ui/sidebar"
 import {
   Home,
@@ -442,9 +441,8 @@ export default function ResearcherProposalsPage() {
   return (
     <ResearcherLayout active="proposals">
       <main className="p-6">
-        <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4 flex items-center">
-          <SidebarTrigger />
-          <h1 className="text-2xl font-bold text-gray-900 ml-4">My Proposals</h1>
+        <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4">
+          <h1 className="text-2xl font-bold text-gray-900">My Proposals</h1>
         </header>
         {/* Search and Filter */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">

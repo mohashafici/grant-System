@@ -110,7 +110,7 @@ const validateProposalField = (name: string, value: string, selectedGrant?: any,
 }
 
 function SubmitPageContent() {
-  useAuthRedirect(["researcher"])
+  useAuthRedirect()
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
     title: "",
@@ -166,7 +166,7 @@ function SubmitPageContent() {
   // Show loading while grantId is being set
   if (grantIdFromQuery === undefined) {
     return (
-      <ResearcherLayout>
+      <ResearcherLayout active="submit">
         <div className="p-6 text-center">
           <LoadingSpinner text="Loading..." />
         </div>
@@ -219,8 +219,11 @@ function SubmitPageContent() {
         if (grantIdFromQuery) {
           const matchingGrant = activeGrants.find((g: any) => g._id === grantIdFromQuery);
           if (matchingGrant) {
-            setSelectedGrant(matchingGrant);
-            setFormData(prev => ({ ...prev, grant: grantIdFromQuery }));
+            setFormData(prev => ({ 
+              ...prev, 
+              grant: grantIdFromQuery,
+              category: matchingGrant.category // Auto-fill category from selected grant
+            }));
           }
         }
       } catch (error) {
@@ -332,7 +335,7 @@ function SubmitPageContent() {
 
     if (field === 'additionalDocuments') {
       const newFiles = Array.from(files)
-      const validFiles = []
+      const validFiles: File[] = []
       const newErrors: string[] = []
 
       newFiles.forEach((file, index) => {
@@ -983,15 +986,15 @@ function SubmitPageContent() {
   }
 
   return (
-    <ResearcherLayout>
+    <ResearcherLayout active="submit">
       <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Submit Proposal</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Submit Proposal</h1>
             <p className="text-gray-600">Create and submit your research proposal</p>
           </div>
           <Link href="/researcher/proposals">
-            <Button variant="outline">
+            <Button variant="outline" className="w-full sm:w-auto">
               <ChevronLeft className="w-4 h-4 mr-2" />
               Back to Proposals
             </Button>
@@ -1060,18 +1063,18 @@ function SubmitPageContent() {
         </Card>
 
         {/* Navigation Buttons */}
-        <div className="flex justify-between items-center mt-6">
-          <div className="flex space-x-3">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mt-6">
+          <div className="flex justify-center sm:justify-start">
             {currentStep > 1 && (
-              <Button variant="outline" onClick={handlePrevious}>
+              <Button variant="outline" onClick={handlePrevious} className="w-full sm:w-auto">
                 <ChevronLeft className="w-4 h-4 mr-2" />
                 Previous
               </Button>
             )}
           </div>
-          <div className="flex space-x-3">
+          <div className="flex justify-center sm:justify-end">
             {currentStep < steps.length ? (
-              <Button onClick={handleNext} disabled={!isStepValid(currentStep)}>
+              <Button onClick={handleNext} disabled={!isStepValid(currentStep)} className="w-full sm:w-auto">
                 Next
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
@@ -1079,7 +1082,7 @@ function SubmitPageContent() {
               <Button 
                 onClick={handleSubmit} 
                 disabled={submitting || !isStepValid(currentStep)}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
               >
                 {submitting ? (
                   <LoadingSpinner text="Submitting..." />

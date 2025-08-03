@@ -36,7 +36,7 @@ const getStatusColor = (status: string) => {
 };
 
 export default function ResearcherDashboardPage() {
-  useAuthRedirect(["researcher"]);
+  useAuthRedirect();
   const [proposals, setProposals] = useState<any[]>([]);
   const [grants, setGrants] = useState<any[]>([]);
   const [userProfile, setUserProfile] = useState<any>(null);

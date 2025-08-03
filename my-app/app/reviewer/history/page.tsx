@@ -15,7 +15,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { SidebarTrigger } from "@/components/ui/sidebar"
 import {
   FileText,
   Eye,
@@ -139,9 +138,8 @@ export default function ReviewHistoryPage() {
 
   return (
     <ReviewerLayout active="history">
-      <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4 flex items-center">
-                <SidebarTrigger />
-        <h1 className="text-2xl font-bold text-gray-900 ml-4">Review History</h1>
+      <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4">
+        <h1 className="text-2xl font-bold text-gray-900">Review History</h1>
       </header>
       <div className="space-y-6">
                 <div>
@@ -197,7 +195,7 @@ export default function ReviewHistoryPage() {
             </div>
 
             {/* Search and Filter */}
-            <div className="flex flex-col lg:flex-row gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
@@ -207,9 +205,9 @@ export default function ReviewHistoryPage() {
                   className="pl-10"
                 />
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Select value={decisionFilter} onValueChange={setDecisionFilter}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px]">
                     <Filter className="w-4 h-4 mr-2" />
                     <SelectValue placeholder="Filter by decision" />
                   </SelectTrigger>
@@ -222,7 +220,7 @@ export default function ReviewHistoryPage() {
                 </Select>
 
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-[150px]">
+                  <SelectTrigger className="w-full sm:w-[150px]">
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -249,75 +247,77 @@ export default function ReviewHistoryPage() {
                 ) : error ? (
                   <div className="py-8 text-center text-red-500">{error}</div>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Proposal Title</TableHead>
-                        <TableHead>Researcher</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Review Date</TableHead>
-                        {/* <TableHead>Score</TableHead> */}
-                        <TableHead>Decision</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredReviews.map((review) => (
-                        <TableRow key={review._id}>
-                          <TableCell className="font-medium">{review.proposal?.title}</TableCell>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">
-                                {review.proposal?.researcher
-                                  ? `${review.proposal.researcher.firstName || ""} ${review.proposal.researcher.lastName || ""}`.trim() ||
-                                    review.proposal.researcher.email ||
-                                    "Unknown"
-                                  : "Unknown"}
-                              </div>
-                              <div className="text-sm text-gray-500">{review.proposal?.researcher?.institution}</div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{review.proposal?.category}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center text-sm">
-                              <Calendar className="w-4 h-4 mr-1 text-gray-400" />
-                              {review.reviewDate ? new Date(review.reviewDate).toLocaleDateString() : ''}
-                            </div>
-                          </TableCell>
-                          {/* <TableCell>
-                            <div className="text-lg font-bold text-blue-600">{review.score}</div>
-                          </TableCell> */}
-                          <TableCell>
-                            <Badge className={getDecisionColor(review.decision)}>
-                              {review.decision === "Approved" ? (
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                              ) : review.decision === "Rejected" ? (
-                                <XCircle className="w-3 h-3 mr-1" />
-                              ) : (
-                                <Clock className="w-3 h-3 mr-1" />
-                              )}
-                              {review.decision}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button size="sm" variant="outline" onClick={() => setSelectedReview(review)}>
-                                  <Eye className="w-4 h-4 mr-1" />
-                                  View Details
-                                </Button>
-                              </DialogTrigger>
-                              {selectedReview && selectedReview._id === review._id && (
-                                <ReviewHistoryModal review={selectedReview} onClose={() => setSelectedReview(null)} />
-                              )}
-                            </Dialog>
-                          </TableCell>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs sm:text-sm">Proposal Title</TableHead>
+                          <TableHead className="text-xs sm:text-sm hidden sm:table-cell">Researcher</TableHead>
+                          <TableHead className="text-xs sm:text-sm hidden md:table-cell">Category</TableHead>
+                          <TableHead className="text-xs sm:text-sm hidden lg:table-cell">Review Date</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Decision</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Actions</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredReviews.map((review) => (
+                          <TableRow key={review._id}>
+                            <TableCell className="font-medium text-xs sm:text-sm max-w-[120px] sm:max-w-none truncate">
+                              {review.proposal?.title}
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                              <div>
+                                <div className="font-medium text-xs sm:text-sm">
+                                  {review.proposal?.researcher
+                                    ? `${review.proposal.researcher.firstName || ""} ${review.proposal.researcher.lastName || ""}`.trim() ||
+                                      review.proposal.researcher.email ||
+                                      "Unknown"
+                                    : "Unknown"}
+                                </div>
+                                <div className="text-xs sm:text-sm text-gray-500 truncate">{review.proposal?.researcher?.institution}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              <Badge variant="outline" className="text-xs">{review.proposal?.category}</Badge>
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              <div className="flex items-center text-xs sm:text-sm">
+                                <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1 text-gray-400" />
+                                {review.reviewDate ? new Date(review.reviewDate).toLocaleDateString() : ''}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={`${getDecisionColor(review.decision)} text-xs`}>
+                                {review.decision === "Approved" ? (
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                ) : review.decision === "Rejected" ? (
+                                  <XCircle className="w-3 h-3 mr-1" />
+                                ) : (
+                                  <Clock className="w-3 h-3 mr-1" />
+                                )}
+                                <span className="hidden sm:inline">{review.decision}</span>
+                                <span className="sm:hidden">{review.decision === "Approved" ? "✓" : review.decision === "Rejected" ? "✗" : "⏱"}</span>
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button size="sm" variant="outline" onClick={() => setSelectedReview(review)} className="w-full sm:w-auto">
+                                    <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                                    <span className="hidden sm:inline">View</span>
+                                    <span className="sm:hidden">Details</span>
+                                  </Button>
+                                </DialogTrigger>
+                                {selectedReview && selectedReview._id === review._id && (
+                                  <ReviewHistoryModal review={selectedReview} onClose={() => setSelectedReview(null)} />
+                                )}
+                              </Dialog>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>

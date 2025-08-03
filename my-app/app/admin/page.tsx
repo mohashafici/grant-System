@@ -32,149 +32,63 @@ import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { authStorage } from "@/lib/auth"
 
-// function AssignReviewerModal({ submission, onClose }: { submission: any; onClose: () => void }) {
-//   const [selectedReviewer, setSelectedReviewer] = useState("")
-//   const [submitting, setSubmitting] = useState(false)
-//   const { toast } = useToast()
-
-//   const handleAssign = async () => {
-//     if (!selectedReviewer) {
-//       toast({
-//         title: "Validation Error",
-//         description: "Please select a reviewer",
-//         variant: "destructive",
-//       })
-//       return
-//     }
-
-//     setSubmitting(true)
-//     try {
-//       // TODO: Connect to backend to assign reviewer
-//       // Simulate API call
-//       await new Promise(resolve => setTimeout(resolve, 1000))
-      
-//       toast({
-//         title: "Reviewer Assigned",
-//         description: `Reviewer has been successfully assigned to "${submission.title}"`,
-//       })
-//       onClose()
-//     } catch (error) {
-//       toast({
-//         title: "Error",
-//         description: "Failed to assign reviewer. Please try again.",
-//         variant: "destructive",
-//       })
-//     } finally {
-//       setSubmitting(false)
-//     }
-//   }
-
-//   return (
-//     <DialogContent>
-//       <DialogHeader>
-//         <DialogTitle>Assign Reviewer</DialogTitle>
-//         <DialogDescription>Assign a reviewer to: {submission.title}</DialogDescription>
-//       </DialogHeader>
-//       <div className="space-y-4">
-//         <div className="space-y-2">
-//           <Label>Select Reviewer</Label>
-//           <Select value={selectedReviewer} onValueChange={setSelectedReviewer}>
-//             <SelectTrigger>
-//               <SelectValue placeholder="Choose a reviewer" />
-//             </SelectTrigger>
-//             <SelectContent>
-//               {/* Reviewers should be fetched from the backend */}
-//               {/* For now, we'll use a static list */}
-//               {/* Replace this with actual reviewer data */}
-//               {/* {reviewers.map((reviewer) => (
-//                 <SelectItem key={reviewer.id} value={reviewer.id.toString()}>
-//                   {reviewer.name} - {reviewer.expertise} (Workload: {reviewer.workload})
-//                 </SelectItem>
-//               ))} */}
-//             </SelectContent>
-//           </Select>
-//         </div>
-//         <div className="flex space-x-3">
-//           <Button 
-//             onClick={handleAssign} 
-//             className="bg-blue-600 hover:bg-blue-700"
-//             disabled={submitting}
-//           >
-//             {submitting ? (
-//               <>
-//                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-//                 Assigning...
-//               </>
-//             ) : (
-//               "Assign Reviewer"
-//             )}
-//           </Button>
-//           <Button variant="outline" onClick={onClose}>
-//             Cancel
-//           </Button>
-//         </div>
-//       </div>
-//     </DialogContent>
-//   )
-// }
-
 function ProposalViewModal({ proposal, onClose, reviewer }: { proposal: any; onClose: () => void; reviewer?: any }) {
   return (
-    <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-      <DialogHeader>
-        <DialogTitle>{proposal.title}</DialogTitle>
-        <DialogDescription>
+    <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-3xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-3 sm:p-4 md:p-6">
+      <DialogHeader className="space-y-2 sm:space-y-3">
+        <DialogTitle className="text-base sm:text-lg md:text-xl break-words">{proposal.title}</DialogTitle>
+        <DialogDescription className="text-xs sm:text-sm md:text-base">
           Submitted by {proposal.researcher?.firstName} {proposal.researcher?.lastName} from {proposal.researcher?.institution}
         </DialogDescription>
       </DialogHeader>
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Proposal Information</CardTitle>
+      <div className="space-y-3 sm:space-y-4 md:space-y-6">
+        <Card className="overflow-hidden">
+          <CardHeader className="pb-2 sm:pb-3 md:pb-4 px-3 sm:px-4 md:px-6">
+            <CardTitle className="text-sm sm:text-base md:text-lg">Proposal Information</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          <CardContent className="space-y-2 sm:space-y-3 md:space-y-4 px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
               <div>
-                <Label className="font-medium">Status</Label>
-                <Badge className="mt-1">{proposal.status}</Badge>
+                <Label className="font-medium text-xs sm:text-sm md:text-base">Status</Label>
+                <Badge className="mt-1 text-xs sm:text-sm">{proposal.status}</Badge>
               </div>
               <div>
-                <Label className="font-medium">Category</Label>
-                <p className="mt-1">{proposal.category}</p>
+                <Label className="font-medium text-xs sm:text-sm md:text-base">Category</Label>
+                <p className="mt-1 text-xs sm:text-sm md:text-base break-words">{proposal.category}</p>
               </div>
               <div>
-                <Label className="font-medium">Funding Requested</Label>
-                <p className="mt-1 text-lg font-semibold text-blue-600">${proposal.funding?.toLocaleString()}</p>
+                <Label className="font-medium text-xs sm:text-sm md:text-base">Funding Requested</Label>
+                <p className="mt-1 text-sm sm:text-base md:text-lg font-semibold text-blue-600 break-words">${proposal.funding?.toLocaleString()}</p>
               </div>
               <div>
-                <Label className="font-medium">Grant</Label>
-                <p className="mt-1">{proposal.grantTitle}</p>
+                <Label className="font-medium text-xs sm:text-sm md:text-base">Grant</Label>
+                <p className="mt-1 text-xs sm:text-sm md:text-base break-words">{proposal.grantTitle}</p>
               </div>
               <div>
-                <Label className="font-medium">Submission Date</Label>
-                <p className="mt-1">{proposal.dateSubmitted ? new Date(proposal.dateSubmitted).toLocaleDateString() : 'N/A'}</p>
+                <Label className="font-medium text-xs sm:text-sm md:text-base">Submission Date</Label>
+                <p className="mt-1 text-xs sm:text-sm md:text-base">{proposal.dateSubmitted ? new Date(proposal.dateSubmitted).toLocaleDateString() : 'N/A'}</p>
               </div>
               <div>
-                <Label className="font-medium">Deadline</Label>
-                <p className="mt-1">{proposal.deadline ? new Date(proposal.deadline).toLocaleDateString() : 'N/A'}</p>
+                <Label className="font-medium text-xs sm:text-sm md:text-base">Deadline</Label>
+                <p className="mt-1 text-xs sm:text-sm md:text-base">{proposal.deadline ? new Date(proposal.deadline).toLocaleDateString() : 'N/A'}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Abstract</CardTitle>
+        <Card className="overflow-hidden">
+          <CardHeader className="pb-2 sm:pb-3 md:pb-4 px-3 sm:px-4 md:px-6">
+            <CardTitle className="text-sm sm:text-base md:text-lg">Abstract</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-gray-700 leading-relaxed">{proposal.abstract}</p>
+          <CardContent className="px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-6">
+            <p className="text-gray-700 leading-relaxed text-xs sm:text-sm md:text-base break-words max-h-40 sm:max-h-48 overflow-y-auto">{proposal.abstract}</p>
           </CardContent>
         </Card>
-        <div className="flex justify-end">
-          <Button variant="outline" onClick={onClose}>Close</Button>
+        <div className="flex justify-end pt-2">
+          <Button variant="outline" onClick={onClose} className="w-full sm:w-auto h-10 sm:h-11 text-xs sm:text-sm">Close</Button>
         </div>
       </div>
     </DialogContent>
-  );
+  )
 }
 
 export default function AdminDashboard() {
@@ -282,205 +196,217 @@ export default function AdminDashboard() {
       title: "View Proposal",
       description: `Viewing details for "${submission.title}"`,
     })
-    // TODO: Implement view proposal functionality
   }
 
   return (
     <AdminLayout active="dashboard" title="Admin Dashboard">
-      <main className="p-6">
+             <main className="p-3 sm:p-4 md:p-6 w-full overflow-hidden">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Proposals</CardTitle>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
+          <Card className="p-4 md:p-6">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
+              <CardTitle className="text-xs md:text-sm font-medium">Total Proposals</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalProposals}</div>
+            <CardContent className="px-0 pb-0">
+              <div className="text-xl md:text-2xl font-bold">{totalProposals}</div>
               <p className="text-xs text-muted-foreground">Total proposals submitted</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Approved</CardTitle>
+          <Card className="p-4 md:p-6">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
+              <CardTitle className="text-xs md:text-sm font-medium">Approved</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{approvedProposals}</div>
+            <CardContent className="px-0 pb-0">
+              <div className="text-xl md:text-2xl font-bold">{approvedProposals}</div>
               <p className="text-xs text-muted-foreground">Total approved proposals</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
+          <Card className="p-4 md:p-6">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
+              <CardTitle className="text-xs md:text-sm font-medium">Pending Review</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{pendingProposals}</div>
+            <CardContent className="px-0 pb-0">
+              <div className="text-xl md:text-2xl font-bold">{pendingProposals}</div>
               <p className="text-xs text-muted-foreground">Awaiting assignment or review</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Rejected</CardTitle>
+          <Card className="p-4 md:p-6">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
+              <CardTitle className="text-xs md:text-sm font-medium">Rejected</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{rejectedProposals}</div>
+            <CardContent className="px-0 pb-0">
+              <div className="text-xl md:text-2xl font-bold">{rejectedProposals}</div>
               <p className="text-xs text-muted-foreground">Total rejected proposals</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Funding</CardTitle>
+          <Card className="p-4 md:p-6">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
+              <CardTitle className="text-xs md:text-sm font-medium">Total Funding</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${totalFunding.toLocaleString()}</div>
+            <CardContent className="px-0 pb-0">
+              <div className="text-xl md:text-2xl font-bold">${totalFunding.toLocaleString()}</div>
               <p className="text-xs text-muted-foreground">Awarded this year</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Submissions</CardTitle>
-              <CardDescription>Monthly proposal submissions and approvals</CardDescription>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
+          <Card className="overflow-hidden">
+            <CardHeader className="pb-3 md:pb-4 px-3 sm:px-4 md:px-6">
+              <CardTitle className="text-sm sm:text-base md:text-lg">Submissions</CardTitle>
+              <CardDescription className="text-xs sm:text-sm md:text-base">Monthly proposal submissions and approvals</CardDescription>
             </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={submissionsData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="submissions" fill="#3B82F6" name="Submissions" />
-                  <Bar dataKey="approved" fill="#10B981" name="Approved" />
-                </BarChart>
-              </ResponsiveContainer>
+            <CardContent className="px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-6">
+              <div className="w-full h-[250px] sm:h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={submissionsData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" fontSize={12} />
+                    <YAxis fontSize={12} />
+                    <Tooltip />
+                    <Bar dataKey="submissions" fill="#3B82F6" name="Submissions" />
+                    <Bar dataKey="approved" fill="#10B981" name="Approved" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Proposals by Category</CardTitle>
-              <CardDescription>Distribution of research categories</CardDescription>
+          <Card className="overflow-hidden">
+            <CardHeader className="pb-3 md:pb-4 px-3 sm:px-4 md:px-6">
+              <CardTitle className="text-sm sm:text-base md:text-lg">Proposals by Category</CardTitle>
+              <CardDescription className="text-xs sm:text-sm md:text-base">Distribution of research categories</CardDescription>
             </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={categoryData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    fill="#8884d8"
-                    dataKey="value"
-                    label={({ name, value }) => `${name}: ${value}`}
-                  >
-                    {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+            <CardContent className="px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-6">
+              <div className="w-full h-[250px] sm:h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, value }) => `${name}: ${value}`}
+                    >
+                      {categoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* All Submissions Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>All Submissions</CardTitle>
-            <CardDescription>Manage and assign reviewers to proposals</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table className="min-w-[700px]">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Proposal Title</TableHead>
-                  <TableHead>Researcher</TableHead>
-                  <TableHead>Institution</TableHead>
-                  <TableHead>Submission Date</TableHead>
-                  <TableHead>Funding</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Reviewer</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {proposals.map((submission) => (
-                  <TableRow key={submission._id}>
-                    <TableCell className="font-medium">{submission.title}</TableCell>
-                    <TableCell>
-                      {submission.researcher?.firstName} {submission.researcher?.lastName}
-                    </TableCell>
-                    <TableCell>{submission.researcher?.institution}</TableCell>
-                    <TableCell>{submission.dateSubmitted ? new Date(submission.dateSubmitted).toLocaleDateString() : ''}</TableCell>
-                    <TableCell className="font-semibold text-blue-600">${submission.funding?.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(submission.status)}>{submission.status}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {submission.reviewer
-                        ? reviewers.find((r) => r._id === submission.reviewer)?.firstName + ' ' + reviewers.find((r) => r._id === submission.reviewer)?.lastName
-                        : "Not assigned"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => setViewProposal(submission)}
-                            >
-                              <Eye className="w-4 h-4 mr-1" />
-                              View
-                            </Button>
-                          </DialogTrigger>
-                          {viewProposal && viewProposal._id === submission._id && (
-                            <ProposalViewModal
-                              proposal={viewProposal}
-                              reviewer={reviewers.find((r) => r._id === viewProposal.reviewer)}
-                              onClose={() => setViewProposal(null)}
-                            />
-                          )}
-                        </Dialog>
-                        {submission.status === "Pending Assignment" && (
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                size="sm"
-                                className="bg-blue-600 hover:bg-blue-700"
-                                onClick={() => setSelectedSubmission(submission)}
-                              >
-                                <UserPlus className="w-4 h-4 mr-1" />
-                                Assign
-                              </Button>
-                            </DialogTrigger>
-                            {selectedSubmission && (
-                                // The AssignReviewerModal component was removed, so this will cause an error.
-                                // Assuming the intent was to re-add it or remove this block if not needed.
-                                // For now, commenting out the call to avoid errors.
-                                // <AssignReviewerModal
-                                //   submission={selectedSubmission}
-                                //   onClose={() => setSelectedSubmission(null)}
-                                // />
-                                <div>Assign functionality not implemented</div>
+                 {/* All Submissions Table */}
+         <Card className="overflow-hidden">
+           <CardHeader className="pb-3 md:pb-4">
+             <CardTitle className="text-lg md:text-xl">All Submissions</CardTitle>
+             <CardDescription className="text-sm md:text-base">Manage and assign reviewers to proposals</CardDescription>
+           </CardHeader>
+           <CardContent className="p-0 md:p-6 overflow-hidden">
+            <div className="w-full overflow-hidden">
+              <div className="w-full">
+                <Table className="w-full">
+                                     <TableHeader>
+                     <TableRow>
+                       <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[25%] sm:w-[20%]">Title</TableHead>
+                       <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[20%] sm:w-[15%]">Researcher</TableHead>
+                       <TableHead className="hidden sm:table-cell text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[15%]">Institution</TableHead>
+                       <TableHead className="hidden md:table-cell text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[10%]">Date</TableHead>
+                       <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[15%] sm:w-[20%]">Funding</TableHead>
+                       <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[15%] sm:w-[10%]">Status</TableHead>
+                       <TableHead className="hidden lg:table-cell text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[10%]">Reviewer</TableHead>
+                       <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[10%] sm:w-[15%]">Actions</TableHead>
+                     </TableRow>
+                   </TableHeader>
+                  <TableBody>
+                    {proposals.map((submission) => (
+                      <TableRow key={submission._id}>
+                                               <TableCell className="font-medium text-xs md:text-sm truncate px-2 md:px-4 py-2 md:py-3">
+                         {submission.title}
+                       </TableCell>
+                       <TableCell className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">
+                         <div className="flex flex-col">
+                           <span className="truncate">{submission.researcher?.firstName}</span>
+                           <span className="truncate">{submission.researcher?.lastName}</span>
+                         </div>
+                       </TableCell>
+                       <TableCell className="hidden sm:table-cell text-xs md:text-sm truncate px-2 md:px-4 py-2 md:py-3">
+                         {submission.researcher?.institution}
+                       </TableCell>
+                       <TableCell className="hidden md:table-cell text-xs md:text-sm whitespace-nowrap px-2 md:px-4 py-2 md:py-3">
+                         {submission.dateSubmitted ? new Date(submission.dateSubmitted).toLocaleDateString() : ''}
+                       </TableCell>
+                                               <TableCell className="font-semibold text-blue-600 text-xs md:text-sm whitespace-nowrap px-2 md:px-4 py-2 md:py-3">
+                         ${submission.funding?.toLocaleString()}
+                       </TableCell>
+                       <TableCell className="px-2 md:px-4 py-2 md:py-3">
+                         <Badge className={`${getStatusColor(submission.status)} text-xs whitespace-nowrap`}>
+                           {submission.status}
+                         </Badge>
+                       </TableCell>
+                       <TableCell className="hidden lg:table-cell text-xs md:text-sm truncate px-2 md:px-4 py-2 md:py-3">
+                         {submission.reviewer
+                           ? reviewers.find((r) => r._id === submission.reviewer)?.firstName + ' ' + reviewers.find((r) => r._id === submission.reviewer)?.lastName
+                           : "Not assigned"}
+                       </TableCell>
+                                               <TableCell className="px-2 md:px-4 py-2 md:py-3">
+                         <div className="flex flex-col gap-1">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                                                 <Button 
+                                   size="sm" 
+                                   variant="outline"
+                                   onClick={() => setViewProposal(submission)}
+                                   className="text-xs h-7 w-7 md:h-8 md:w-auto md:px-2 md:px-3 p-0"
+                                 >
+                                   <Eye className="w-3 h-3 md:w-4 md:h-4" />
+                                   <span className="hidden md:inline md:ml-1">View</span>
+                                 </Button>
+                              </DialogTrigger>
+                              {viewProposal && viewProposal._id === submission._id && (
+                                <ProposalViewModal
+                                  proposal={viewProposal}
+                                  reviewer={reviewers.find((r) => r._id === viewProposal.reviewer)}
+                                  onClose={() => setViewProposal(null)}
+                                />
+                              )}
+                            </Dialog>
+                            {submission.status === "Pending Assignment" && (
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                                                     <Button
+                                     size="sm"
+                                     className="bg-blue-600 hover:bg-blue-700 text-xs h-7 w-7 md:h-8 md:w-auto md:px-2 md:px-3 p-0"
+                                     onClick={() => setSelectedSubmission(submission)}
+                                   >
+                                     <UserPlus className="w-3 h-3 md:w-4 md:h-4" />
+                                     <span className="hidden md:inline md:ml-1">Assign</span>
+                                   </Button>
+                                </DialogTrigger>
+                                {selectedSubmission && (
+                                  <div>Assign functionality not implemented</div>
+                                )}
+                              </Dialog>
                             )}
-                          </Dialog>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           </CardContent>
         </Card>

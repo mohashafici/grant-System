@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -22,24 +22,44 @@ import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 
 // Proposal View Modal Component
 function ProposalViewModal({ proposal, onClose }: { proposal: any; onClose: () => void }) {
+  const handleDownload = async (fileUrl: string, fileName: string) => {
+    try {
+      const response = await fetch(fileUrl);
+      if (!response.ok) throw new Error('Failed to download file');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Failed to download file. Please try again.');
+    }
+  };
+
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-auto">
         <DialogHeader>
-          <DialogTitle>{proposal.title}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl">{proposal.title}</DialogTitle>
+          <DialogDescription className="text-sm sm:text-base">
             Submitted by {proposal.researcher?.firstName} {proposal.researcher?.lastName} from {proposal.researcher?.institution}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Basic Information */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Proposal Information</CardTitle>
+              <CardTitle className="text-base sm:text-lg">Proposal Information</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <CardContent className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <Label className="font-medium">Status</Label>
                   <Badge className="mt-1">{proposal.status}</Badge>
@@ -132,7 +152,11 @@ function ProposalViewModal({ proposal, onClose }: { proposal: any; onClose: () =
                           <p className="text-sm text-gray-500">Main proposal file</p>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDownload(proposal.proposalDocument, 'proposal-document.pdf')}
+                      >
                         <Download className="h-4 w-4 mr-2" />
                         Download
                       </Button>
@@ -147,7 +171,11 @@ function ProposalViewModal({ proposal, onClose }: { proposal: any; onClose: () =
                           <p className="text-sm text-gray-500">Researcher's CV</p>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDownload(proposal.cvResume, 'cv-resume.pdf')}
+                      >
                         <Download className="h-4 w-4 mr-2" />
                         Download
                       </Button>
@@ -165,7 +193,11 @@ function ProposalViewModal({ proposal, onClose }: { proposal: any; onClose: () =
                               <p className="text-sm text-gray-500">Additional file</p>
                             </div>
                           </div>
-                          <Button variant="outline" size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleDownload(doc.url || doc, doc.name || `document-${index + 1}.pdf`)}
+                          >
                             <Download className="h-4 w-4 mr-2" />
                             Download
                           </Button>
@@ -192,7 +224,7 @@ function ProposalViewModal({ proposal, onClose }: { proposal: any; onClose: () =
 }
 
 export default function AdminProposalsPage() {
-  useAuthRedirect(["admin"])
+  useAuthRedirect()
   const [proposals, setProposals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -258,7 +290,7 @@ export default function AdminProposalsPage() {
   }, []);
 
   // Sort and filter proposals
-  const getSortedAndFilteredProposals = () => {
+  const getSortedAndFilteredProposals = useCallback(() => {
     let filtered = proposals;
 
     // Sort proposals
@@ -301,7 +333,7 @@ export default function AdminProposalsPage() {
     });
 
     return filtered;
-  };
+  }, [proposals, sortBy, sortOrder]);
 
   const handleAssignReviewer = async () => {
     if (!selectedProposal || !selectedReviewer) {
@@ -346,11 +378,11 @@ export default function AdminProposalsPage() {
     return reviewer ? `${reviewer.firstName} ${reviewer.lastName}` : "Unknown";
   };
 
-  const sortedProposals = getSortedAndFilteredProposals();
+  const sortedProposals = useMemo(() => getSortedAndFilteredProposals(), [getSortedAndFilteredProposals]);
 
   if (loading) {
     return (
-      <AdminLayout>
+      <AdminLayout active="proposals">
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
@@ -362,10 +394,10 @@ export default function AdminProposalsPage() {
   }
 
   return (
-    <AdminLayout>
-      <div className="p-6">
-        <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4">
-          <h1 className="text-2xl font-bold text-gray-900 ml-4">Manage Proposals</h1>
+    <AdminLayout active="proposals">
+      <div className="p-4 sm:p-6">
+        <header className="bg-white border-b px-4 sm:px-6 py-3 sm:py-4 shadow-sm w-full mb-4">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 ml-2 sm:ml-4">Manage Proposals</h1>
         </header>
 
         {error && (
@@ -375,8 +407,8 @@ export default function AdminProposalsPage() {
         )}
 
         {/* Filters and Controls */}
-        <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm mb-4 sm:mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             <div>
               <Label htmlFor="sortBy">Sort By</Label>
               <Select value={sortBy} onValueChange={setSortBy}>
@@ -415,32 +447,33 @@ export default function AdminProposalsPage() {
 
         {/* Proposals Table */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Researcher</TableHead>
-                <TableHead>Grant</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Funding</TableHead>
-                <TableHead>Reviewer</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs sm:text-sm">Title</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Researcher</TableHead>
+                  <TableHead className="hidden sm:table-cell text-xs sm:text-sm">Grant</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Status</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs sm:text-sm">Category</TableHead>
+                  <TableHead className="hidden lg:table-cell text-xs sm:text-sm">Funding</TableHead>
+                  <TableHead className="hidden lg:table-cell text-xs sm:text-sm">Reviewer</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
             <TableBody>
               {sortedProposals.map((proposal) => (
                 <TableRow key={proposal._id}>
-                  <TableCell className="font-medium max-w-xs truncate">
+                  <TableCell className="font-medium max-w-xs truncate text-xs sm:text-sm">
                     {proposal.title}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-xs sm:text-sm">
                     {proposal.researcher?.firstName} {proposal.researcher?.lastName}
                   </TableCell>
-                  <TableCell className="max-w-xs truncate">
+                  <TableCell className="hidden sm:table-cell max-w-xs truncate text-xs sm:text-sm">
                     {proposal.grantTitle}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-xs sm:text-sm">
                     <Badge variant={
                       proposal.status === "Approved" ? "default" :
                       proposal.status === "Rejected" ? "destructive" :
@@ -450,27 +483,29 @@ export default function AdminProposalsPage() {
                       {proposal.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{proposal.category}</TableCell>
-                  <TableCell>${proposal.funding?.toLocaleString()}</TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell text-xs sm:text-sm">{proposal.category}</TableCell>
+                  <TableCell className="hidden lg:table-cell text-xs sm:text-sm">${proposal.funding?.toLocaleString()}</TableCell>
+                  <TableCell className="hidden lg:table-cell text-xs sm:text-sm">
                     {proposal.reviewer ? getReviewerName(proposal.reviewer) : "Not assigned"}
                   </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
+                  <TableCell className="text-xs sm:text-sm">
+                    <div className="flex space-x-1 sm:space-x-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setViewProposal(proposal)}
+                        className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
                       </Button>
                       {!proposal.reviewer && (
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => setSelectedProposal(proposal)}
+                          className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                         >
-                          <UserPlus className="h-4 w-4" />
+                          <UserPlus className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                       )}
                     </div>
@@ -479,6 +514,7 @@ export default function AdminProposalsPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </div>
 
         {/* Assign Reviewer Modal */}

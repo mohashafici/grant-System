@@ -46,6 +46,9 @@ import {
   Calendar,
   DollarSign,
   AlertCircle,
+  Clock,
+  Building,
+  MapPin,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import AdminLayout from "@/components/layouts/AdminLayout"
@@ -61,6 +64,7 @@ export default function ManageGrantsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedGrant, setSelectedGrant] = useState(null)
+  const [viewGrant, setViewGrant] = useState(null)
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const { toast } = useToast()
   const [deleteGrantId, setDeleteGrantId] = useState<string | null>(null)
@@ -330,7 +334,7 @@ export default function ManageGrantsPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => setSelectedGrant(grant)}
+                              onClick={() => setViewGrant(grant)}
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
@@ -364,6 +368,14 @@ export default function ManageGrantsPage() {
           <CreateGrantModal
             onClose={() => setCreateModalOpen(false)}
             onGrantChanged={fetchGrants}
+          />
+        )}
+
+        {/* View Grant Modal */}
+        {viewGrant && (
+          <ViewGrantModal
+            grant={viewGrant}
+            onClose={() => setViewGrant(null)}
           />
         )}
 
@@ -952,6 +964,296 @@ function EditGrantModal({ grant, onClose, onGrantChanged }: { grant: any; onClos
             </Button>
           </div>
         </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// View Grant Modal Component
+function ViewGrantModal({ grant, onClose }: { grant: any; onClose: () => void }) {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const [grantDetails, setGrantDetails] = useState(grant);
+  const [loading, setLoading] = useState(false);
+  const [applicantStats, setApplicantStats] = useState({ applicants: 0, approved: 0, rejected: 0 });
+
+  useEffect(() => {
+    fetchGrantDetails();
+    fetchApplicantStats();
+  }, [grant._id]);
+
+  const fetchGrantDetails = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/grants/${grant._id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setGrantDetails(data);
+      }
+    } catch (error) {
+      console.error('Error fetching grant details:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchApplicantStats = async () => {
+    try {
+      const token = authStorage.getToken();
+      const res = await fetch(`${API_BASE_URL}/proposals/grant/${grant._id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const proposals = await res.json();
+        const stats = {
+          applicants: proposals.length,
+          approved: proposals.filter((p: any) => p.status === 'approved').length,
+          rejected: proposals.filter((p: any) => p.status === 'rejected').length
+        };
+        setApplicantStats(stats);
+      }
+    } catch (error) {
+      console.error('Error fetching applicant stats:', error);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Active': return 'bg-green-100 text-green-800';
+      case 'Closed': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'Technology': return 'bg-blue-100 text-blue-800';
+      case 'Healthcare': return 'bg-green-100 text-green-800';
+      case 'Environment': return 'bg-emerald-100 text-emerald-800';
+      case 'Social Sciences': return 'bg-purple-100 text-purple-800';
+      case 'Education': return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Award className="w-5 h-5 text-blue-600" />
+            Grant Details
+          </DialogTitle>
+          <DialogDescription>
+            View complete information about this grant opportunity
+          </DialogDescription>
+        </DialogHeader>
+
+        {loading ? (
+          <div className="flex justify-center items-center py-8">
+            <LoadingSpinner text="Loading grant details..." />
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Header Section */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">{grantDetails.title}</h2>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    <Badge className={getCategoryColor(grantDetails.category)}>
+                      {grantDetails.category}
+                    </Badge>
+                    <Badge className={getStatusColor(grantDetails.status)}>
+                      {grantDetails.status}
+                    </Badge>
+                  </div>
+                  <p className="text-gray-600 text-sm">
+                    <Building className="w-4 h-4 inline mr-1" />
+                    {grantDetails.organization || 'Organization not specified'}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-blue-600">
+                    ${grantDetails.funding?.toLocaleString()}
+                  </div>
+                  <p className="text-sm text-gray-500">Total Funding</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center">
+                    <Users className="w-8 h-8 text-blue-600" />
+                    <div className="ml-3">
+                      <p className="text-sm font-medium text-gray-600">Total Applicants</p>
+                      <p className="text-2xl font-bold text-gray-900">{applicantStats.applicants}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center">
+                    <FileText className="w-8 h-8 text-green-600" />
+                    <div className="ml-3">
+                      <p className="text-sm font-medium text-gray-600">Approved</p>
+                      <p className="text-2xl font-bold text-gray-900">{applicantStats.approved}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center">
+                    <AlertCircle className="w-8 h-8 text-red-600" />
+                    <div className="ml-3">
+                      <p className="text-sm font-medium text-gray-600">Rejected</p>
+                      <p className="text-2xl font-bold text-gray-900">{applicantStats.rejected}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Key Information */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="w-5 h-5" />
+                    Important Dates
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">Application Deadline:</span>
+                    <span className="text-sm font-semibold">
+                      {new Date(grantDetails.deadline).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">Created:</span>
+                    <span className="text-sm font-semibold">
+                      {new Date(grantDetails.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">Last Updated:</span>
+                    <span className="text-sm font-semibold">
+                      {new Date(grantDetails.updatedAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <DollarSign className="w-5 h-5" />
+                    Funding Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">Total Funding:</span>
+                    <span className="text-lg font-bold text-blue-600">
+                      ${grantDetails.funding?.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">Currency:</span>
+                    <span className="text-sm font-semibold">USD</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">Status:</span>
+                    <Badge className={getStatusColor(grantDetails.status)}>
+                      {grantDetails.status}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Description */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Description</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  {grantDetails.description || 'No description provided.'}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Requirements */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Requirements & Eligibility</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  {grantDetails.requirements || 'No requirements specified.'}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Contact Information */}
+            {grantDetails.contactEmail && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Contact Information</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-600">Email:</span>
+                      <a 
+                        href={`mailto:${grantDetails.contactEmail}`}
+                        className="text-blue-600 hover:text-blue-800 text-sm"
+                      >
+                        {grantDetails.contactEmail}
+                      </a>
+                    </div>
+                    {grantDetails.contactPhone && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-600">Phone:</span>
+                        <a 
+                          href={`tel:${grantDetails.contactPhone}`}
+                          className="text-blue-600 hover:text-blue-800 text-sm"
+                        >
+                          {grantDetails.contactPhone}
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-3 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={onClose}
+              >
+                Close
+              </Button>
+              <Button
+                onClick={() => {
+                  onClose();
+                  // This would open the edit modal - you might want to add a state for this
+                }}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Edit Grant
+              </Button>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

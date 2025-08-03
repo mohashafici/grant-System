@@ -31,7 +31,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ResearcherLayout from "@/components/layouts/ResearcherLayout";
-import { SidebarTrigger } from "@/components/ui/sidebar"
 import { authStorage } from "@/lib/auth"
 import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 
@@ -88,7 +87,7 @@ interface Proposal {
 }
 
 export default function BrowseGrants() {
-  useAuthRedirect(["researcher"])
+  useAuthRedirect()
   const [grants, setGrants] = useState<Grant[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -119,8 +118,8 @@ export default function BrowseGrants() {
         }
         setProposals(proposalsData);
         // Mark grants as applied if user has a proposal for that grant
-        const appliedGrantIds = new Set(proposalsData.map((p) => p.grant));
-        const grantsWithApplied = grantsData.map((g) => ({ ...g, applied: appliedGrantIds.has(g._id) }));
+        const appliedGrantIds = new Set(proposalsData.map((p: Proposal) => p.grant));
+        const grantsWithApplied = grantsData.map((g: Grant) => ({ ...g, applied: appliedGrantIds.has(g._id) }));
         setGrants(grantsWithApplied);
       } catch {
         setGrants([]);
@@ -157,9 +156,8 @@ export default function BrowseGrants() {
   return (
     <ResearcherLayout active="grants">
       <div className="space-y-6">
-        <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4 flex items-center">
-          <SidebarTrigger />
-          <h1 className="text-2xl font-bold text-gray-900 ml-4">Browse Available Grants</h1>
+        <header className="bg-white border-b px-6 py-4 shadow-sm w-full mb-4">
+          <h1 className="text-2xl font-bold text-gray-900">Browse Available Grants</h1>
         </header>
 
         {/* Stats Cards */}
@@ -193,12 +191,12 @@ export default function BrowseGrants() {
         {/* Filters */}
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
                 <div className="relative">
                   <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                   <Input
-                    placeholder="Search grants by title, description, or organization..."
+                    placeholder="Search grants by title, description..."
                     className="pl-10"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -206,22 +204,18 @@ export default function BrowseGrants() {
                 </div>
               </div>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-full sm:w-48">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((category) => (
-                    <SelectItem key={category.value} value={category.value}>
+                    <SelectItem key={category.value} value={category.value || ""}>
                       {category.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Button variant="outline">
-                <Filter className="w-4 h-4 mr-2" />
-                More Filters
-              </Button>
-                  </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -230,16 +224,16 @@ export default function BrowseGrants() {
           {filteredGrants.map((grant) => (
             <Card key={grant._id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
                   <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
                       <h3 className="text-lg font-semibold text-gray-900">{grant.title}</h3>
-                      {grant.applied && <Badge className="bg-blue-100 text-blue-800">Applied</Badge>}
+                      {grant.applied && <Badge className="bg-blue-100 text-blue-800 w-fit">Applied</Badge>}
                     </div>
                     <p className="text-sm text-gray-600 mb-2">{grant.organization}</p>
                     <p className="text-gray-700 mb-3 line-clamp-2">{grant.description}</p>
 
-                    <div className="flex items-center space-x-6 text-sm text-gray-600">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-gray-600">
                       <span className="flex items-center">
                         <DollarSign className="w-4 h-4 mr-1" />
                         {grant.funding ? `$${grant.funding.toLocaleString()}` : "N/A"}
@@ -263,7 +257,7 @@ export default function BrowseGrants() {
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="outline">{grant.category}</Badge>
                     <Badge className={getStatusColor(grant.status || "")}>
                       {getStatusIcon(grant.status || "")}
@@ -272,11 +266,11 @@ export default function BrowseGrants() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" onClick={() => setSelectedGrant(grant)}>
+                        <Button variant="outline" size="sm" onClick={() => setSelectedGrant(grant)} className="w-full sm:w-auto">
                           <Eye className="w-4 h-4 mr-2" />
                           View Details
                         </Button>

@@ -29,7 +29,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-  SidebarTrigger,
 } from "@/components/ui/sidebar"
 import {
   FileText,
@@ -191,22 +190,19 @@ export default function ReviewerProfilePage() {
       <div className="flex min-h-screen bg-gray-50">
         <div className="flex-1">
           <header className="bg-white border-b px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <SidebarTrigger />
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
-                  <p className="text-gray-600">Manage your personal and professional information</p>
-                </div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
+                <p className="text-gray-600">Manage your personal and professional information</p>
               </div>
               <div className="flex space-x-3">
                 {isEditing ? (
-                  <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+                  <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
                     <Save className="w-4 h-4 mr-2" />
                     Save Changes
                   </Button>
                 ) : (
-                  <Button onClick={() => setIsEditing(true)} className="bg-blue-600 hover:bg-blue-700">
+                  <Button onClick={() => setIsEditing(true)} className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
                     Edit Profile
                   </Button>
                 )}
@@ -217,20 +213,20 @@ export default function ReviewerProfilePage() {
           <main className="p-6">
             <Card className="mb-8">
               <CardContent className="p-6">
-                <div className="flex items-start space-x-6">
-                  <Avatar className="w-24 h-24">
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                  <Avatar className="w-20 h-20 sm:w-24 sm:h-24">
                     <AvatarImage src={profile.profileImage ? `http://localhost:5000/uploads/${profile.profileImage}` : "/placeholder.svg"} alt={profile.firstName + ' ' + profile.lastName} />
-                    <AvatarFallback className="text-2xl">
+                    <AvatarFallback className="text-xl sm:text-2xl">
                       {profile.firstName?.[0]}{profile.lastName?.[0]}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1">
-                    <h2 className="text-3xl font-bold text-gray-900">{profile.firstName} {profile.lastName}</h2>
-                    <p className="text-xl text-gray-600 mb-2">{profile.role === 'reviewer' ? 'Reviewer' : profile.role?.charAt(0).toUpperCase() + profile.role?.slice(1)}</p>
-                    <p className="text-lg text-blue-600 mb-4">
+                  <div className="flex-1 text-center sm:text-left">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">{profile.firstName} {profile.lastName}</h2>
+                    <p className="text-lg sm:text-xl text-gray-600 mb-2">{profile.role === 'reviewer' ? 'Reviewer' : profile.role?.charAt(0).toUpperCase() + profile.role?.slice(1)}</p>
+                    <p className="text-base sm:text-lg text-blue-600 mb-4">
                       {profile.institution} {profile.department && <>• {profile.department}</>}
                     </p>
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                    <div className="flex flex-wrap justify-center sm:justify-start gap-4 text-sm text-gray-600">
                       <div className="flex items-center">
                         <Mail className="w-4 h-4 mr-1" />
                         {profile.email}

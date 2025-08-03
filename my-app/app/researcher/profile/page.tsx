@@ -27,7 +27,6 @@ import {
   Building,
 } from "lucide-react"
 import ResearcherLayout from "@/components/layouts/ResearcherLayout"
-import { SidebarTrigger } from "@/components/ui/sidebar"
 import { authStorage } from "@/lib/auth"
 import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 
@@ -115,9 +114,8 @@ export default function ResearcherProfilePage() {
   return (
     <ResearcherLayout active="profile" email={profileData.email} firstName={profileData.firstName}>
       <div className="w-full flex flex-col items-center justify-center min-h-[80vh] py-8 px-2">
-        <header className="w-full max-w-4xl mx-auto mb-8 flex items-center">
-          <SidebarTrigger />
-          <h1 className="text-3xl font-bold text-gray-900 ml-4">Profile</h1>
+        <header className="w-full max-w-4xl mx-auto mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
         </header>
         <Card className="w-full max-w-4xl mx-auto shadow-lg border-0">
           <CardContent className="pt-8 pb-10 px-8 flex flex-col items-center w-full">

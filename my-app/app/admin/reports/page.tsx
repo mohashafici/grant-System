@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -65,6 +65,7 @@ import AdminLayout from "@/components/layouts/AdminLayout"
 import { useToast } from "@/hooks/use-toast"
 import { authStorage } from "@/lib/auth"
 import { useAuthRedirect } from "@/hooks/use-auth-redirect"
+import { PageSkeleton } from "@/components/ui/loading-skeleton"
 
 function ReportDetailsModal({ report, onClose }: { report: any; onClose: () => void }) {
   return (
@@ -153,7 +154,7 @@ function ReportDetailsModal({ report, onClose }: { report: any; onClose: () => v
 }
 
 export default function AdminReportsPage() {
-  useAuthRedirect(["admin"])
+  useAuthRedirect()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedReport, setSelectedReport] = useState(null)
@@ -171,67 +172,85 @@ export default function AdminReportsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [exportLoading, setExportLoading] = useState(false)
-  const [userStats, setUserStats] = useState([]);
-  const [grantStats, setGrantStats] = useState([]);
+  const [userStats, setUserStats] = useState<any[]>([]);
+  const [grantStats, setGrantStats] = useState<any[]>([]);
   const [statsLoading, setStatsLoading] = useState(false);
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true)
-      setError("")
-      try {
-        const token = authStorage.getToken()
-        if (!token) {
-          throw new Error("No authentication token found")
-        }
-
-        // Fetch evaluation reports
-        const evalRes = await fetch(`${API_BASE_URL}/reports/evaluation`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (!evalRes.ok) throw new Error("Failed to fetch evaluation reports")
-        const evalData = await evalRes.json()
-        setEvaluationReports(evalData)
-
-        // Fetch analytics
-        const analyticsRes = await fetch(`${API_BASE_URL}/reports/analytics`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (!analyticsRes.ok) throw new Error("Failed to fetch analytics")
-        const analyticsData = await analyticsRes.json()
-        setMonthlyData(analyticsData.monthlyData || [])
-        setCategoryData(analyticsData.categoryData || [])
-
-        // Fetch reviewer performance
-        const perfRes = await fetch(`${API_BASE_URL}/reports/reviewer-performance`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (!perfRes.ok) throw new Error("Failed to fetch reviewer performance")
-        const perfData = await perfRes.json()
-        setReviewerPerformance(perfData || [])
-      } catch (err: any) {
-        setError(err.message)
-        console.error("Error fetching data:", err)
-      } finally {
-        setLoading(false)
+  // Optimized data fetching with caching
+  const fetchData = useCallback(async () => {
+    setLoading(true)
+    setError("")
+    try {
+      const token = authStorage.getToken()
+      if (!token) {
+        throw new Error("No authentication token found")
       }
+
+      // Fetch all data in parallel for better performance
+      const [evalRes, analyticsRes, perfRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/reports/evaluation`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${API_BASE_URL}/reports/analytics`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${API_BASE_URL}/reports/reviewer-performance`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+      ]);
+
+      if (!evalRes.ok) throw new Error("Failed to fetch evaluation reports")
+      if (!analyticsRes.ok) throw new Error("Failed to fetch analytics")
+      if (!perfRes.ok) throw new Error("Failed to fetch reviewer performance")
+
+      const [evalData, analyticsData, perfData] = await Promise.all([
+        evalRes.json(),
+        analyticsRes.json(),
+        perfRes.json()
+      ]);
+
+      setEvaluationReports(evalData)
+      setMonthlyData(analyticsData.monthlyData || [])
+      setCategoryData(analyticsData.categoryData || [])
+      setReviewerPerformance(perfData || [])
+    } catch (err: any) {
+      setError(err.message)
+      console.error("Error fetching data:", err)
+    } finally {
+      setLoading(false)
     }
-    fetchData()
-  }, [])
+  }, [API_BASE_URL])
 
   useEffect(() => {
+    fetchData()
+  }, [fetchData])
+
+  const fetchStats = useCallback(async () => {
     setStatsLoading(true);
-    const token = authStorage.getToken();
-    Promise.all([
-      fetch(`${API_BASE_URL}/reports/user-stats?year=${year}&month=${month}`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()),
-      fetch(`${API_BASE_URL}/reports/grant-stats?year=${year}&month=${month}`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()),
-    ]).then(([users, grants]) => {
+    try {
+      const token = authStorage.getToken();
+      const [users, grants] = await Promise.all([
+        fetch(`${API_BASE_URL}/reports/user-stats?year=${year}&month=${month}`, { 
+          headers: { Authorization: `Bearer ${token}` } 
+        }).then(res => res.json()),
+        fetch(`${API_BASE_URL}/reports/grant-stats?year=${year}&month=${month}`, { 
+          headers: { Authorization: `Bearer ${token}` } 
+        }).then(res => res.json()),
+      ]);
       setUserStats(users);
       setGrantStats(grants);
-    }).finally(() => setStatsLoading(false));
-  }, [year, month]);
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    } finally {
+      setStatsLoading(false);
+    }
+  }, [API_BASE_URL, year, month]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   const filteredReports = evaluationReports.filter((report) => {
     const matchesSearch = report.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -341,6 +360,16 @@ export default function AdminReportsPage() {
   const activeGrants = grantStats.filter(g => g.status !== 'Closed' && new Date(g.deadline) >= selectedStartDate).length;
   const closedGrants = grantStats.filter(g => g.status === 'Closed' && new Date(g.deadline) < selectedEndDate).length;
 
+  if (loading) {
+    return (
+      <AdminLayout active="reports">
+        <div className="p-6">
+          <PageSkeleton />
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout active="reports">
         {/* Header */}
@@ -350,23 +379,23 @@ export default function AdminReportsPage() {
             <p className="text-gray-600">Comprehensive insights into grant application trends and performance</p>
           </div>
           <div className="flex items-center space-x-2">
-            <Select value={year} onValueChange={setYear}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-              <SelectItem value="2024">2025</SelectItem>
-              <SelectItem value="2023">2024</SelectItem>
-              <SelectItem value="2022">2023</SelectItem>
+                      <Select value={year.toString()} onValueChange={(value) => setYear(parseInt(value))}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="2025">2025</SelectItem>
+              <SelectItem value="2024">2024</SelectItem>
+              {/* <SelectItem value="2022">2023</SelectItem> */}
             </SelectContent>
           </Select>
-          <Select value={month} onValueChange={setMonth}>
+          <Select value={month.toString()} onValueChange={(value) => setMonth(parseInt(value))}>
             <SelectTrigger className="w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {monthNames.map((name, idx) => (
-                <SelectItem key={idx + 1} value={idx + 1}>{name}</SelectItem>
+                <SelectItem key={idx + 1} value={(idx + 1).toString()}>{name}</SelectItem>
               ))}
               </SelectContent>
             </Select>
