@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Label } from "@/components/ui/label"
 import {
   Dialog,
   DialogContent,
@@ -67,45 +68,100 @@ import { authStorage } from "@/lib/auth"
 import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 import { PageSkeleton } from "@/components/ui/loading-skeleton"
 
-function ReportDetailsModal({ report, onClose }: { report: any; onClose: () => void }) {
+// TypeScript interfaces for better type safety
+interface Report {
+  _id: string;
+  title: string;
+  generatedDate: string;
+  period: string;
+  totalProposals: number;
+  totalFunding: number;
+  approved: number;
+  rejected: number;
+  status: string;
+  averageScore?: number;
+}
+
+interface MonthlyData {
+  month: string;
+  applications: number;
+  approved: number;
+  rejected: number;
+  funding: number;
+}
+
+interface CategoryData {
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface ReviewerPerformance {
+  id: string;
+  name: string;
+  reviews: number;
+  totalAssigned: number;
+  avgTime: number;
+  onTimeRate: number;
+}
+
+interface UserStats {
+  id: string;
+  name: string;
+  applications: number;
+  approved: number;
+  funding: number;
+}
+
+interface GrantStats {
+  id: string;
+  title: string;
+  applications: number;
+  approved: number;
+  funding: number;
+  status: string;
+  deadline: string;
+}
+
+function ReportDetailsModal({ report, onClose }: { report: Report; onClose: () => void }) {
   return (
-    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-      <DialogHeader>
-        <DialogTitle>{report.title}</DialogTitle>
-        <DialogDescription>
+    <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-4xl max-h-[90vh] overflow-y-auto p-3 sm:p-4 md:p-6">
+      <DialogHeader className="space-y-2 sm:space-y-3">
+        <DialogTitle className="text-base sm:text-lg md:text-xl">{report.title}</DialogTitle>
+        <DialogDescription className="text-xs sm:text-sm md:text-base">
           Generated on {report.generatedDate} • Period: {report.period}
         </DialogDescription>
       </DialogHeader>
 
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Report Summary */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Executive Summary</CardTitle>
+        <Card className="p-3 sm:p-4 md:p-6">
+          <CardHeader className="pb-2 sm:pb-3 md:pb-4">
+            <CardTitle className="text-sm sm:text-base md:text-lg">Executive Summary</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <span className="font-medium">Total Proposals:</span>
-                <span className="ml-2 text-2xl font-bold text-blue-600">{report.totalProposals}</span>
+          <CardContent className="space-y-3 sm:space-y-4 p-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="text-center sm:text-left">
+                <span className="font-medium text-xs sm:text-sm">Total Proposals:</span>
+                <span className="ml-1 sm:ml-2 text-lg sm:text-xl md:text-2xl font-bold text-blue-600">{report.totalProposals}</span>
               </div>
-              <div>
-                <span className="font-medium">Total Funding:</span>
-                <span className="ml-2 text-2xl font-bold text-green-600">{report.totalFunding}</span>
+              <div className="text-center sm:text-left">
+                <span className="font-medium text-xs sm:text-sm">Total Funding:</span>
+                <span className="ml-1 sm:ml-2 text-lg sm:text-xl md:text-2xl font-bold text-green-600">{report.totalFunding}</span>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">{report.approved}</div>
-                <div className="text-sm text-green-700">Approved</div>
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              <div className="text-center p-2 sm:p-3 md:p-4 bg-green-50 rounded-lg">
+                <div className="text-lg sm:text-xl md:text-2xl font-bold text-green-600">{report.approved}</div>
+                <div className="text-xs sm:text-sm text-green-700">Approved</div>
               </div>
-              <div className="text-center p-4 bg-red-50 rounded-lg">
-                <div className="text-2xl font-bold text-red-600">{report.rejected}</div>
-                <div className="text-sm text-red-700">Rejected</div>
+              <div className="text-center p-2 sm:p-3 md:p-4 bg-red-50 rounded-lg">
+                <div className="text-lg sm:text-xl md:text-2xl font-bold text-red-600">{report.rejected}</div>
+                <div className="text-xs sm:text-sm text-red-700">Rejected</div>
               </div>
-              <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                <div className="text-2xl font-bold text-yellow-600">{report.pending}</div>
-                <div className="text-sm text-yellow-700">Pending</div>
+              <div className="text-center p-2 sm:p-3 md:p-4 bg-blue-50 rounded-lg">
+                <div className="text-lg sm:text-xl md:text-2xl font-bold text-blue-600">{report.totalProposals - report.approved - report.rejected}</div>
+                <div className="text-xs sm:text-sm text-blue-700">Pending</div>
               </div>
             </div>
           </CardContent>
@@ -131,10 +187,7 @@ function ReportDetailsModal({ report, onClose }: { report: any; onClose: () => v
               <div>
                 <span className="font-medium">Avg. Funding:</span>
                 <span className="ml-2 text-lg font-bold">
-                  $
-                  {Math.round(
-                    Number.parseInt(report.totalFunding.replace(/[$,]/g, "")) / report.approved,
-                  ).toLocaleString()}
+                  ${report.approved > 0 ? Math.round(report.totalFunding / report.approved).toLocaleString() : '0'}
                 </span>
               </div>
             </div>
@@ -157,23 +210,34 @@ export default function AdminReportsPage() {
   useAuthRedirect()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [selectedReport, setSelectedReport] = useState(null)
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null)
   const [month, setMonth] = useState(new Date().getMonth() + 1)
   const [year, setYear] = useState(new Date().getFullYear())
   const [generating, setGenerating] = useState(false)
-  const [report, setReport] = useState<any | null>(null)
+  const [report, setReport] = useState<Report | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
   const { toast } = useToast()
 
+  // Check if mobile on mount and resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
   // Dynamic data states
-  const [evaluationReports, setEvaluationReports] = useState<any[]>([])
-  const [monthlyData, setMonthlyData] = useState<any[]>([])
-  const [categoryData, setCategoryData] = useState<any[]>([])
-  const [reviewerPerformance, setReviewerPerformance] = useState<any[]>([])
+  const [evaluationReports, setEvaluationReports] = useState<Report[]>([])
+  const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([])
+  const [categoryData, setCategoryData] = useState<CategoryData[]>([])
+  const [reviewerPerformance, setReviewerPerformance] = useState<ReviewerPerformance[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [exportLoading, setExportLoading] = useState(false)
-  const [userStats, setUserStats] = useState<any[]>([]);
-  const [grantStats, setGrantStats] = useState<any[]>([]);
+  const [userStats, setUserStats] = useState<UserStats[]>([]);
+  const [grantStats, setGrantStats] = useState<GrantStats[]>([]);
   const [statsLoading, setStatsLoading] = useState(false);
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -362,147 +426,163 @@ export default function AdminReportsPage() {
 
   if (loading) {
     return (
-      <AdminLayout active="reports">
-        <div className="p-6">
-          <PageSkeleton />
+      <AdminLayout active="reports" title="Reports & Analytics">
+        <div className="flex items-center justify-center min-h-screen p-4">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-500 text-sm">Loading reports...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminLayout active="reports" title="Reports & Analytics">
+        <div className="flex items-center justify-center min-h-screen p-4">
+          <div className="text-center text-red-600 text-sm">{error}</div>
         </div>
       </AdminLayout>
     );
   }
 
   return (
-    <AdminLayout active="reports">
+    <AdminLayout active="reports" title="Reports & Analytics">
+      <div className="p-2 sm:p-3 md:p-4 lg:p-6 w-full overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
-            <p className="text-gray-600">Comprehensive insights into grant application trends and performance</p>
+            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">Reports & Analytics</h1>
+            <p className="text-xs sm:text-sm md:text-base text-gray-600">Comprehensive insights into grant application trends and performance</p>
           </div>
-          <div className="flex items-center space-x-2">
-                      <Select value={year.toString()} onValueChange={(value) => setYear(parseInt(value))}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="2025">2025</SelectItem>
-              <SelectItem value="2024">2024</SelectItem>
-              {/* <SelectItem value="2022">2023</SelectItem> */}
-            </SelectContent>
-          </Select>
-          <Select value={month.toString()} onValueChange={(value) => setMonth(parseInt(value))}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {monthNames.map((name, idx) => (
-                <SelectItem key={idx + 1} value={(idx + 1).toString()}>{name}</SelectItem>
-              ))}
-              </SelectContent>
-            </Select>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+            <div className="flex gap-2">
+              <Select value={year.toString()} onValueChange={(value) => setYear(parseInt(value))}>
+                <SelectTrigger className="w-20 sm:w-24 md:w-32 text-xs sm:text-sm md:text-base h-9 sm:h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2025">2025</SelectItem>
+                  <SelectItem value="2024">2024</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={month.toString()} onValueChange={(value) => setMonth(parseInt(value))}>
+                <SelectTrigger className="w-24 sm:w-32 md:w-40 text-xs sm:text-sm md:text-base h-9 sm:h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {monthNames.map((name, idx) => (
+                    <SelectItem key={idx + 1} value={(idx + 1).toString()}>{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <Button 
               variant="outline" 
               onClick={handleExportReport}
               disabled={exportLoading}
+              className="w-full sm:w-auto h-9 sm:h-10 text-xs sm:text-sm"
             >
-              <Download className="w-4 h-4 mr-2" />
+              <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               {exportLoading ? "Exporting..." : "Export Report"}
             </Button>
           </div>
         </div>
 
-        {/* Key Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <Card>
-            <CardContent className="p-4">
+        {/* Key Metrics - Mobile optimized */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6">
+          <Card className="p-2 sm:p-3 md:p-4">
+            <CardContent className="p-0">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total Proposals</p>
-                  <p className="text-2xl font-bold">{totalProposals}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Total Proposals</p>
+                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold">{totalProposals}</p>
                 </div>
-                <FileText className="w-8 h-8 text-blue-600" />
+                <FileText className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 text-blue-600" />
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4">
+          <Card className="p-2 sm:p-3 md:p-4">
+            <CardContent className="p-0">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Approved</p>
-                  <p className="text-2xl font-bold">{totalApproved}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Approved</p>
+                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold">{totalApproved}</p>
                 </div>
-                <CheckCircle className="w-8 h-8 text-green-600" />
+                <CheckCircle className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 text-green-600" />
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4">
+          <Card className="p-2 sm:p-3 md:p-4">
+            <CardContent className="p-0">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Rejected</p>
-                  <p className="text-2xl font-bold">{totalRejected}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Rejected</p>
+                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold">{totalRejected}</p>
                 </div>
-                <XCircle className="w-8 h-8 text-red-600" />
+                <XCircle className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 text-red-600" />
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4">
+          <Card className="p-2 sm:p-3 md:p-4">
+            <CardContent className="p-0">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total Funding</p>
-                  <p className="text-2xl font-bold">${totalFunding.toLocaleString()}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Total Funding</p>
+                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold">${totalFunding.toLocaleString()}</p>
                 </div>
-                <DollarSign className="w-8 h-8 text-blue-600" />
+                <DollarSign className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 text-blue-600" />
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4">
+          <Card className="p-2 sm:p-3 md:p-4">
+            <CardContent className="p-0">
               <div className="flex items-center justify-between">
                 <div>
-                <p className="text-sm text-gray-600">Active Grants</p>
-                <p className="text-2xl font-bold">{activeGrants}</p>
-              </div>
-              <Award className="w-8 h-8 text-purple-600" />
+                  <p className="text-xs sm:text-sm text-gray-600">Active Grants</p>
+                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold">{activeGrants}</p>
+                </div>
+                <Award className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 text-purple-600" />
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4">
+          <Card className="col-span-2 lg:col-span-1 p-2 sm:p-3 md:p-4">
+            <CardContent className="p-0">
               <div className="flex items-center justify-between">
                 <div>
-                <p className="text-sm text-gray-600">Closed Grants</p>
-                <p className="text-2xl font-bold">{closedGrants}</p>
-              </div>
-              <Award className="w-8 h-8 text-orange-600" />
+                  <p className="text-xs sm:text-sm text-gray-600">Closed Grants</p>
+                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold">{closedGrants}</p>
+                </div>
+                <Award className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 text-orange-600" />
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Charts and Analytics */}
-        <Tabs defaultValue="applications" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="applications">Applications</TabsTrigger>
-            <TabsTrigger value="funding">Funding</TabsTrigger>
-            <TabsTrigger value="reviewers">Reviewers</TabsTrigger>
-          <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="grants">Grants</TabsTrigger>
+        <Tabs defaultValue="applications" className="space-y-3 sm:space-y-4">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 h-auto">
+            <TabsTrigger value="applications" className="text-xs sm:text-sm md:text-base h-8 sm:h-9 md:h-10">Applications</TabsTrigger>
+            <TabsTrigger value="funding" className="text-xs sm:text-sm md:text-base h-8 sm:h-9 md:h-10">Funding</TabsTrigger>
+            <TabsTrigger value="reviewers" className="text-xs sm:text-sm md:text-base h-8 sm:h-9 md:h-10">Reviewers</TabsTrigger>
+            <TabsTrigger value="users" className="text-xs sm:text-sm md:text-base h-8 sm:h-9 md:h-10">Users</TabsTrigger>
+            <TabsTrigger value="grants" className="text-xs sm:text-sm md:text-base h-8 sm:h-9 md:h-10">Grants</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="applications" className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>submissons by Month</CardTitle>
-                  <CardDescription>Monthly application submission trends</CardDescription>
+          <TabsContent value="applications" className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+              <Card className="p-2 sm:p-3 md:p-4 lg:p-6">
+                <CardHeader className="pb-2 sm:pb-3 md:pb-4">
+                  <CardTitle className="text-sm sm:text-base md:text-lg">Submissions by Month</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm md:text-base">Monthly application submission trends</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
+                <CardContent className="p-0">
+                  <ResponsiveContainer width="100%" height={isMobile ? 200 : 300}>
                     <BarChart data={monthlyData}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
+                      <XAxis dataKey="month" fontSize={isMobile ? 10 : 12} />
+                      <YAxis fontSize={isMobile ? 10 : 12} />
                       <Tooltip />
                       <Bar dataKey="applications" fill="#3b82f6" name="Total" />
                       <Bar dataKey="approved" fill="#10b981" name="Approved" />
@@ -512,19 +592,19 @@ export default function AdminReportsPage() {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Research domain by Category</CardTitle>
-                  <CardDescription>Distribution across research categories</CardDescription>
+              <Card className="p-2 sm:p-3 md:p-4 lg:p-6">
+                <CardHeader className="pb-2 sm:pb-3 md:pb-4">
+                  <CardTitle className="text-sm sm:text-base md:text-lg">Research Domain by Category</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm md:text-base">Distribution across research categories</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
+                <CardContent className="p-0">
+                  <ResponsiveContainer width="100%" height={isMobile ? 200 : 300}>
                     <PieChart>
                       <Pie
                         data={categoryData}
                         cx="50%"
                         cy="50%"
-                        outerRadius={100}
+                        outerRadius={isMobile ? 60 : 100}
                         fill="#8884d8"
                         dataKey="value"
                         label={({ name, value }) => `${name}: ${value}`}
@@ -541,19 +621,19 @@ export default function AdminReportsPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="funding" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Funding Trends</CardTitle>
-                <CardDescription>Monthly funding allocation and application volume</CardDescription>
+          <TabsContent value="funding" className="space-y-3 sm:space-y-4">
+            <Card className="p-2 sm:p-3 md:p-4 lg:p-6">
+              <CardHeader className="pb-2 sm:pb-3 md:pb-4">
+                <CardTitle className="text-sm sm:text-base md:text-lg">Funding Trends</CardTitle>
+                <CardDescription className="text-xs sm:text-sm md:text-base">Monthly funding allocation and application volume</CardDescription>
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={400}>
+              <CardContent className="p-0">
+                <ResponsiveContainer width="100%" height={isMobile ? 250 : 400}>
                   <LineChart data={monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis yAxisId="left" />
-                    <YAxis yAxisId="right" orientation="right" />
+                    <XAxis dataKey="month" fontSize={isMobile ? 10 : 12} />
+                    <YAxis yAxisId="left" fontSize={isMobile ? 10 : 12} />
+                    <YAxis yAxisId="right" orientation="right" fontSize={isMobile ? 10 : 12} />
                     <Tooltip
                       formatter={(value, name) => [
                         name === "funding" ? `$${(value as number).toLocaleString()}` : value,
@@ -565,7 +645,7 @@ export default function AdminReportsPage() {
                       type="monotone"
                       dataKey="funding"
                       stroke="#3b82f6"
-                      strokeWidth={3}
+                      strokeWidth={isMobile ? 2 : 3}
                       dot={false}
                     />
                     <Line
@@ -573,7 +653,7 @@ export default function AdminReportsPage() {
                       type="monotone"
                       dataKey="applications"
                       stroke="#ef4444"
-                      strokeWidth={3}
+                      strokeWidth={isMobile ? 2 : 3}
                       dot={false}
                     />
                   </LineChart>
@@ -582,49 +662,81 @@ export default function AdminReportsPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="reviewers" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Reviewer Performance</CardTitle>
-                <CardDescription>Review completion and scoring metrics</CardDescription>
+          <TabsContent value="reviewers" className="space-y-3 sm:space-y-4">
+            <Card className="p-2 sm:p-3 md:p-4 lg:p-6">
+              <CardHeader className="pb-2 sm:pb-3 md:pb-4">
+                <CardTitle className="text-sm sm:text-base md:text-lg">Reviewer Performance</CardTitle>
+                <CardDescription className="text-xs sm:text-sm md:text-base">Review completion and scoring metrics</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Reviewer Performance Table */}
-                  <div className="overflow-x-auto">
-                  <Table className="min-w-[900px]">
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Reviewer</TableHead>
-                          <TableHead>Reviews Completed</TableHead>
-                          <TableHead>Total Assigned</TableHead>
-                          {/* <TableHead>Avg Score</TableHead> */}
-                          <TableHead>Avg Time (days)</TableHead>
-                          <TableHead>On-Time Rate</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {reviewerPerformance.map((reviewer) => (
-                          <TableRow key={reviewer.id}>
-                            <TableCell className="font-medium">{reviewer.name}</TableCell>
-                            <TableCell>{reviewer.reviews}</TableCell>
-                            <TableCell>{reviewer.totalAssigned}</TableCell>
-                            {/* <TableCell>{reviewer.averageScore}/10</TableCell> */}
-                            <TableCell>{reviewer.avgTime}d</TableCell>
-                            <TableCell>{reviewer.onTimeRate}%</TableCell>
+              <CardContent className="p-0">
+                <div className="space-y-3 sm:space-y-4">
+                  {/* Mobile Card View */}
+                  {isMobile ? (
+                    <div className="space-y-3 p-2">
+                      {reviewerPerformance.map((reviewer) => (
+                        <div key={reviewer.id} className="bg-gray-50 rounded-lg p-3 border">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-medium text-sm text-gray-900">{reviewer.name}</h4>
+                            <Badge variant="secondary" className="text-xs">
+                              {reviewer.reviews}/{reviewer.totalAssigned}
+                            </Badge>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Completed:</span>
+                              <span className="font-medium text-blue-600">{reviewer.reviews}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Assigned:</span>
+                              <span className="font-medium text-gray-700">{reviewer.totalAssigned}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Avg Time:</span>
+                              <span className="font-medium text-orange-600">{reviewer.avgTime}d</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">On-Time:</span>
+                              <span className="font-medium text-green-600">{reviewer.onTimeRate}%</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    /* Desktop Table View */
+                    <div className="overflow-x-auto">
+                      <Table className="min-w-[600px] sm:min-w-[800px] md:min-w-[900px] text-xs sm:text-sm">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">Reviewer</TableHead>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">Reviews Completed</TableHead>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">Total Assigned</TableHead>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">Avg Time (days)</TableHead>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">On-Time Rate</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                        </TableHeader>
+                        <TableBody>
+                          {reviewerPerformance.map((reviewer) => (
+                            <TableRow key={reviewer.id}>
+                              <TableCell className="font-medium text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">{reviewer.name}</TableCell>
+                              <TableCell className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">{reviewer.reviews}</TableCell>
+                              <TableCell className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">{reviewer.totalAssigned}</TableCell>
+                              <TableCell className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">{reviewer.avgTime}d</TableCell>
+                              <TableCell className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">{reviewer.onTimeRate}%</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
                   
                   {/* Reviewer Performance Chart */}
-                  <div className="mt-6">
-                    <ResponsiveContainer width="100%" height={400}>
+                  <div className="mt-3 sm:mt-6">
+                    <ResponsiveContainer width="100%" height={isMobile ? 250 : 400}>
                       <BarChart data={reviewerPerformance} layout="horizontal">
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" />
-                        <YAxis dataKey="name" type="category" width={100} />
+                        <XAxis type="number" fontSize={isMobile ? 10 : 12} />
+                        <YAxis dataKey="name" type="category" width={isMobile ? 80 : 100} fontSize={isMobile ? 10 : 12} />
                         <Tooltip />
                         <Bar dataKey="reviews" fill="#3b82f6" name="Reviews Completed" />
                       </BarChart>
@@ -634,75 +746,149 @@ export default function AdminReportsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-        <TabsContent value="users" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>User Activity (Monthly)</CardTitle>
-              <CardDescription>Applications, approvals, and funding by user</CardDescription>
+        <TabsContent value="users" className="space-y-3 sm:space-y-4">
+          <Card className="p-2 sm:p-3 md:p-4 lg:p-6">
+            <CardHeader className="pb-2 sm:pb-3 md:pb-4">
+              <CardTitle className="text-sm sm:text-base md:text-lg">User Activity (Monthly)</CardTitle>
+              <CardDescription className="text-xs sm:text-sm md:text-base">Applications, approvals, and funding by user</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {statsLoading ? (
-                <div className="py-8 text-center text-gray-500">Loading user stats...</div>
+                <div className="py-4 sm:py-8 text-center text-gray-500 text-xs sm:text-sm">Loading user stats...</div>
               ) : (
-                <Table className="min-w-[900px]">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Applications</TableHead>
-                      <TableHead>Approved</TableHead>
-                      <TableHead>Funding</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {userStats.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell>{user.name}</TableCell>
-                        <TableCell>{user.applications}</TableCell>
-                        <TableCell>{user.approved}</TableCell>
-                        <TableCell>${user.funding?.toLocaleString()}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <>
+                  {/* Mobile Card View */}
+                  {isMobile ? (
+                    <div className="space-y-3 p-2">
+                      {userStats.map((user) => (
+                        <div key={user.id} className="bg-gray-50 rounded-lg p-3 border">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-medium text-sm text-gray-900">{user.name}</h4>
+                            <Badge variant="secondary" className="text-xs">
+                              {user.applications} apps
+                            </Badge>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Approved:</span>
+                              <span className="font-medium text-green-600">{user.approved}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Funding:</span>
+                              <span className="font-medium text-blue-600">${user.funding?.toLocaleString()}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    /* Desktop Table View */
+                    <div className="overflow-x-auto">
+                      <Table className="min-w-[600px] sm:min-w-[800px] md:min-w-[900px] text-xs sm:text-sm">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">User</TableHead>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">Applications</TableHead>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">Approved</TableHead>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">Funding</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {userStats.map((user) => (
+                            <TableRow key={user.id}>
+                              <TableCell className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">{user.name}</TableCell>
+                              <TableCell className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">{user.applications}</TableCell>
+                              <TableCell className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">{user.approved}</TableCell>
+                              <TableCell className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">${user.funding?.toLocaleString()}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="grants" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Grant Performance (Monthly)</CardTitle>
-              <CardDescription>Applications, approvals, and funding by grant</CardDescription>
+        <TabsContent value="grants" className="space-y-3 sm:space-y-4">
+          <Card className="p-2 sm:p-3 md:p-4 lg:p-6">
+            <CardHeader className="pb-2 sm:pb-3 md:pb-4">
+              <CardTitle className="text-sm sm:text-base md:text-lg">Grant Performance (Monthly)</CardTitle>
+              <CardDescription className="text-xs sm:text-sm md:text-base">Applications, approvals, and funding by grant</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {statsLoading ? (
-                <div className="py-8 text-center text-gray-500">Loading grant stats...</div>
+                <div className="py-4 sm:py-8 text-center text-gray-500 text-xs sm:text-sm">Loading grant stats...</div>
               ) : (
-                <Table className="min-w-[900px]">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Grant</TableHead>
-                      <TableHead>Applications</TableHead>
-                      <TableHead>Approved</TableHead>
-                      <TableHead>Funding</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {grantStats.map((grant) => (
-                      <TableRow key={grant.id}>
-                        <TableCell>{grant.title}</TableCell>
-                        <TableCell>{grant.applications}</TableCell>
-                        <TableCell>{grant.approved}</TableCell>
-                        <TableCell>${grant.funding?.toLocaleString()}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <>
+                  {/* Mobile Card View */}
+                  {isMobile ? (
+                    <div className="space-y-3 p-2">
+                      {grantStats.map((grant) => (
+                        <div key={grant.id} className="bg-gray-50 rounded-lg p-3 border">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-medium text-sm text-gray-900 line-clamp-1">{grant.title}</h4>
+                            <Badge variant="secondary" className="text-xs">
+                              {grant.applications} apps
+                            </Badge>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Approved:</span>
+                              <span className="font-medium text-green-600">{grant.approved}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Funding:</span>
+                              <span className="font-medium text-blue-600">${grant.funding?.toLocaleString()}</span>
+                            </div>
+                          </div>
+                          <div className="mt-2 pt-2 border-t border-gray-200">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-gray-600">Status:</span>
+                              <Badge 
+                                variant={grant.status === 'Active' ? 'default' : 'secondary'} 
+                                className="text-xs"
+                              >
+                                {grant.status}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    /* Desktop Table View */
+                    <div className="overflow-x-auto">
+                      <Table className="min-w-[600px] sm:min-w-[800px] md:min-w-[900px] text-xs sm:text-sm">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">Grant</TableHead>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">Applications</TableHead>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">Approved</TableHead>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">Funding</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {grantStats.map((grant) => (
+                            <TableRow key={grant.id}>
+                              <TableCell className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">{grant.title}</TableCell>
+                              <TableCell className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">{grant.applications}</TableCell>
+                              <TableCell className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">{grant.approved}</TableCell>
+                              <TableCell className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">${grant.funding?.toLocaleString()}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
         </TabsContent>
         </Tabs>
+      </div>
     </AdminLayout>
   );
 }

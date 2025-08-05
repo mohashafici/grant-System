@@ -57,19 +57,135 @@ import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 import { FormError } from "@/components/ui/form-error"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 
+// Mobile-friendly grant card component
+function MobileGrantCard({ grant, grantStats, onView, onEdit, onDelete, getStatusColor, getCategoryColor }: {
+  grant: any;
+  grantStats: any;
+  onView: (grant: any) => void;
+  onEdit: (grant: any) => void;
+  onDelete: (grantId: string) => void;
+  getStatusColor: (status: string) => string;
+  getCategoryColor: (category: string) => string;
+}) {
+  return (
+    <Card className="mb-3 p-3 sm:p-4 hover:shadow-md transition-shadow">
+      <div className="space-y-3 sm:space-y-4">
+        {/* Header */}
+        <div className="flex justify-between items-start">
+          <div className="flex-1 mr-2">
+            <h3 className="font-medium text-sm sm:text-base line-clamp-2 leading-tight">{grant.title}</h3>
+          </div>
+          <Badge className={`${getStatusColor(grant.status)} text-xs whitespace-nowrap flex-shrink-0`}>
+            {grant.status}
+          </Badge>
+        </div>
+
+        {/* Category and Funding */}
+        <div className="flex items-center justify-between">
+          <Badge className={`${getCategoryColor(grant.category)} text-xs`}>
+            {grant.category}
+          </Badge>
+          <div className="text-right">
+            <div className="text-sm sm:text-base font-semibold text-blue-600">
+              ${grant.funding?.toLocaleString()}
+            </div>
+            <div className="text-xs text-gray-500">Funding</div>
+          </div>
+        </div>
+
+        {/* Details Grid */}
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
+          <div>
+            <span className="text-gray-500">Deadline:</span>
+            <p className="font-medium">{new Date(grant.deadline).toLocaleDateString()}</p>
+          </div>
+          <div>
+            <span className="text-gray-500">Applicants:</span>
+            <p className="font-medium">{grantStats[grant._id]?.applicants || 0}</p>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2 pt-2">
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={() => onView(grant)}
+            className="flex-1 h-8 text-xs"
+          >
+            <Eye className="w-3 h-3 mr-1" />
+            View
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onEdit(grant)}
+            className="flex-1 h-8 text-xs"
+          >
+            <Edit className="w-3 h-3 mr-1" />
+            Edit
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onDelete(grant._id)}
+            className="flex-1 h-8 text-xs text-red-600 hover:text-red-700"
+          >
+            <Trash2 className="w-3 h-3 mr-1" />
+            Delete
+          </Button>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+interface Grant {
+  _id: string;
+  title: string;
+  description: string;
+  category: string;
+  status: string;
+  funding: number;
+  deadline: string;
+  organization?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  requirements?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface GrantStats {
+  applicants: number;
+  approved: number;
+  rejected: number;
+}
+
 export default function ManageGrantsPage() {
-  useAuthRedirect(["admin"])
-  const [grants, setGrants] = useState([])
+  useAuthRedirect()
+  const [grants, setGrants] = useState<Grant[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [selectedGrant, setSelectedGrant] = useState(null)
-  const [viewGrant, setViewGrant] = useState(null)
+  const [selectedGrant, setSelectedGrant] = useState<Grant | null>(null)
+  const [viewGrant, setViewGrant] = useState<Grant | null>(null)
   const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const { toast } = useToast()
   const [deleteGrantId, setDeleteGrantId] = useState<string | null>(null)
-  const [grantStats, setGrantStats] = useState({}) // { [grantId]: { applicants, approved, rejected } }
+  const [grantStats, setGrantStats] = useState<Record<string, GrantStats>>({})
   const [totalRejected, setTotalRejected] = useState(0)
+
+  // Check if mobile on mount and resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     fetchGrants()
@@ -96,45 +212,75 @@ export default function ManageGrantsPage() {
 
   const fetchAllGrantStats = async () => {
     const token = authStorage.getToken()
-    let stats = {}
+    let stats: Record<string, GrantStats> = {}
     let rejectedSum = 0
-    await Promise.all(grants.map(async (grant) => {
-      const res = await fetch(`${API_BASE_URL}/proposals/grant/${grant._id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const proposals = await res.json()
+
+    for (const grant of grants) {
+      try {
+        const proposalsRes = await fetch(`${API_BASE_URL}/proposals/grant/${grant._id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        
+        if (proposalsRes.ok) {
+          const proposals = await proposalsRes.json()
       const applicants = proposals.length
-      const approved = proposals.filter(p => p.status === "Approved").length
-      const rejected = proposals.filter(p => p.status === "Rejected").length
+          const approved = proposals.filter((p: any) => p.status === "Approved").length
+          const rejected = proposals.filter((p: any) => p.status === "Rejected").length
+          
       stats[grant._id] = { applicants, approved, rejected }
       rejectedSum += rejected
-    }))
+        }
+      } catch (error) {
+        console.error(`Error fetching stats for grant ${grant._id}:`, error)
+        stats[grant._id] = { applicants: 0, approved: 0, rejected: 0 }
+      }
+    }
+    
     setGrantStats(stats)
     setTotalRejected(rejectedSum)
   }
 
-  const handleDelete = (id) => {
+  const handleDelete = (id: string) => {
     setDeleteGrantId(id)
   }
 
   const confirmDelete = async () => {
     if (!deleteGrantId) return
+
     try {
       const token = authStorage.getToken()
       const res = await fetch(`${API_BASE_URL}/grants/${deleteGrantId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       })
+
       if (res.ok) {
-        toast({ title: "Grant deleted!", description: "The grant was deleted successfully.", duration: 3000 })
+        toast({
+          title: "Grant Deleted",
+          description: "The grant has been successfully deleted.",
+        })
         fetchGrants()
       } else {
-        toast({ title: "Delete failed", description: "Failed to delete grant", duration: 3000 })
+        const errorData = await res.json().catch(() => ({}))
+        toast({
+          title: "Error",
+          description: errorData.message || "Failed to delete the grant. Please try again.",
+          variant: "destructive",
+        })
       }
-    } catch (err) {
-      toast({ title: "Delete failed", description: "Error deleting grant", duration: 3000 })
+    } catch (error) {
+      console.error('Delete grant error:', error)
+      toast({
+        title: "Error",
+        description: "An error occurred while deleting the grant.",
+        variant: "destructive",
+      })
+    } finally {
+      setDeleteGrantId(null)
     }
-    setDeleteGrantId(null)
   }
 
   const getStatusColor = (status: string) => {
@@ -142,7 +288,9 @@ export default function ManageGrantsPage() {
       case "Active":
         return "bg-green-100 text-green-800"
       case "Closed":
-        return "bg-red-100 text-red-800"
+        return "bg-gray-100 text-gray-800"
+      case "Draft":
+        return "bg-yellow-100 text-yellow-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
@@ -156,10 +304,14 @@ export default function ManageGrantsPage() {
         return "bg-red-100 text-red-800"
       case "Environment":
         return "bg-green-100 text-green-800"
-      case "Social Sciences":
-        return "bg-purple-100 text-purple-800"
       case "Education":
         return "bg-orange-100 text-orange-800"
+      case "Arts":
+        return "bg-purple-100 text-purple-800"
+      case "Science":
+        return "bg-indigo-100 text-indigo-800"
+      case "Social Impact":
+        return "bg-pink-100 text-pink-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
@@ -183,69 +335,79 @@ export default function ManageGrantsPage() {
     return matchesSearch && matchesStatus
   })
 
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen p-4">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-500 text-sm">Loading grants...</p>
+      </div>
+    </div>
+  )
+
   return (
-    <AdminLayout>
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
+    <AdminLayout active="grants" title="Manage Grants">
+      <div className="p-2 sm:p-3 md:p-4 lg:p-6 w-full overflow-hidden">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Manage Grants</h1>
-            <p className="text-gray-600">Create and manage funding opportunities</p>
+            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">Manage Grants</h1>
+            <p className="text-xs sm:text-sm md:text-base text-gray-600">Create and manage funding opportunities</p>
           </div>
           <Button
             onClick={() => setCreateModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto h-9 sm:h-10 text-xs sm:text-sm"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             Create Grant
           </Button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <Card>
-            <CardContent className="p-6">
+        {/* Stats Cards - Mobile optimized */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-4 sm:mb-6">
+          <Card className="p-2 sm:p-3 md:p-4 lg:p-6">
+            <CardContent className="p-0">
               <div className="flex items-center">
-                <Award className="w-8 h-8 text-blue-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Grants</p>
-                  <p className="text-2xl font-bold text-gray-900">{grants.length}</p>
+                <Award className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 text-blue-600" />
+                <div className="ml-2 sm:ml-3 md:ml-4">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Total Grants</p>
+                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900">{grants.length}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-6">
+          <Card className="p-2 sm:p-3 md:p-4 lg:p-6">
+            <CardContent className="p-0">
               <div className="flex items-center">
-                <FileText className="w-8 h-8 text-green-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Active Grants</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                <FileText className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 text-green-600" />
+                <div className="ml-2 sm:ml-3 md:ml-4">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Active Grants</p>
+                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900">
                     {grants.filter(g => g.status === "Active").length}
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-6">
+          <Card className="p-2 sm:p-3 md:p-4 lg:p-6">
+            <CardContent className="p-0">
               <div className="flex items-center">
-                <Users className="w-8 h-8 text-purple-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Applicants</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                <Users className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 text-purple-600" />
+                <div className="ml-2 sm:ml-3 md:ml-4">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Total Applicants</p>
+                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900">
                     {Object.values(grantStats).reduce((sum: number, stat: any) => sum + stat.applicants, 0)}
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-6">
+          <Card className="col-span-2 lg:col-span-1 p-2 sm:p-3 md:p-4 lg:p-6">
+            <CardContent className="p-0">
               <div className="flex items-center">
-                <Trash2 className="w-8 h-8 text-red-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Closed Grants</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                <Trash2 className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 text-red-600" />
+                <div className="ml-2 sm:ml-3 md:ml-4">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Closed Grants</p>
+                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900">
                     {grants.filter(g => g.status === "Closed").length}
                   </p>
                 </div>
@@ -254,30 +416,30 @@ export default function ManageGrantsPage() {
           </Card>
         </div>
 
-        {/* Filters */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row gap-4">
+        {/* Filters - Mobile optimized */}
+        <Card className="mb-4 sm:mb-6">
+          <CardContent className="p-3 sm:p-4 md:p-6">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3 sm:w-4 sm:h-4" />
                   <Input
                     placeholder="Search grants..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="pl-8 sm:pl-10 text-xs sm:text-sm md:text-base h-9 sm:h-10"
                   />
                 </div>
               </div>
               <div className="w-full sm:w-48">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
+                  <SelectTrigger className="text-xs sm:text-sm md:text-base h-9 sm:h-10">
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="Open">Active</SelectItem>
-                    <SelectItem value="Closed">Close</SelectItem>
+                    <SelectItem value="Closed">Closed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -285,80 +447,109 @@ export default function ManageGrantsPage() {
           </CardContent>
         </Card>
 
-        {/* Grants Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>All Grants</CardTitle>
-            <CardDescription>Manage your funding opportunities</CardDescription>
+        {/* Grants List - Mobile/Desktop responsive */}
+        <Card className="overflow-hidden">
+          <CardHeader className="pb-2 sm:pb-3 md:pb-4 px-2 sm:px-3 md:px-4 lg:px-6">
+            <CardTitle className="text-base sm:text-lg md:text-xl">All Grants</CardTitle>
+            <CardDescription className="text-xs sm:text-sm md:text-base">Manage your funding opportunities</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 md:p-6 overflow-hidden">
             {loading ? (
               <div className="flex justify-center items-center py-8">
                 <LoadingSpinner text="Loading grants..." />
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Funding</TableHead>
-                      <TableHead>Deadline</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Applicants</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+              <>
+                {/* Mobile View */}
+                {isMobile ? (
+                  <div className="p-2 sm:p-3 md:p-4">
                     {filteredGrants.map((grant) => (
-                      <TableRow key={grant._id}>
-                        <TableCell className="font-medium">{grant.title}</TableCell>
-                        <TableCell>
-                          <Badge className={getCategoryColor(grant.category)}>
-                            {grant.category}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>${grant.funding?.toLocaleString()}</TableCell>
-                        <TableCell>{new Date(grant.deadline).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(grant.status)}>
-                            {grant.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {grantStats[grant._id]?.applicants || 0}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setViewGrant(grant)}
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setSelectedGrant(grant)}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDelete(grant._id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                      <MobileGrantCard
+                        key={grant._id}
+                        grant={grant}
+                        grantStats={grantStats}
+                        onView={setViewGrant}
+                        onEdit={setSelectedGrant}
+                        onDelete={handleDelete}
+                        getStatusColor={getStatusColor}
+                        getCategoryColor={getCategoryColor}
+                      />
                     ))}
-                  </TableBody>
-                </Table>
+                  </div>
+                ) : (
+                  /* Desktop Table View */
+                  <div className="w-full overflow-x-auto">
+                  <Table className="w-full text-xs sm:text-sm">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[25%] sm:w-[30%]">Title</TableHead>
+                        <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[15%] sm:w-[15%]">Category</TableHead>
+                        <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[15%] sm:w-[15%]">Funding</TableHead>
+                        <TableHead className="hidden md:table-cell text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[10%]">Deadline</TableHead>
+                        <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[10%] sm:w-[10%]">Status</TableHead>
+                        <TableHead className="hidden lg:table-cell text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[10%]">Applicants</TableHead>
+                        <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[15%] sm:w-[15%]">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredGrants.map((grant) => (
+                        <TableRow key={grant._id}>
+                          <TableCell className="font-medium text-xs md:text-sm truncate px-2 md:px-4 py-2 md:py-3">
+                            {grant.title}
+                          </TableCell>
+                          <TableCell className="px-2 md:px-4 py-2 md:py-3">
+                            <Badge className={`${getCategoryColor(grant.category)} text-xs whitespace-nowrap`}>
+                              {grant.category}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">${grant.funding?.toLocaleString()}</TableCell>
+                          <TableCell className="hidden md:table-cell text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">{new Date(grant.deadline).toLocaleDateString()}</TableCell>
+                          <TableCell className="px-2 md:px-4 py-2 md:py-3">
+                            <Badge className={`${getStatusColor(grant.status)} text-xs whitespace-nowrap`}>
+                              {grant.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">
+                            {grantStats[grant._id]?.applicants || 0}
+                          </TableCell>
+                          <TableCell className="px-2 md:px-4 py-2 md:py-3">
+                            <div className="flex flex-row gap-1 sm:gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setViewGrant(grant)}
+                                className="text-xs h-7 w-7 md:h-8 md:w-auto md:px-2 md:px-3 p-0"
+                              >
+                                <Eye className="w-3 h-3 md:w-4 md:h-4" />
+                                <span className="hidden md:inline md:ml-1">View</span>
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedGrant(grant)}
+                                className="text-xs h-7 w-7 md:h-8 md:w-auto md:px-2 md:px-3 p-0"
+                              >
+                                <Edit className="w-3 h-3 md:w-4 md:h-4" />
+                                <span className="hidden md:inline md:ml-1">Edit</span>
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDelete(grant._id)}
+                                className="text-xs h-7 w-7 md:h-8 md:w-auto md:px-2 md:px-3 p-0"
+                              >
+                                <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
+                                <span className="hidden md:inline md:ml-1">Delete</span>
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
               </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
@@ -390,18 +581,18 @@ export default function ManageGrantsPage() {
 
         {/* Delete Confirmation Modal */}
         <Dialog open={!!deleteGrantId} onOpenChange={() => setDeleteGrantId(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Delete Grant</DialogTitle>
-              <DialogDescription>
+          <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-md p-3 sm:p-4 md:p-6">
+            <DialogHeader className="space-y-2 sm:space-y-3">
+              <DialogTitle className="text-base sm:text-lg md:text-xl">Delete Grant</DialogTitle>
+              <DialogDescription className="text-xs sm:text-sm md:text-base">
                 Are you sure you want to delete this grant? This action cannot be undone.
               </DialogDescription>
             </DialogHeader>
-            <div className="flex space-x-3">
-              <Button onClick={confirmDelete} variant="destructive">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-4">
+              <Button onClick={confirmDelete} variant="destructive" className="flex-1 sm:flex-none h-9 sm:h-10 text-xs sm:text-sm">
                 Delete
               </Button>
-              <Button variant="outline" onClick={() => setDeleteGrantId(null)}>
+              <Button variant="outline" onClick={() => setDeleteGrantId(null)} className="flex-1 sm:flex-none h-9 sm:h-10 text-xs sm:text-sm">
                 Cancel
               </Button>
             </div>
@@ -594,33 +785,33 @@ function CreateGrantModal({ onClose, onGrantChanged }: { onClose: () => void; on
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Create New Grant</DialogTitle>
-          <DialogDescription>Set up a new funding opportunity</DialogDescription>
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-3 sm:p-4 md:p-6">
+        <DialogHeader className="space-y-2 sm:space-y-3">
+          <DialogTitle className="text-base sm:text-lg md:text-xl">Create New Grant</DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm md:text-base">Set up a new funding opportunity</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="grant-title">Grant Title *</Label>
+            <Label htmlFor="grant-title" className="text-xs sm:text-sm md:text-base">Grant Title *</Label>
             <Input
               id="grant-title"
               placeholder="Enter grant title"
               value={grantData.title}
               onChange={(e) => handleInputChange('title', e.target.value)}
               onBlur={() => handleBlur('title')}
-              className={errors.title && touched.title ? "border-red-500 focus:border-red-500" : ""}
+              className={`text-xs sm:text-sm ${errors.title && touched.title ? "border-red-500 focus:border-red-500" : ""}`}
             />
             <FormError error={errors.title} />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="grant-category">Category *</Label>
+            <Label htmlFor="grant-category" className="text-xs sm:text-sm md:text-base">Category *</Label>
             <Select 
               value={grantData.category} 
               onValueChange={(value) => handleInputChange('category', value)}
               onOpenChange={(open) => !open && handleBlur('category')}
             >
-              <SelectTrigger className={errors.category && touched.category ? "border-red-500 focus:border-red-500" : ""}>
+              <SelectTrigger className={`text-xs sm:text-sm ${errors.category && touched.category ? "border-red-500 focus:border-red-500" : ""}`}>
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
@@ -635,9 +826,9 @@ function CreateGrantModal({ onClose, onGrantChanged }: { onClose: () => void; on
             <FormError error={errors.category} />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
-              <Label htmlFor="grant-funding">Total Funding (USD) *</Label>
+              <Label htmlFor="grant-funding" className="text-xs sm:text-sm md:text-base">Total Funding (USD) *</Label>
               <Input
                 id="grant-funding"
                 type="number"
@@ -646,12 +837,12 @@ function CreateGrantModal({ onClose, onGrantChanged }: { onClose: () => void; on
                 value={grantData.funding}
                 onChange={(e) => handleInputChange('funding', e.target.value)}
                 onBlur={() => handleBlur('funding')}
-                className={errors.funding && touched.funding ? "border-red-500 focus:border-red-500" : ""}
+                className={`text-xs sm:text-sm ${errors.funding && touched.funding ? "border-red-500 focus:border-red-500" : ""}`}
               />
               <FormError error={errors.funding} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="grant-deadline">Application Deadline *</Label>
+              <Label htmlFor="grant-deadline" className="text-xs sm:text-sm md:text-base">Application Deadline *</Label>
               <Input
                 id="grant-deadline"
                 type="date"
@@ -659,14 +850,14 @@ function CreateGrantModal({ onClose, onGrantChanged }: { onClose: () => void; on
                 value={grantData.deadline}
                 onChange={(e) => handleInputChange('deadline', e.target.value)}
                 onBlur={() => handleBlur('deadline')}
-                className={errors.deadline && touched.deadline ? "border-red-500 focus:border-red-500" : ""}
+                className={`text-xs sm:text-sm ${errors.deadline && touched.deadline ? "border-red-500 focus:border-red-500" : ""}`}
               />
               <FormError error={errors.deadline} />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="grant-description">Description *</Label>
+            <Label htmlFor="grant-description" className="text-xs sm:text-sm md:text-base">Description *</Label>
             <Textarea
               id="grant-description"
               placeholder="Describe the grant opportunity"
@@ -674,13 +865,13 @@ function CreateGrantModal({ onClose, onGrantChanged }: { onClose: () => void; on
               value={grantData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
               onBlur={() => handleBlur('description')}
-              className={errors.description && touched.description ? "border-red-500 focus:border-red-500" : ""}
+              className={`text-xs sm:text-sm min-h-[80px] sm:min-h-[100px] resize-none ${errors.description && touched.description ? "border-red-500 focus:border-red-500" : ""}`}
             />
             <FormError error={errors.description} />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="grant-requirements">Requirements *</Label>
+            <Label htmlFor="grant-requirements" className="text-xs sm:text-sm md:text-base">Requirements *</Label>
             <Textarea
               id="grant-requirements"
               placeholder="List eligibility requirements and criteria"
@@ -688,15 +879,15 @@ function CreateGrantModal({ onClose, onGrantChanged }: { onClose: () => void; on
               value={grantData.requirements}
               onChange={(e) => handleInputChange('requirements', e.target.value)}
               onBlur={() => handleBlur('requirements')}
-              className={errors.requirements && touched.requirements ? "border-red-500 focus:border-red-500" : ""}
+              className={`text-xs sm:text-sm min-h-[60px] sm:min-h-[80px] resize-none ${errors.requirements && touched.requirements ? "border-red-500 focus:border-red-500" : ""}`}
             />
             <FormError error={errors.requirements} />
           </div>
 
-          <div className="flex space-x-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2">
             <Button 
               onClick={handleSubmit} 
-              className="bg-blue-600 hover:bg-blue-700" 
+              className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto h-10 sm:h-11 text-xs sm:text-sm" 
               disabled={loading || !isFormValid()}
             >
               {loading ? (
@@ -712,6 +903,7 @@ function CreateGrantModal({ onClose, onGrantChanged }: { onClose: () => void; on
                 setErrors({});
                 onClose();
               }}
+              className="w-full sm:w-auto h-10 sm:h-11 text-xs sm:text-sm"
             >
               Cancel
             </Button>
@@ -1037,13 +1229,13 @@ function ViewGrantModal({ grant, onClose }: { grant: any; onClose: () => void })
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Award className="w-5 h-5 text-blue-600" />
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-3 sm:p-4 md:p-6">
+        <DialogHeader className="space-y-2 sm:space-y-3">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg md:text-xl">
+            <Award className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
             Grant Details
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs sm:text-sm md:text-base">
             View complete information about this grant opportunity
           </DialogDescription>
         </DialogHeader>
@@ -1053,65 +1245,65 @@ function ViewGrantModal({ grant, onClose }: { grant: any; onClose: () => void })
             <LoadingSpinner text="Loading grant details..." />
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Header Section */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 sm:p-6 rounded-lg">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">{grantDetails.title}</h2>
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2">{grantDetails.title}</h2>
                   <div className="flex flex-wrap gap-2 mb-3">
-                    <Badge className={getCategoryColor(grantDetails.category)}>
+                    <Badge className={`${getCategoryColor(grantDetails.category)} text-xs sm:text-sm`}>
                       {grantDetails.category}
                     </Badge>
-                    <Badge className={getStatusColor(grantDetails.status)}>
+                    <Badge className={`${getStatusColor(grantDetails.status)} text-xs sm:text-sm`}>
                       {grantDetails.status}
                     </Badge>
                   </div>
-                  <p className="text-gray-600 text-sm">
-                    <Building className="w-4 h-4 inline mr-1" />
+                  <p className="text-gray-600 text-xs sm:text-sm">
+                    <Building className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
                     {grantDetails.organization || 'Organization not specified'}
                   </p>
                 </div>
                 <div className="text-right">
-                  <div className="text-3xl font-bold text-blue-600">
+                  <div className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">
                     ${grantDetails.funding?.toLocaleString()}
                   </div>
-                  <p className="text-sm text-gray-500">Total Funding</p>
+                  <p className="text-xs sm:text-sm text-gray-500">Total Funding</p>
                 </div>
               </div>
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               <Card>
-                <CardContent className="p-4">
+                <CardContent className="p-3 sm:p-4">
                   <div className="flex items-center">
-                    <Users className="w-8 h-8 text-blue-600" />
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-600">Total Applicants</p>
-                      <p className="text-2xl font-bold text-gray-900">{applicantStats.applicants}</p>
+                    <Users className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+                    <div className="ml-2 sm:ml-3">
+                      <p className="text-xs sm:text-sm font-medium text-gray-600">Total Applicants</p>
+                      <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">{applicantStats.applicants}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="p-4">
+                <CardContent className="p-3 sm:p-4">
                   <div className="flex items-center">
-                    <FileText className="w-8 h-8 text-green-600" />
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-600">Approved</p>
-                      <p className="text-2xl font-bold text-gray-900">{applicantStats.approved}</p>
+                    <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-green-600" />
+                    <div className="ml-2 sm:ml-3">
+                      <p className="text-xs sm:text-sm font-medium text-gray-600">Approved</p>
+                      <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">{applicantStats.approved}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="p-4">
+                <CardContent className="p-3 sm:p-4">
                   <div className="flex items-center">
-                    <AlertCircle className="w-8 h-8 text-red-600" />
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-600">Rejected</p>
-                      <p className="text-2xl font-bold text-gray-900">{applicantStats.rejected}</p>
+                    <AlertCircle className="w-6 h-6 sm:w-8 sm:h-8 text-red-600" />
+                    <div className="ml-2 sm:ml-3">
+                      <p className="text-xs sm:text-sm font-medium text-gray-600">Rejected</p>
+                      <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">{applicantStats.rejected}</p>
                     </div>
                   </div>
                 </CardContent>

@@ -23,6 +23,7 @@ import {
   Bell,
   Menu,
   X,
+  Eye,
 } from "lucide-react"
 import Link from "next/link"
 import PublicNavbar from "@/components/public-navbar";
@@ -337,7 +338,7 @@ export default function SearchGrantsPage() {
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => setSelectedGrant(grant)}>
-                          <ExternalLink className="w-4 h-4 mr-2" />
+                          <Eye className="w-4 h-4 mr-2" />
                           View Details
                         </Button>
                         </DialogTrigger>
@@ -375,7 +376,7 @@ export default function SearchGrantsPage() {
                                 <span>{selectedGrant.requirements || "-"}</span>
                               </div>
                               <div>
-                                <span className="font-semibold">Tags: </span>
+                                {/* <span className="font-semibold">Tags: </span> */}
                                 {Array.isArray(selectedGrant.tags) && selectedGrant.tags.length > 0 ? (
                                   selectedGrant.tags.map((tag: string, idx: number) => (
                                     <Badge key={idx} variant="outline" className="text-xs ml-1">

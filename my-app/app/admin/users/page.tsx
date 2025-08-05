@@ -47,6 +47,7 @@ import {
   Calendar,
   AlertCircle,
   Trash2,
+  RefreshCw,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import AdminLayout from "@/components/layouts/AdminLayout"
@@ -55,6 +56,105 @@ import { authStorage } from "@/lib/auth"
 import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 import { FormError } from "@/components/ui/form-error"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
+
+interface User {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+  status: string;
+  institution: string;
+  department?: string;
+  profileImage?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Mobile-friendly user card component
+function MobileUserCard({ user, onView, onEdit, onDelete, getRoleColor, getStatusColor }: {
+  user: User;
+  onView: (userId: string) => void;
+  onEdit: (userId: string) => void;
+  onDelete: (userId: string) => void;
+  getRoleColor: (role: string) => string;
+  getStatusColor: (status: string) => string;
+}) {
+  return (
+    <Card className="mb-3 p-3 sm:p-4 hover:shadow-md transition-shadow">
+      <div className="space-y-3 sm:space-y-4">
+        {/* Header with Avatar and Name */}
+        <div className="flex items-center space-x-3">
+          <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
+            <AvatarImage src={user.profileImage} />
+            <AvatarFallback className="text-xs sm:text-sm">
+              {user.firstName?.[0]}{user.lastName?.[0]}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium text-sm sm:text-base truncate">{user.firstName} {user.lastName}</h3>
+            <p className="text-xs sm:text-sm text-gray-500 truncate">{user.email}</p>
+          </div>
+        </div>
+
+        {/* Details Grid */}
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
+          <div>
+            <span className="text-gray-500">Role:</span>
+            <Badge className={`${getRoleColor(user.role)} text-xs mt-1`}>
+              {user.role}
+            </Badge>
+          </div>
+          <div>
+            <span className="text-gray-500">Status:</span>
+            <Badge className={`${getStatusColor(user.status || 'active')} text-xs mt-1`}>
+              {user.status || 'active'}
+            </Badge>
+          </div>
+          <div>
+            <span className="text-gray-500">Institution:</span>
+            <p className="font-medium truncate">{user.institution}</p>
+          </div>
+          <div>
+            <span className="text-gray-500">Department:</span>
+            <p className="font-medium truncate">{user.department || 'N/A'}</p>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2 pt-2">
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={() => onView(user._id)}
+            className="flex-1 h-8 text-xs"
+          >
+            <Eye className="w-3 h-3 mr-1" />
+            View
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onEdit(user._id)}
+            className="flex-1 h-8 text-xs"
+          >
+            <Edit className="w-3 h-3 mr-1" />
+            Edit
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onDelete(user._id)}
+            className="flex-1 h-8 text-xs text-red-600 hover:text-red-700"
+          >
+            <Trash2 className="w-3 h-3 mr-1" />
+            Delete
+          </Button>
+        </div>
+      </div>
+    </Card>
+  )
+}
 
 // Validation functions
 const validateUserField = (name: string, value: string, isEdit: boolean = false): string => {
@@ -101,7 +201,7 @@ const validateUserField = (name: string, value: string, isEdit: boolean = false)
     
     case 'status':
       if (!value) return "Status is required"
-      if (!['active', 'inactive', 'pending'].includes(value)) return "Status must be active, inactive, or pending"
+      if (!['active'].includes(value)) return "Status must be active"
       return ""
     
     default:
@@ -354,8 +454,6 @@ function CreateUserModal({ onClose, onUserCreated }: { onClose: () => void; onUs
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
               </SelectContent>
             </Select>
             <FormError error={errors.status} />
@@ -800,8 +898,6 @@ function EditUserModal({ userId, onClose, onUserUpdated }: { userId: string; onC
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
               </SelectContent>
             </Select>
             <FormError error={errors.status} />
@@ -843,10 +939,6 @@ const getStatusColor = (status: string) => {
   switch (status) {
     case "active":
       return "bg-green-100 text-green-800"
-    case "inactive":
-      return "bg-red-100 text-red-800"
-    case "pending":
-      return "bg-yellow-100 text-yellow-800"
     default:
       return "bg-gray-100 text-gray-800"
   }
@@ -854,8 +946,9 @@ const getStatusColor = (status: string) => {
 
 export default function ManageUsersPage() {
   useAuthRedirect(["admin"])
-  const [users, setUsers] = useState<any[]>([])
+  const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [roleFilter, setRoleFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
@@ -863,14 +956,30 @@ export default function ManageUsersPage() {
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
   const { toast } = useToast()
+
+  // Check if mobile on mount and resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     fetchUsers()
   }, [])
 
-  const fetchUsers = async () => {
-    setLoading(true)
+  const fetchUsers = async (isRefresh = false) => {
+    if (isRefresh) {
+      setRefreshing(true)
+    } else {
+      setLoading(true)
+    }
+    
     try {
       const token = authStorage.getToken()
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users`, {
@@ -879,6 +988,15 @@ export default function ManageUsersPage() {
       if (!res.ok) throw new Error("Failed to fetch users")
       const data = await res.json()
       setUsers(data)
+      
+      // Show success toast for refresh operations
+      if (isRefresh) {
+        toast({
+          title: "Refreshed!",
+          description: "User list has been updated successfully.",
+          duration: 2000
+        })
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -886,7 +1004,11 @@ export default function ManageUsersPage() {
         variant: "destructive",
       })
     } finally {
-      setLoading(false)
+      if (isRefresh) {
+        setRefreshing(false)
+      } else {
+        setLoading(false)
+      }
     }
   }
 
@@ -920,8 +1042,17 @@ export default function ManageUsersPage() {
     setUsers(prev => [...prev, user])
   }
 
-  const handleUserUpdated = (updated: any) => {
+  const handleUserUpdated = async (updated: any) => {
+    // Update local state immediately for instant feedback
     setUsers(prev => prev.map(user => user._id === updated._id ? updated : user))
+    
+    // Re-fetch users to ensure we have the most up-to-date data
+    try {
+      await fetchUsers()
+    } catch (error) {
+      console.error('Failed to refresh users after update:', error)
+      // If refresh fails, we still have the updated user in local state
+    }
   }
 
   const filteredUsers = users.filter((user) => {
@@ -936,68 +1067,80 @@ export default function ManageUsersPage() {
   })
 
   return (
-    <AdminLayout>
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
+    <AdminLayout active="users" title="Manage Users">
+      <div className="p-2 sm:p-3 md:p-4 lg:p-6 w-full overflow-hidden">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Manage Users</h1>
-            <p className="text-gray-600">Create and manage user accounts</p>
+            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">Manage Users</h1>
+            <p className="text-xs sm:text-sm md:text-base text-gray-600">Create and manage user accounts</p>
           </div>
-          <Button
-            onClick={() => setCreateModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <UserPlus className="w-4 h-4 mr-2" />
-            Add User
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button
+              onClick={() => fetchUsers(true)}
+              disabled={refreshing}
+              variant="outline"
+              className="h-9 sm:h-10 text-xs sm:text-sm"
+            >
+              <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              {refreshing ? 'Refreshing...' : 'Refresh'}
+            </Button>
+            <Button
+              onClick={() => setCreateModalOpen(true)}
+              className="bg-blue-600 hover:bg-blue-700 h-9 sm:h-10 text-xs sm:text-sm"
+            >
+              <UserPlus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              Add User
+            </Button>
+          </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <Card>
-            <CardContent className="p-6">
+        {/* Stats Cards - Mobile optimized */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-4 sm:mb-6">
+          <Card className={`p-2 sm:p-3 md:p-4 lg:p-6 ${refreshing ? 'opacity-75' : ''}`}>
+            <CardContent className="p-0">
               <div className="flex items-center">
-                <Users className="w-8 h-8 text-blue-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Users</p>
-                  <p className="text-2xl font-bold text-gray-900">{users.length}</p>
+                <Users className={`w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 text-blue-600 ${refreshing ? 'animate-pulse' : ''}`} />
+                <div className="ml-2 sm:ml-3 md:ml-4">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Total Users</p>
+                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900">{users.length}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-6">
+          <Card className="p-2 sm:p-3 md:p-4 lg:p-6">
+            <CardContent className="p-0">
               <div className="flex items-center">
-                <Award className="w-8 h-8 text-green-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Researchers</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                <Award className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 text-green-600" />
+                <div className="ml-2 sm:ml-3 md:ml-4">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Researchers</p>
+                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900">
                     {users.filter(u => u.role === "researcher").length}
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-6">
+          <Card className="p-2 sm:p-3 md:p-4 lg:p-6">
+            <CardContent className="p-0">
               <div className="flex items-center">
-                <Shield className="w-8 h-8 text-purple-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Reviewers</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                <Shield className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 text-purple-600" />
+                <div className="ml-2 sm:ml-3 md:ml-4">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Reviewers</p>
+                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900">
                     {users.filter(u => u.role === "reviewer").length}
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-6">
+          <Card className="col-span-2 lg:col-span-1 p-2 sm:p-3 md:p-4 lg:p-6">
+            <CardContent className="p-0">
               <div className="flex items-center">
-                <Settings className="w-8 h-8 text-red-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Admins</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                <Settings className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 text-red-600" />
+                <div className="ml-2 sm:ml-3 md:ml-4">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Admins</p>
+                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900">
                     {users.filter(u => u.role === "admin").length}
                   </p>
                 </div>
@@ -1006,137 +1149,166 @@ export default function ManageUsersPage() {
           </Card>
         </div>
 
-        {/* Filters */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="Search users..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
+        {/* Filters - Mobile optimized */}
+        <Card className="mb-4 sm:mb-6">
+          <CardContent className="p-3 sm:p-4 md:p-6">
+            <div className="space-y-3 sm:space-y-4">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3 sm:w-4 sm:h-4" />
+                <Input
+                  placeholder="Search users..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8 sm:pl-10 text-xs sm:text-sm md:text-base h-9 sm:h-10"
+                />
+              </div>
+
+              {/* Filter Controls */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                  <Label htmlFor="roleFilter" className="text-xs sm:text-sm">Filter by Role</Label>
+                  <Select value={roleFilter} onValueChange={setRoleFilter}>
+                    <SelectTrigger className="text-xs sm:text-sm md:text-base h-9 sm:h-10">
+                      <SelectValue placeholder="All Roles" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Roles</SelectItem>
+                      <SelectItem value="researcher">Researcher</SelectItem>
+                      <SelectItem value="reviewer">Reviewer</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
-              <div className="w-full sm:w-48">
-                <Select value={roleFilter} onValueChange={setRoleFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Filter by role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Roles</SelectItem>
-                    <SelectItem value="researcher">Researcher</SelectItem>
-                    <SelectItem value="reviewer">Reviewer</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="w-full sm:w-48">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div>
+                  <Label htmlFor="statusFilter" className="text-xs sm:text-sm">Filter by Status</Label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="text-xs sm:text-sm md:text-base h-9 sm:h-10">
+                      <SelectValue placeholder="All Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Users Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>All Users</CardTitle>
-            <CardDescription>Manage user accounts and permissions</CardDescription>
+        {/* Users List - Mobile/Desktop responsive */}
+        <Card className="overflow-hidden">
+          <CardHeader className="pb-2 sm:pb-3 md:pb-4 px-2 sm:px-3 md:px-4 lg:px-6">
+            <CardTitle className="text-base sm:text-lg md:text-xl">All Users</CardTitle>
+            <CardDescription className="text-xs sm:text-sm md:text-base">Manage user accounts and permissions</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 md:p-6 overflow-hidden">
             {loading ? (
               <div className="flex justify-center items-center py-8">
                 <LoadingSpinner text="Loading users..." />
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Institution</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+              <>
+                {/* Mobile View */}
+                {isMobile ? (
+                  <div className={`p-2 sm:p-3 md:p-4 ${refreshing ? 'opacity-75 transition-opacity duration-300' : ''}`}>
                     {filteredUsers.map((user) => (
-                      <TableRow key={user._id}>
-                        <TableCell>
-                          <div className="flex items-center space-x-3">
-                            <Avatar>
-                              <AvatarImage src={user.profileImage} />
-                              <AvatarFallback>
-                                {user.firstName?.[0]}{user.lastName?.[0]}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="font-medium">{user.firstName} {user.lastName}</div>
-                              <div className="text-sm text-gray-500">{user.department}</div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>
-                          <Badge className={getRoleColor(user.role)}>
-                            {user.role}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{user.institution}</TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(user.status || 'active')}>
-                            {user.status || 'active'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setSelectedUserId(user._id)}
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedUserId(user._id)
-                                setEditModalOpen(true)
-                              }}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setDeleteUserId(user._id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                      <MobileUserCard
+                        key={user._id}
+                        user={user}
+                        onView={setSelectedUserId}
+                        onEdit={(userId) => {
+                          setSelectedUserId(userId)
+                          setEditModalOpen(true)
+                        }}
+                        onDelete={setDeleteUserId}
+                        getRoleColor={getRoleColor}
+                        getStatusColor={getStatusColor}
+                      />
                     ))}
-                  </TableBody>
-                </Table>
-              </div>
+                  </div>
+                ) : (
+                  /* Desktop Table View */
+                  <div className={`w-full overflow-x-auto ${refreshing ? 'opacity-75 transition-opacity duration-300' : ''}`}>
+                    <Table className="w-full text-xs sm:text-sm">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[25%] sm:w-[30%]">User</TableHead>
+                          <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[25%] sm:w-[25%]">Email</TableHead>
+                          <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[15%] sm:w-[15%]">Role</TableHead>
+                          <TableHead className="hidden md:table-cell text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[20%]">Institution</TableHead>
+                          <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[15%] sm:w-[15%]">Status</TableHead>
+                          <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[15%] sm:w-[15%]">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredUsers.map((user) => (
+                          <TableRow key={user._id}>
+                            <TableCell className="px-2 md:px-4 py-2 md:py-3">
+                              <div className="flex items-center space-x-3">
+                                <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
+                                  <AvatarImage src={user.profileImage} />
+                                  <AvatarFallback className="text-xs">
+                                    {user.firstName?.[0]}{user.lastName?.[0]}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="min-w-0">
+                                  <div className="font-medium text-xs sm:text-sm truncate">{user.firstName} {user.lastName}</div>
+                                  <div className="text-xs text-gray-500 truncate">{user.department}</div>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 truncate">{user.email}</TableCell>
+                            <TableCell className="px-2 md:px-4 py-2 md:py-3">
+                              <Badge className={`${getRoleColor(user.role)} text-xs whitespace-nowrap`}>
+                                {user.role}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 truncate">{user.institution}</TableCell>
+                            <TableCell className="px-2 md:px-4 py-2 md:py-3">
+                              <Badge className={`${getStatusColor(user.status || 'active')} text-xs whitespace-nowrap`}>
+                                {user.status || 'active'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="px-2 md:px-4 py-2 md:py-3">
+                              <div className="flex space-x-1 sm:space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setSelectedUserId(user._id)}
+                                  className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                                >
+                                  <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedUserId(user._id)
+                                    setEditModalOpen(true)
+                                  }}
+                                  className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                                >
+                                  <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setDeleteUserId(user._id)}
+                                  className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                                >
+                                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
@@ -1171,18 +1343,18 @@ export default function ManageUsersPage() {
 
         {/* Delete Confirmation Modal */}
         <Dialog open={!!deleteUserId} onOpenChange={() => setDeleteUserId(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Delete User</DialogTitle>
-              <DialogDescription>
+          <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-md p-3 sm:p-4 md:p-6">
+            <DialogHeader className="space-y-2 sm:space-y-3">
+              <DialogTitle className="text-base sm:text-lg md:text-xl">Delete User</DialogTitle>
+              <DialogDescription className="text-xs sm:text-sm md:text-base">
                 Are you sure you want to delete this user? This action cannot be undone.
               </DialogDescription>
             </DialogHeader>
-            <div className="flex space-x-3">
-              <Button onClick={() => deleteUserId && handleDelete(deleteUserId)} variant="destructive">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-4">
+              <Button onClick={() => deleteUserId && handleDelete(deleteUserId)} variant="destructive" className="flex-1 sm:flex-none h-9 sm:h-10 text-xs sm:text-sm">
                 Delete
               </Button>
-              <Button variant="outline" onClick={() => setDeleteUserId(null)}>
+              <Button variant="outline" onClick={() => setDeleteUserId(null)} className="flex-1 sm:flex-none h-9 sm:h-10 text-xs sm:text-sm">
                 Cancel
               </Button>
             </div>

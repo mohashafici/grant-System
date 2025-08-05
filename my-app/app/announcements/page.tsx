@@ -46,6 +46,8 @@ export default function AnnouncementsPage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -79,6 +81,15 @@ export default function AnnouncementsPage() {
     ) : true;
     return matchesCategory && matchesSearch;
   });
+
+  // Handle email change
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const emailValue = e.target.value;
+    setEmail(emailValue);
+    // Check if email is valid and not empty
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    setIsSubscribed(emailRegex.test(emailValue));
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white pb-12">
@@ -243,9 +254,22 @@ export default function AnnouncementsPage() {
                 updates directly in your inbox.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
-                <Input type="email" placeholder="Enter your email" className="bg-white text-gray-900" />
-                <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
-                  Subscribe
+                <Input 
+                  type="email" 
+                  placeholder="Enter your email" 
+                  className="bg-white text-gray-900" 
+                  value={email}
+                  onChange={handleEmailChange}
+                />
+                <Button 
+                  size="lg" 
+                  className={`${
+                    isSubscribed 
+                      ? "bg-green-600 hover:bg-green-700 text-white" 
+                      : "bg-white text-blue-600 hover:bg-gray-100"
+                  }`}
+                >
+                  {isSubscribed ? "Subscribed" : "Subscribe"}
                 </Button>
               </div>
               <p className="text-blue-200 text-sm mt-4">Weekly digest • No spam • Unsubscribe anytime</p>

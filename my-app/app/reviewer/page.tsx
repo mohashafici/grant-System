@@ -23,7 +23,39 @@ import ReviewerLayout from "@/components/layouts/ReviewerLayout"
 import { useAuthRedirect } from "@/hooks/use-auth-redirect"
 import { authStorage } from "@/lib/auth"
 
-function ReviewModal({ review, onClose, onSubmit }: { review: any; onClose: () => void; onSubmit: (reviewData: any) => void }) {
+// TypeScript interfaces
+interface Review {
+  _id: string;
+  proposal: {
+    _id: string;
+    title: string;
+    funding: number;
+    category: string;
+    abstract: string;
+    status: string;
+    grantTitle: string;
+    dateSubmitted: string;
+    deadline: string;
+    personnelCosts?: number;
+    equipmentCosts?: number;
+    materialsCosts?: number;
+    travelCosts?: number;
+    otherCosts?: number;
+    proposalDocument?: string;
+    cvResume?: string;
+    additionalDocuments?: string[];
+    researcher: {
+      firstName: string;
+      lastName: string;
+      institution: string;
+    };
+  };
+  status: string;
+  decision?: string;
+  reviewDate?: string;
+}
+
+function ReviewModal({ review, onClose, onSubmit }: { review: Review; onClose: () => void; onSubmit: (reviewData: any) => void }) {
   const [reviewData, setReviewData] = useState({
     comments: "",
     decision: "",
@@ -325,15 +357,126 @@ function ProposalViewModal({ proposal, onClose }: { proposal: any; onClose: () =
   )
 }
 
+// Mobile Review Card Component
+function MobileReviewCard({ review, onView, onReview }: { 
+  review: Review; 
+  onView: (proposal: any) => void; 
+  onReview: (review: Review) => void; 
+}) {
+  return (
+    <Card className="mb-4 border shadow-sm">
+      <CardContent className="p-4">
+        <div className="space-y-3">
+          {/* Header */}
+          <div className="flex justify-between items-start">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-sm leading-tight text-gray-900 mb-1 line-clamp-2">
+                {review.proposal?.title}
+              </h3>
+              <p className="text-xs text-gray-500">
+                {review.proposal?.researcher?.firstName} {review.proposal?.researcher?.lastName}
+              </p>
+            </div>
+            <Badge className={`ml-2 flex-shrink-0 text-xs ${
+              review.status === "Pending" 
+                ? "bg-blue-100 text-blue-800" 
+                : "bg-green-100 text-green-800"
+            }`}>
+              {review.status === "Pending" ? (
+                <>
+                  <Clock className="w-3 h-3 mr-1" />
+                  <span className="hidden xs:inline">Pending</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  <span className="hidden xs:inline">Completed</span>
+                </>
+              )}
+            </Badge>
+          </div>
+
+          {/* Details */}
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <span className="text-gray-500">Funding:</span>
+              <p className="font-medium text-blue-600">${review.proposal?.funding?.toLocaleString()}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">Category:</span>
+              <p className="font-medium truncate">{review.proposal?.category}</p>
+            </div>
+            {review.decision && (
+              <div className="col-span-2">
+                <span className="text-gray-500">Decision:</span>
+                <Badge className={`ml-2 text-xs ${
+                  review.decision === "Approved" ? "bg-green-100 text-green-800" :
+                  review.decision === "Rejected" ? "bg-red-100 text-red-800" :
+                  "bg-orange-100 text-orange-800"
+                }`}>
+                  {review.decision}
+                </Badge>
+              </div>
+            )}
+            {review.reviewDate && (
+              <div className="col-span-2">
+                <span className="text-gray-500">Review Date:</span>
+                <p className="font-medium">{new Date(review.reviewDate).toLocaleDateString()}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2 pt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onView(review.proposal)}
+              className="flex-1 h-9 text-xs"
+            >
+              <Eye className="w-3 h-3 mr-1" />
+              View
+            </Button>
+            {review.status === "Pending" && (
+              <Button
+                size="sm"
+                variant="default"
+                onClick={() => onReview(review)}
+                className="flex-1 h-9 text-xs"
+              >
+                <FileText className="w-3 h-3 mr-1" />
+                Review
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 export default function ReviewerDashboardPage() {
   useAuthRedirect()
   const { toast } = useToast()
 
-  const [assignedReviews, setAssignedReviews] = useState<any[]>([])
+  const [assignedReviews, setAssignedReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [selectedReview, setSelectedReview] = useState<any | null>(null)
+  const [selectedReview, setSelectedReview] = useState<Review | null>(null)
   const [viewProposal, setViewProposal] = useState<any | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -365,6 +508,9 @@ export default function ReviewerDashboardPage() {
 
   const handleSubmitReview = async (reviewData: any) => {
     try {
+      if (!selectedReview || !selectedReview.proposal) {
+        throw new Error("No review selected")
+      }
       const token = authStorage.getToken()
       const res = await fetch(`${API_BASE_URL}/reviews/${selectedReview.proposal._id}`, {
         method: "POST",
@@ -399,87 +545,99 @@ export default function ReviewerDashboardPage() {
 
   return (
     <ReviewerLayout active="dashboard">
-      <header className="bg-white border-b px-4 md:px-6 py-3 md:py-4 shadow-sm w-full mb-4">
-        <h1 className="text-xl md:text-2xl font-bold text-gray-900">Reviewer Dashboard</h1>
+      <header className="bg-white border-b px-3 sm:px-4 md:px-6 py-3 md:py-4 shadow-sm w-full mb-3 sm:mb-4">
+        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Reviewer Dashboard</h1>
       </header>
-      <div className="space-y-4 md:space-y-6 px-4 md:px-6">
+      <div className="space-y-3 sm:space-y-4 md:space-y-6 px-3 sm:px-4 md:px-6">
         <div>
-          <p className="text-gray-600 text-sm md:text-base ml-0 md:ml-16">Review and evaluate research proposals</p>
+          <p className="text-gray-600 text-xs sm:text-sm md:text-base ml-0 md:ml-16">Review and evaluate research proposals</p>
         </div>
         
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
-          <Card className="p-4 md:p-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8">
+          <Card className="p-3 sm:p-4 md:p-6">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-              <CardTitle className="text-xs md:text-sm font-medium">Total Assigned</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-xs sm:text-xs md:text-sm font-medium">Total Assigned</CardTitle>
+              <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="px-0 pb-0">
-              <div className="text-xl md:text-2xl font-bold">{assignedReviews.length}</div>
+              <div className="text-lg sm:text-xl md:text-2xl font-bold">{assignedReviews.length}</div>
               <p className="text-xs text-muted-foreground">Reviews assigned to you</p>
             </CardContent>
           </Card>
-          <Card className="p-4 md:p-6">
+          <Card className="p-3 sm:p-4 md:p-6">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-              <CardTitle className="text-xs md:text-sm font-medium">Pending Reviews</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-xs sm:text-xs md:text-sm font-medium">Pending Reviews</CardTitle>
+              <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="px-0 pb-0">
-              <div className="text-xl md:text-2xl font-bold text-yellow-600">{pendingReviews.length}</div>
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-600">{pendingReviews.length}</div>
               <p className="text-xs text-muted-foreground">Awaiting your review</p>
             </CardContent>
           </Card>
-          <Card className="p-4 md:p-6">
+          <Card className="p-3 sm:p-4 md:p-6">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-              <CardTitle className="text-xs md:text-sm font-medium">Completed Reviews</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-xs sm:text-xs md:text-sm font-medium">Completed Reviews</CardTitle>
+              <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="px-0 pb-0">
-              <div className="text-xl md:text-2xl font-bold text-green-600">{completedReviews.length}</div>
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-green-600">{completedReviews.length}</div>
               <p className="text-xs text-muted-foreground">Reviews submitted</p>
             </CardContent>
           </Card>
         </div>
 
         {loading ? (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2 text-gray-600 text-sm md:text-base">Loading assigned reviews...</p>
+          <div className="text-center py-6 sm:py-8">
+            <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600 text-xs sm:text-sm md:text-base">Loading assigned reviews...</p>
           </div>
         ) : error ? (
-          <div className="text-center py-8 text-red-600 text-sm md:text-base">{error}</div>
+          <div className="text-center py-6 sm:py-8 text-red-600 text-xs sm:text-sm md:text-base">{error}</div>
         ) : (
           <div className="space-y-4 md:space-y-6">
             {/* Pending Reviews */}
             <Card>
-              <CardHeader className="pb-3 md:pb-4">
-                <CardTitle className="text-lg md:text-xl">Pending Reviews</CardTitle>
-                <CardDescription className="text-sm md:text-base">Proposals awaiting your review and evaluation</CardDescription>
+              <CardHeader className="pb-2 sm:pb-3 md:pb-4 px-3 sm:px-4 md:px-6">
+                <CardTitle className="text-base sm:text-lg md:text-xl">Pending Reviews</CardTitle>
+                <CardDescription className="text-xs sm:text-sm md:text-base">Proposals awaiting your review and evaluation</CardDescription>
               </CardHeader>
-              <CardContent className="p-0 md:p-6">
+              <CardContent className="p-3 sm:p-4 md:p-6">
                 {pendingReviews.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <FileText className="w-8 h-8 md:w-12 md:h-12 mx-auto mb-4 text-gray-300" />
-                    <p className="text-sm md:text-base">No pending reviews at the moment.</p>
+                  <div className="text-center py-6 sm:py-8 text-gray-500">
+                    <FileText className="w-6 h-6 sm:w-8 sm:h-8 md:w-12 md:h-12 mx-auto mb-3 sm:mb-4 text-gray-300" />
+                    <p className="text-xs sm:text-sm md:text-base">No pending reviews at the moment.</p>
+                  </div>
+                ) : isMobile ? (
+                  // Mobile Card View
+                  <div className="space-y-3">
+                    {pendingReviews.map((review) => (
+                      <MobileReviewCard
+                        key={review._id}
+                        review={review}
+                        onView={(proposal) => setViewProposal(proposal)}
+                        onReview={(review) => setSelectedReview(review)}
+                      />
+                    ))}
                   </div>
                 ) : (
-                  <div className="overflow-x-auto -mx-4 md:mx-0">
-                    <div className="min-w-full inline-block align-middle">
-                      <div className="overflow-hidden">
-                        <Table className="min-w-full">
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">Proposal Title</TableHead>
-                              <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">Researcher</TableHead>
-                              <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">Funding</TableHead>
-                              <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">Status</TableHead>
-                              <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">Actions</TableHead>
-                            </TableRow>
-                          </TableHeader>
+                  // Desktop Table View
+                  <div className="w-full overflow-hidden">
+                    <div className="w-full">
+                      <Table className="w-full text-xs sm:text-sm">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[25%] sm:w-[30%]">Proposal Title</TableHead>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[15%] sm:w-[20%]">Researcher</TableHead>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[15%] sm:w-[15%]">Funding</TableHead>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[10%] sm:w-[10%]">Status</TableHead>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[15%] sm:w-[15%]">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
                           <TableBody>
                             {pendingReviews.map((review) => (
                               <TableRow key={review._id}>
-                                <TableCell className="font-medium text-xs md:text-sm max-w-[100px] sm:max-w-[150px] md:max-w-none truncate px-2 md:px-4 py-2 md:py-3">
+                                <TableCell className="font-medium text-xs md:text-sm truncate px-2 md:px-4 py-2 md:py-3">
                                   {review.proposal?.title}
                                 </TableCell>
                                 <TableCell className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">
@@ -497,8 +655,6 @@ export default function ReviewerDashboardPage() {
                                 </TableCell>
                                 <TableCell className="px-2 md:px-4 py-2 md:py-3">
                                   <div className="flex flex-col sm:flex-row gap-1 sm:gap-2">
-                                    <Dialog>
-                                      <DialogTrigger asChild>
                                         <Button 
                                           size="sm" 
                                           variant="outline"
@@ -508,41 +664,21 @@ export default function ReviewerDashboardPage() {
                                           <Eye className="w-3 h-3 md:w-4 md:h-4 mr-1" />
                                           <span className="hidden sm:inline">View</span>
                                         </Button>
-                                      </DialogTrigger>
-                                      {viewProposal && review.proposal && viewProposal._id === review.proposal._id && (
-                                        <ProposalViewModal
-                                          proposal={viewProposal}
-                                          onClose={() => setViewProposal(null)}
-                                        />
-                                      )}
-                                    </Dialog>
-                                    <Dialog>
-                                      <DialogTrigger asChild>
                                         <Button 
                                           size="sm" 
                                           variant="default"
                                           onClick={() => setSelectedReview(review)}
                                           className="text-xs h-8 md:h-9 px-2 md:px-3"
                                         >
-                                          <Eye className="w-3 h-3 md:w-4 md:h-4 mr-1" />
+                                    <FileText className="w-3 h-3 md:w-4 md:h-4 mr-1" />
                                           <span className="hidden sm:inline">Review</span>
                                         </Button>
-                                      </DialogTrigger>
-                                      {selectedReview && selectedReview._id === review._id && (
-                                        <ReviewModal
-                                          review={selectedReview}
-                                          onClose={() => setSelectedReview(null)}
-                                          onSubmit={handleSubmitReview}
-                                        />
-                                      )}
-                                    </Dialog>
                                   </div>
                                 </TableCell>
                               </TableRow>
                             ))}
                           </TableBody>
                         </Table>
-                      </div>
                     </div>
                   </div>
                 )}
@@ -552,28 +688,41 @@ export default function ReviewerDashboardPage() {
             {/* Completed Reviews */}
             {completedReviews.length > 0 && (
               <Card>
-                <CardHeader className="pb-3 md:pb-4">
-                  <CardTitle className="text-lg md:text-xl">Completed Reviews</CardTitle>
-                  <CardDescription className="text-sm md:text-base">Reviews you have submitted</CardDescription>
+                <CardHeader className="pb-2 sm:pb-3 md:pb-4 px-3 sm:px-4 md:px-6">
+                  <CardTitle className="text-base sm:text-lg md:text-xl">Completed Reviews</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm md:text-base">Reviews you have submitted</CardDescription>
                 </CardHeader>
-                <CardContent className="p-0 md:p-6">
-                  <div className="overflow-x-auto -mx-4 md:mx-0">
-                    <div className="min-w-full inline-block align-middle">
-                      <div className="overflow-hidden">
-                        <Table className="min-w-full">
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">Proposal Title</TableHead>
-                              <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">Researcher</TableHead>
-                              <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">Decision</TableHead>
-                              <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">Review Date</TableHead>
-                              <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">Actions</TableHead>
-                            </TableRow>
-                          </TableHeader>
+                <CardContent className="p-3 sm:p-4 md:p-6">
+                  {isMobile ? (
+                    // Mobile Card View
+                    <div className="space-y-3">
+                      {completedReviews.map((review) => (
+                        <MobileReviewCard
+                          key={review._id}
+                          review={review}
+                          onView={(proposal) => setViewProposal(proposal)}
+                          onReview={(review) => setSelectedReview(review)}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    // Desktop Table View
+                  <div className="w-full overflow-hidden">
+                    <div className="w-full">
+                      <Table className="w-full text-xs sm:text-sm">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[25%] sm:w-[30%]">Proposal Title</TableHead>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[15%] sm:w-[20%]">Researcher</TableHead>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[15%] sm:w-[15%]">Decision</TableHead>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[10%] sm:w-[10%]">Review Date</TableHead>
+                            <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[15%] sm:w-[15%]">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
                           <TableBody>
                             {completedReviews.map((review) => (
                               <TableRow key={review._id}>
-                                <TableCell className="font-medium text-xs md:text-sm max-w-[100px] sm:max-w-[150px] md:max-w-none truncate px-2 md:px-4 py-2 md:py-3">
+                                <TableCell className="font-medium text-xs md:text-sm truncate px-2 md:px-4 py-2 md:py-3">
                                   {review.proposal?.title}
                                 </TableCell>
                                 <TableCell className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">
@@ -595,8 +744,6 @@ export default function ReviewerDashboardPage() {
                                   {review.reviewDate ? new Date(review.reviewDate).toLocaleDateString() : 'N/A'}
                                 </TableCell>
                                 <TableCell className="px-2 md:px-4 py-2 md:py-3">
-                                  <Dialog>
-                                    <DialogTrigger asChild>
                                       <Button 
                                         size="sm" 
                                         variant="outline"
@@ -606,14 +753,6 @@ export default function ReviewerDashboardPage() {
                                         <Eye className="w-3 h-3 md:w-4 md:h-4 mr-1" />
                                         <span className="hidden sm:inline">View</span>
                                       </Button>
-                                    </DialogTrigger>
-                                    {viewProposal && review.proposal && viewProposal._id === review.proposal._id && (
-                                      <ProposalViewModal
-                                        proposal={viewProposal}
-                                        onClose={() => setViewProposal(null)}
-                                      />
-                                    )}
-                                  </Dialog>
                                 </TableCell>
                               </TableRow>
                             ))}
@@ -621,11 +760,31 @@ export default function ReviewerDashboardPage() {
                         </Table>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             )}
           </div>
+        )}
+
+        {/* Modals - Outside conditional rendering for proper display */}
+        {viewProposal && (
+          <Dialog open={!!viewProposal} onOpenChange={() => setViewProposal(null)}>
+            <ProposalViewModal
+              proposal={viewProposal}
+              onClose={() => setViewProposal(null)}
+            />
+          </Dialog>
+        )}
+        
+        {selectedReview && selectedReview !== null && (
+          <Dialog open={!!selectedReview} onOpenChange={() => setSelectedReview(null)}>
+            <ReviewModal
+              review={selectedReview}
+              onClose={() => setSelectedReview(null)}
+              onSubmit={handleSubmitReview}
+            />
+          </Dialog>
         )}
       </div>
     </ReviewerLayout>
