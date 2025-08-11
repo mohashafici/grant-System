@@ -113,24 +113,60 @@ export default function ResearcherDashboardPage() {
   const grantsFunding = Array.isArray(grants) ? grants.reduce((sum, g) => sum + (typeof g.funding === "number" ? g.funding : parseFloat((g.funding || "0").replace(/[^\d.]/g, ""))), 0) : 0;
 
   // Recent activity placeholder
+  const getProposalTimestamp = (p: any): number => {
+    const source = p?.updatedAt || p?.dateUpdated || p?.reviewStartedAt || p?.dateSubmitted;
+    const ts = source ? new Date(source).getTime() : 0;
+    return Number.isFinite(ts) ? ts : 0;
+  };
+
+  const formatTimeAgo = (ts: number): string => {
+    if (!ts) return "-";
+    const diffMs = Date.now() - ts;
+    const sec = Math.floor(diffMs / 1000);
+    if (sec < 60) return `${sec}s ago`;
+    const min = Math.floor(sec / 60);
+    if (min < 60) return `${min}m ago`;
+    const hrs = Math.floor(min / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return `${days}d ago`;
+    const weeks = Math.floor(days / 7);
+    if (weeks < 5) return `${weeks}w ago`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months}mo ago`;
+    const years = Math.floor(days / 365);
+    return `${years}y ago`;
+  };
+
+  const latestApproved = [...proposals]
+    .filter((p) => p.status === "Approved")
+    .sort((a, b) => getProposalTimestamp(b) - getProposalTimestamp(a))[0];
+
+  const latestUnderReview = [...proposals]
+    .filter((p) => p.status === "Under Review")
+    .sort((a, b) => getProposalTimestamp(b) - getProposalTimestamp(a))[0];
+
+  const latestSubmitted = [...proposals]
+    .sort((a, b) => (new Date(b?.dateSubmitted || 0).getTime()) - (new Date(a?.dateSubmitted || 0).getTime()))[0];
+
   const recentActivity = [
     {
       type: "Grant Approved",
-      desc: proposals.find((p) => p.status === "Approved")?.title || "-",
-      amount: proposals.find((p) => p.status === "Approved")?.funding || "-",
-      time: "2 days ago",
+      desc: latestApproved?.title || "-",
+      amount: latestApproved?.funding || "-",
+      time: formatTimeAgo(getProposalTimestamp(latestApproved)),
       color: "bg-green-500",
     },
     {
       type: "Review Started",
-      desc: proposals.find((p) => p.status === "Under Review")?.title || "-",
-      time: "1 week ago",
+      desc: latestUnderReview?.title || "-",
+      time: formatTimeAgo(getProposalTimestamp(latestUnderReview)),
       color: "bg-yellow-500",
     },
     {
       type: "Application Submitted",
-      desc: proposals[0]?.title || "-",
-      time: "2 weeks ago",
+      desc: latestSubmitted?.title || "-",
+      time: formatTimeAgo(new Date(latestSubmitted?.dateSubmitted || 0).getTime()),
       color: "bg-blue-500",
     },
   ];

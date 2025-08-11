@@ -236,23 +236,23 @@ function CreateUserModal({ onClose, onUserCreated }: { onClose: () => void; onUs
 
   // Real-time validation
   useEffect(() => {
-    Object.keys(touched).forEach(field => {
+    Object.keys(touched).forEach((field: string) => {
       if (touched[field]) {
         const error = validateUserField(field, userData[field as keyof typeof userData])
-        setErrors(prev => ({ ...prev, [field]: error }))
+        setErrors((prev: Record<string, string>) => ({ ...prev, [field]: error }))
       }
     })
   }, [userData, touched])
 
   const handleBlur = (field: string) => {
-    setTouched(prev => ({ ...prev, [field]: true }))
+    setTouched((prev: Record<string, boolean>) => ({ ...prev, [field]: true }))
   }
 
   const handleInputChange = (field: string, value: string) => {
-    setUserData(prev => ({ ...prev, [field]: value }))
+    setUserData((prev: any) => ({ ...prev, [field]: value }))
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }))
+      setErrors((prev: Record<string, string>) => ({ ...prev, [field]: "" }))
     }
   }
 
@@ -316,7 +316,7 @@ function CreateUserModal({ onClose, onUserCreated }: { onClose: () => void; onUs
       })
       onUserCreated(data.user)
       onClose()
-      router.push("/admin/users")
+      // router.push("/admin/users") // Removed navigation after creation
     } catch (error: any) {
       toast({
         title: "Error",
@@ -471,7 +471,7 @@ function CreateUserModal({ onClose, onUserCreated }: { onClose: () => void; onUs
                 "Create User"
               )}
             </Button>
-            <Button variant="outline" onClick={() => { onClose(); router.push("/admin/users") }} disabled={loading}>
+            <Button variant="outline" onClick={() => { onClose(); }} disabled={loading}>
               Cancel
             </Button>
           </div>
@@ -668,23 +668,23 @@ function EditUserModal({ userId, onClose, onUserUpdated }: { userId: string; onC
   useEffect(() => {
     if (!userData) return
     
-    Object.keys(touched).forEach(field => {
+    Object.keys(touched).forEach((field: string) => {
       if (touched[field]) {
         const error = validateUserField(field, userData[field] || "", true)
-        setErrors(prev => ({ ...prev, [field]: error }))
+        setErrors((prev: Record<string, string>) => ({ ...prev, [field]: error }))
       }
     })
   }, [userData, touched])
 
   const handleBlur = (field: string) => {
-    setTouched(prev => ({ ...prev, [field]: true }))
+    setTouched((prev: Record<string, boolean>) => ({ ...prev, [field]: true }))
   }
 
   const handleInputChange = (field: string, value: string) => {
-    setUserData(prev => ({ ...prev, [field]: value }))
+    setUserData((prev: any) => ({ ...prev, [field]: value }))
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }))
+      setErrors((prev: Record<string, string>) => ({ ...prev, [field]: "" }))
     }
   }
 
@@ -945,10 +945,9 @@ const getStatusColor = (status: string) => {
 }
 
 export default function ManageUsersPage() {
-  useAuthRedirect(["admin"])
+  useAuthRedirect()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [roleFilter, setRoleFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
@@ -973,13 +972,8 @@ export default function ManageUsersPage() {
     fetchUsers()
   }, [])
 
-  const fetchUsers = async (isRefresh = false) => {
-    if (isRefresh) {
-      setRefreshing(true)
-    } else {
-      setLoading(true)
-    }
-    
+  const fetchUsers = async () => {
+    setLoading(true)
     try {
       const token = authStorage.getToken()
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users`, {
@@ -988,15 +982,6 @@ export default function ManageUsersPage() {
       if (!res.ok) throw new Error("Failed to fetch users")
       const data = await res.json()
       setUsers(data)
-      
-      // Show success toast for refresh operations
-      if (isRefresh) {
-        toast({
-          title: "Refreshed!",
-          description: "User list has been updated successfully.",
-          duration: 2000
-        })
-      }
     } catch (error) {
       toast({
         title: "Error",
@@ -1004,11 +989,7 @@ export default function ManageUsersPage() {
         variant: "destructive",
       })
     } finally {
-      if (isRefresh) {
-        setRefreshing(false)
-      } else {
-        setLoading(false)
-      }
+      setLoading(false)
     }
   }
 
@@ -1019,7 +1000,17 @@ export default function ManageUsersPage() {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       })
-      if (!res.ok) throw new Error("Failed to delete user")
+      if (!res.ok) {
+        let msg = "Failed to delete user"
+        try {
+          const err = await res.json()
+          if (err?.message) msg = err.message
+        } catch {}
+        if (res.status === 409 || res.status === 400) {
+          msg = "This user cannot be deleted because they have existing activity (e.g., proposals or reviews). You can deactivate the user instead."
+        }
+        throw new Error(msg)
+      }
       
       toast({
         title: "User Deleted",
@@ -1027,10 +1018,10 @@ export default function ManageUsersPage() {
         duration: 3000
       })
       fetchUsers()
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to delete user",
+        description: error?.message || "Failed to delete user",
         variant: "destructive",
         duration: 4000
       })
@@ -1039,12 +1030,12 @@ export default function ManageUsersPage() {
   }
 
   const handleUserCreated = (user: any) => {
-    setUsers(prev => [...prev, user])
+    setUsers((prev: User[]) => [user, ...prev])
   }
 
   const handleUserUpdated = async (updated: any) => {
     // Update local state immediately for instant feedback
-    setUsers(prev => prev.map(user => user._id === updated._id ? updated : user))
+    setUsers((prev: User[]) => prev.map((user: User) => user._id === updated._id ? updated : user))
     
     // Re-fetch users to ensure we have the most up-to-date data
     try {
@@ -1077,15 +1068,6 @@ export default function ManageUsersPage() {
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             <Button
-              onClick={() => fetchUsers(true)}
-              disabled={refreshing}
-              variant="outline"
-              className="h-9 sm:h-10 text-xs sm:text-sm"
-            >
-              <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              {refreshing ? 'Refreshing...' : 'Refresh'}
-            </Button>
-            <Button
               onClick={() => setCreateModalOpen(true)}
               className="bg-blue-600 hover:bg-blue-700 h-9 sm:h-10 text-xs sm:text-sm"
             >
@@ -1097,10 +1079,10 @@ export default function ManageUsersPage() {
 
         {/* Stats Cards - Mobile optimized */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-4 sm:mb-6">
-          <Card className={`p-2 sm:p-3 md:p-4 lg:p-6 ${refreshing ? 'opacity-75' : ''}`}>
+          <Card className="p-2 sm:p-3 md:p-4 lg:p-6">
             <CardContent className="p-0">
               <div className="flex items-center">
-                <Users className={`w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 text-blue-600 ${refreshing ? 'animate-pulse' : ''}`} />
+                <Users className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 text-blue-600" />
                 <div className="ml-2 sm:ml-3 md:ml-4">
                   <p className="text-xs sm:text-sm font-medium text-gray-600">Total Users</p>
                   <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900">{users.length}</p>
@@ -1180,7 +1162,7 @@ export default function ManageUsersPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
+                {/* <div>
                   <Label htmlFor="statusFilter" className="text-xs sm:text-sm">Filter by Status</Label>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="text-xs sm:text-sm md:text-base h-9 sm:h-10">
@@ -1191,7 +1173,7 @@ export default function ManageUsersPage() {
                       <SelectItem value="active">Active</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
+                </div> */}
               </div>
             </div>
           </CardContent>
@@ -1212,7 +1194,7 @@ export default function ManageUsersPage() {
               <>
                 {/* Mobile View */}
                 {isMobile ? (
-                  <div className={`p-2 sm:p-3 md:p-4 ${refreshing ? 'opacity-75 transition-opacity duration-300' : ''}`}>
+                  <div className="p-2 sm:p-3 md:p-4">
                     {filteredUsers.map((user) => (
                       <MobileUserCard
                         key={user._id}
@@ -1230,7 +1212,7 @@ export default function ManageUsersPage() {
                   </div>
                 ) : (
                   /* Desktop Table View */
-                  <div className={`w-full overflow-x-auto ${refreshing ? 'opacity-75 transition-opacity duration-300' : ''}`}>
+                  <div className="w-full overflow-x-auto">
                     <Table className="w-full text-xs sm:text-sm">
                       <TableHeader>
                         <TableRow>
@@ -1348,6 +1330,8 @@ export default function ManageUsersPage() {
               <DialogTitle className="text-base sm:text-lg md:text-xl">Delete User</DialogTitle>
               <DialogDescription className="text-xs sm:text-sm md:text-base">
                 Are you sure you want to delete this user? This action cannot be undone.
+                Note: If the user has existing activity (such as submitted proposals or completed reviews), deletion may be blocked.
+                In that case, consider deactivating the user instead.
               </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-4">

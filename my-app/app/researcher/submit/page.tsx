@@ -198,26 +198,44 @@ function SubmitPageContent() {
   useEffect(() => {
     const fetchGrants = async () => {
       try {
+        const token = authStorage.getToken();
+        if (!token) return;
+
+        // Fetch all grants
         const res = await fetch(`${API_BASE_URL}/grants`);
         if (!res.ok) {
           throw new Error('Failed to fetch grants');
         }
         const data = await res.json();
         
-        // Filter for active grants
-        const activeGrants = data.filter((grant: any) => grant.status === "Active");
+        // Fetch researcher's existing proposals to check for applied grants
+        const proposalsRes = await fetch(`${API_BASE_URL}/proposals/mine`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         
-        if (activeGrants.length > 0) {
-          setGrants(activeGrants);
-        } else {
-          // Fallback to all grants if no active ones
-          setGrants(data);
+        let appliedGrantIds = new Set();
+        if (proposalsRes.ok) {
+          const proposalsData = await proposalsRes.json();
+          // Get IDs of grants that the researcher has already applied to
+          appliedGrantIds = new Set(proposalsData.map((p: any) => p.grant));
         }
         
-        // Pre-select grant if ID is in query params
+        // Filter for active grants that haven't been applied to
+        const availableGrants = data.filter((grant: any) => 
+          grant.status === "Active" && !appliedGrantIds.has(grant._id)
+        );
+        
+        if (availableGrants.length > 0) {
+          setGrants(availableGrants);
+        } else {
+          // If no available grants, show message but don't set grants
+          setGrants([]);
+        }
+        
+        // Pre-select grant if ID is in query params (only if it's available)
         const grantIdFromQuery = searchParams.get('grantId');
         if (grantIdFromQuery) {
-          const matchingGrant = activeGrants.find((g: any) => g._id === grantIdFromQuery);
+          const matchingGrant = availableGrants.find((g: any) => g._id === grantIdFromQuery);
           if (matchingGrant) {
             setFormData(prev => ({ 
               ...prev, 
@@ -228,6 +246,7 @@ function SubmitPageContent() {
         }
       } catch (error) {
         console.error('Error fetching grants:', error);
+        setGrants([]);
       }
     };
 
@@ -261,6 +280,8 @@ function SubmitPageContent() {
   const isStepValid = (step: number): boolean => {
     switch (step) {
       case 1:
+        // Check if grants are available first
+        if (grants.length === 0) return false;
         return !validateProposalField('title', formData.title) && 
                !validateProposalField('abstract', formData.abstract) && 
                !validateProposalField('grant', formData.grant)
@@ -507,100 +528,140 @@ function SubmitPageContent() {
       case 1:
         return (
           <div className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="title">Project Title *</Label>
-              <Input
-                id="title"
-                placeholder="Enter your project title"
-                value={formData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
-                onBlur={() => handleBlur('title')}
-                className={errors.title && touched.title ? "border-red-500 focus:border-red-500" : ""}
-              />
-              <FormError error={errors.title} />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="grant">Select Grant *</Label>
-              <Select
-                value={formData.grant}
-                onValueChange={handleGrantChange}
-                onOpenChange={(open) => !open && handleBlur('grant')}
-              >
-                <SelectTrigger className={errors.grant && touched.grant ? "border-red-500 focus:border-red-500" : ""}>
-                  <SelectValue placeholder="Select grant" />
-                </SelectTrigger>
-                <SelectContent>
-                  {grants.length === 0 ? (
-                    <SelectItem value="no-grants" disabled>
-                      No grants available
-                    </SelectItem>
-                  ) : (
-                    grants.map((grant) => (
-                      <SelectItem key={grant._id} value={grant._id}>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{grant.title}</span>
-                          <span className="text-sm text-gray-500">
-                            ${grant.funding?.toLocaleString()} • {grant.category} • {grant.status}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-              <FormError error={errors.grant} />
-              
-              {selectedGrant && (
-                <Card className="mt-3">
-                  <CardContent className="pt-4">
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="font-medium">Grant Title:</span>
-                        <span>{selectedGrant.title}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Available Funding:</span>
-                        <span className="text-green-600 font-semibold">${selectedGrant.funding?.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Category:</span>
-                        <span>{selectedGrant.category}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Deadline:</span>
-                        <span>{new Date(selectedGrant.deadline).toLocaleDateString()}</span>
-                      </div>
-                      <div className="text-sm text-gray-600 mt-2">
-                        {selectedGrant.description}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="abstract">Project Abstract *</Label>
-              <Textarea
-                id="abstract"
-                placeholder="Provide a brief summary of your research project (minimum 50 characters, max 500 characters)"
-                rows={6}
-                value={formData.abstract}
-                onChange={(e) => handleInputChange('abstract', e.target.value)}
-                onBlur={() => handleBlur('abstract')}
-                className={errors.abstract && touched.abstract ? "border-red-500 focus:border-red-500" : ""}
-              />
-              <div className="flex justify-between items-center">
-                <FormError error={errors.abstract} />
+            {grants.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 mx-auto mb-4 bg-yellow-100 rounded-full flex items-center justify-center">
+                  <AlertCircle className="w-8 h-8 text-yellow-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Grants Available</h3>
+                <p className="text-gray-600 mb-4">
+                  You have either applied to all active grants or there are no active grants at the moment.
+                </p>
                 <p className="text-sm text-gray-500">
-                  {formData.abstract.length}/500 characters 
-                  {formData.abstract.length < 50 && formData.abstract.length > 0 && (
-                    <span className="text-red-500 ml-2">(Need {50 - formData.abstract.length} more)</span>
-                  )}
+                  Please check back later or contact the administrator for assistance.
                 </p>
               </div>
-            </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="title">Project Title *</Label>
+                  <Input
+                    id="title"
+                    placeholder="Enter your research project title"
+                    value={formData.title}
+                    onChange={(e) => handleInputChange('title', e.target.value)}
+                    onBlur={() => handleBlur('title')}
+                    className={errors.title && touched.title ? "border-red-500 focus:border-red-500" : ""}
+                  />
+                  <FormError error={errors.title} />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="grant">Select Grant *</Label>
+                  <p className="text-sm text-gray-600 mb-2">
+                    Only active grants that you haven't applied to are shown below.
+                  </p>
+                  <Select
+                    value={formData.grant}
+                    onValueChange={handleGrantChange}
+                    onOpenChange={(open) => !open && handleBlur('grant')}
+                  >
+                    <SelectTrigger className={errors.grant && touched.grant ? "border-red-500 focus:border-red-500" : ""}>
+                      <SelectValue placeholder="Select grant" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {grants.length === 0 ? (
+                        <SelectItem value="no-grants" disabled>
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">No grants available</span>
+                            <span className="text-sm text-gray-500">
+                              You have either applied to all active grants or there are no active grants at the moment
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ) : (
+                        grants.map((grant) => (
+                          <SelectItem key={grant._id} value={grant._id}>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{grant.title}</span>
+                              <span className="text-sm text-gray-500">
+                                ${grant.funding?.toLocaleString()} • {grant.category} • {grant.status}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormError error={errors.grant} />
+                  
+                  {grants.length === 0 && (
+                    <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                      <div className="flex items-start space-x-2">
+                        <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                        <div className="text-sm text-yellow-800">
+                          <p className="font-medium">No grants available for submission</p>
+                          <p className="mt-1">
+                            You have either applied to all active grants or there are no active grants at the moment. 
+                            Please check back later or contact the administrator.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {selectedGrant && (
+                    <Card className="mt-3">
+                      <CardContent className="pt-4">
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="font-medium">Grant Title:</span>
+                            <span>{selectedGrant.title}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="font-medium">Available Funding:</span>
+                            <span className="text-green-600 font-semibold">${selectedGrant.funding?.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="font-medium">Category:</span>
+                            <span>{selectedGrant.category}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="font-medium">Deadline:</span>
+                            <span>{new Date(selectedGrant.deadline).toLocaleDateString()}</span>
+                          </div>
+                          <div className="text-sm text-gray-600 mt-2">
+                            {selectedGrant.description}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="abstract">Project Abstract *</Label>
+                  <Textarea
+                    id="abstract"
+                    placeholder="Provide a brief summary of your research project (minimum 50 characters, max 500 characters)"
+                    rows={6}
+                    value={formData.abstract}
+                    onChange={(e) => handleInputChange('abstract', e.target.value)}
+                    onBlur={() => handleBlur('abstract')}
+                    className={errors.abstract && touched.abstract ? "border-red-500 focus:border-red-500" : ""}
+                  />
+                  <div className="flex justify-between items-center">
+                    <FormError error={errors.abstract} />
+                    <p className="text-sm text-gray-500">
+                      {formData.abstract.length}/500 characters 
+                      {formData.abstract.length < 50 && formData.abstract.length > 0 && (
+                        <span className="text-red-500 ml-2">(Need {50 - formData.abstract.length} more)</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )
       case 2:

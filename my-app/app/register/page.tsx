@@ -294,7 +294,7 @@ function RegisterContent() {
                     <Label htmlFor="first-name">First Name *</Label>
                     <Input
                       id="first-name"
-                      placeholder="John"
+                      placeholder="Mohamed"
                       value={registerData.firstName}
                       onChange={(e) => handleInputChange('firstName', e.target.value)}
                       onBlur={() => handleBlur('firstName')}
@@ -312,7 +312,7 @@ function RegisterContent() {
                     <Label htmlFor="last-name">Last Name *</Label>
                     <Input
                       id="last-name"
-                      placeholder="Doe"
+                      placeholder="Shafici"
                       value={registerData.lastName}
                       onChange={(e) => handleInputChange('lastName', e.target.value)}
                       onBlur={() => handleBlur('lastName')}
@@ -332,7 +332,7 @@ function RegisterContent() {
                   <Input
                     id="register-email"
                     type="email"
-                    placeholder="john.doe@university.edu"
+                    placeholder="mohashafici@gmail.com"
                     value={registerData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     onBlur={() => handleBlur('email')}
@@ -351,7 +351,7 @@ function RegisterContent() {
                     <Label htmlFor="institution">Institution *</Label>
                     <Input
                       id="institution"
-                      placeholder="University Name"
+                      placeholder="institution Name"
                       value={registerData.institution}
                       onChange={(e) => handleInputChange('institution', e.target.value)}
                       onBlur={() => handleBlur('institution')}

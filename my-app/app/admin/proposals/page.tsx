@@ -38,6 +38,16 @@ interface Proposal {
   };
   reviewer?: string;
   attachments?: string[];
+  // Budget breakdown fields
+  personnelCosts?: number;
+  equipmentCosts?: number;
+  materialsCosts?: number;
+  travelCosts?: number;
+  otherCosts?: number;
+  // Document fields
+  proposalDocument?: string;
+  cvResume?: string;
+  additionalDocuments?: string[];
 }
 
 interface Reviewer {
@@ -217,15 +227,118 @@ function ProposalViewModal({ proposal, onClose }: { proposal: Proposal; onClose:
               <CardTitle className="text-sm sm:text-base md:text-lg">Abstract</CardTitle>
             </CardHeader>
             <CardContent className="px-2 sm:px-3 md:px-4 lg:px-6 pb-3 sm:pb-4 md:pb-6">
-              <p className="text-gray-700 leading-relaxed text-xs sm:text-sm md:text-base break-words max-h-32 sm:max-h-40 md:max-h-48 overflow-y-auto">{proposal.abstract}</p>
+              <p className="text-gray-700 leading-relaxed text-xs sm:text-sm md:text-base break-words max-h-40 sm:max-h-48 overflow-y-auto">{proposal.abstract}</p>
             </CardContent>
           </Card>
 
-          {/* Attachments */}
+          {/* Budget Breakdown */}
+          {(proposal.personnelCosts || proposal.equipmentCosts || proposal.materialsCosts || proposal.travelCosts || proposal.otherCosts) && (
+            <Card className="overflow-hidden">
+              <CardHeader className="pb-2 sm:pb-3 md:pb-4 px-2 sm:px-3 md:px-4 lg:px-6">
+                <CardTitle className="text-sm sm:text-base md:text-lg">Budget Breakdown</CardTitle>
+              </CardHeader>
+              <CardContent className="px-2 sm:px-3 md:px-4 lg:px-6 pb-3 sm:pb-4 md:pb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div>
+                    <Label className="font-medium text-xs sm:text-sm md:text-base">Personnel Costs</Label>
+                    <p className="mt-1 text-xs sm:text-sm md:text-base">${proposal.personnelCosts?.toLocaleString() || "0"}</p>
+                  </div>
+                  <div>
+                    <Label className="font-medium text-xs sm:text-sm md:text-base">Equipment</Label>
+                    <p className="mt-1 text-xs sm:text-sm md:text-base">${proposal.equipmentCosts?.toLocaleString() || "0"}</p>
+                  </div>
+                  <div>
+                    <Label className="font-medium text-xs sm:text-sm md:text-base">Materials & Supplies</Label>
+                    <p className="mt-1 text-xs sm:text-sm md:text-base">${proposal.materialsCosts?.toLocaleString() || "0"}</p>
+                  </div>
+                  <div>
+                    <Label className="font-medium text-xs sm:text-sm md:text-base">Travel</Label>
+                    <p className="mt-1 text-xs sm:text-sm md:text-base">${proposal.travelCosts?.toLocaleString() || "0"}</p>
+                  </div>
+                  <div>
+                    <Label className="font-medium text-xs sm:text-sm md:text-base">Other Costs</Label>
+                    <p className="mt-1 text-xs sm:text-sm md:text-base">${proposal.otherCosts?.toLocaleString() || "0"}</p>
+                  </div>
+                  <div className="font-medium text-blue-600">
+                    <Label className="text-xs sm:text-sm md:text-base">Total Budget</Label>
+                    <p className="mt-1 text-sm sm:text-base md:text-lg">${proposal.funding?.toLocaleString()}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Uploaded Documents */}
+          {(proposal.proposalDocument || proposal.cvResume || (proposal.additionalDocuments && proposal.additionalDocuments.length > 0)) && (
+            <Card className="overflow-hidden">
+              <CardHeader className="pb-2 sm:pb-3 md:pb-4 px-2 sm:px-3 md:px-4 lg:px-6">
+                <CardTitle className="text-sm sm:text-base md:text-lg">Uploaded Documents</CardTitle>
+              </CardHeader>
+              <CardContent className="px-2 sm:px-3 md:px-4 lg:px-6 pb-3 sm:pb-4 md:pb-6">
+                <div className="space-y-2 sm:space-y-3">
+                  {proposal.proposalDocument && (
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-2 sm:p-3 border rounded-lg gap-2">
+                      <div className="flex items-center space-x-2 sm:space-x-3">
+                        <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+                        <span className="font-medium text-xs sm:text-sm md:text-base">Proposal Document</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDownload(proposal.proposalDocument, 'Proposal Document')}
+                        className="w-full sm:w-auto h-8 sm:h-9 text-xs"
+                      >
+                        <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                        Download
+                      </Button>
+                    </div>
+                  )}
+                  {proposal.cvResume && (
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-2 sm:p-3 border rounded-lg gap-2">
+                      <div className="flex items-center space-x-2 sm:space-x-3">
+                        <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
+                        <span className="font-medium text-xs sm:text-sm md:text-base">CV/Resume</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDownload(proposal.cvResume, 'CV Resume')}
+                        className="w-full sm:w-auto h-8 sm:h-9 text-xs"
+                      >
+                        <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                        Download
+                      </Button>
+                    </div>
+                  )}
+                  {proposal.additionalDocuments && proposal.additionalDocuments.length > 0 && (
+                    proposal.additionalDocuments.map((doc: string, index: number) => (
+                      <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-2 sm:p-3 border rounded-lg gap-2">
+                        <div className="flex items-center space-x-2 sm:space-x-3">
+                          <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 flex-shrink-0" />
+                          <span className="font-medium text-xs sm:text-sm md:text-base">Additional Document {index + 1}</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDownload(doc, `Additional Document ${index + 1}`)}
+                          className="w-full sm:w-auto h-8 sm:h-9 text-xs"
+                        >
+                          <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                          Download
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Legacy Attachments (keeping for backward compatibility) */}
           {proposal.attachments && proposal.attachments.length > 0 && (
             <Card className="overflow-hidden">
               <CardHeader className="pb-2 sm:pb-3 md:pb-4 px-2 sm:px-3 md:px-4 lg:px-6">
-                <CardTitle className="text-sm sm:text-base md:text-lg">Attachments</CardTitle>
+                <CardTitle className="text-sm sm:text-base md:text-lg">Legacy Attachments</CardTitle>
               </CardHeader>
               <CardContent className="px-2 sm:px-3 md:px-4 lg:px-6 pb-3 sm:pb-4 md:pb-6">
                 <div className="space-y-2">

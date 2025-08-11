@@ -44,10 +44,349 @@ import {
   Copy,
   CheckCircle,
   Clipboard,
+  FileText as FileTextIcon,
+  Calendar,
+  DollarSign,
+  Building,
+  Mail,
+  Phone,
 } from "lucide-react"
 import ResearcherLayout from "@/components/layouts/ResearcherLayout"
 import { authStorage } from "@/lib/auth"
 import { useAuthRedirect } from "@/hooks/use-auth-redirect"
+import { useToast } from "@/hooks/use-toast"
+
+// Award Letter Component
+function AwardLetterModal({ proposal, onClose }: { proposal: any; onClose: () => void }) {
+  const { toast } = useToast()
+  const [generating, setGenerating] = useState(false)
+  const currentUser = authStorage.getUser()
+
+  const generateAwardLetter = async () => {
+    setGenerating(true)
+    try {
+      // Create award letter content with current user data
+      const awardLetterContent = {
+        proposalTitle: proposal.title,
+        grantTitle: proposal.grantTitle || "Research Grant",
+        funding: proposal.funding,
+        researcherName: `${currentUser?.firstName || proposal.researcher?.firstName || "Researcher"} ${currentUser?.lastName || proposal.researcher?.lastName || "Name"}`,
+        institution: currentUser?.institution || proposal.researcher?.institution || "Research Institution",
+        department: currentUser?.department || proposal.researcher?.department || "Research Department",
+        submissionDate: proposal.dateSubmitted ? new Date(proposal.dateSubmitted).toLocaleDateString() : "N/A",
+        approvalDate: new Date().toLocaleDateString(),
+        abstract: proposal.abstract,
+        objectives: proposal.objectives,
+        methodology: proposal.methodology,
+        timeline: proposal.timeline,
+        expectedOutcomes: proposal.expectedOutcomes,
+        budget: {
+          personnel: proposal.personnelCosts || 0,
+          equipment: proposal.equipmentCosts || 0,
+          materials: proposal.materialsCosts || 0,
+          travel: proposal.travelCosts || 0,
+          other: proposal.otherCosts || 0,
+          total: proposal.funding
+        }
+      }
+
+      // Generate PDF using jsPDF
+      const { jsPDF } = await import('jspdf')
+      const doc = new jsPDF()
+      
+      // Set up the document
+      doc.setFont("helvetica")
+      doc.setFontSize(12)
+      
+      // Add header with logo and institution name
+      doc.setFillColor(59, 130, 246) // Blue background
+      doc.rect(0, 0, 210, 40, "F")
+      
+      // Institution name
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(18)
+      doc.setFont("helvetica", "bold")
+      doc.text("Grant Award System", 105, 20, { align: "center" })
+      doc.setFontSize(12)
+      doc.text("Official Award Letter", 105, 30, { align: "center" })
+      
+      // Reset text color
+      doc.setTextColor(0, 0, 0)
+      doc.setFontSize(12)
+      doc.setFont("helvetica", "normal")
+      
+      // Date
+      doc.text(`Date: ${awardLetterContent.approvalDate}`, 20, 60)
+      
+      // Recipient
+      doc.setFont("helvetica", "bold")
+      doc.text("To:", 20, 80)
+      doc.setFont("helvetica", "normal")
+      doc.text(awardLetterContent.researcherName, 20, 90)
+      doc.text(awardLetterContent.institution, 20, 100)
+      if (awardLetterContent.department) {
+        doc.text(awardLetterContent.department, 20, 110)
+      }
+      
+      // Subject
+      doc.setFont("helvetica", "bold")
+      doc.text("Subject: Grant Award Notification", 20, 130)
+      
+      // Congratulations message
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(14)
+      doc.text("CONGRATULATIONS!", 105, 150, { align: "center" })
+      doc.setFontSize(12)
+      
+      const congratulationsText = [
+        "We are pleased to inform you that your research proposal has been approved for funding.",
+        "",
+        `Your proposal titled "${awardLetterContent.proposalTitle}" submitted under the ${awardLetterContent.grantTitle} has been selected for an award of $${awardLetterContent.funding.toLocaleString()}.`,
+        "",
+        "This recognition reflects the exceptional quality and innovation of your research work. Your proposal demonstrated outstanding merit and aligns perfectly with our mission to advance knowledge and create positive impact."
+      ]
+      
+      let yPosition = 170
+      congratulationsText.forEach(line => {
+        if (line === "") {
+          yPosition += 5
+        } else {
+          const lines = doc.splitTextToSize(line, 170)
+          lines.forEach(splitLine => {
+            doc.text(splitLine, 20, yPosition)
+            yPosition += 7
+          })
+        }
+      })
+      
+      // Check if we need a new page
+      if (yPosition > 250) {
+        doc.addPage()
+        yPosition = 20
+      }
+      
+      // Project Details
+      yPosition += 10
+      doc.setFont("helvetica", "bold")
+      doc.text("Project Details:", 20, yPosition)
+      yPosition += 10
+      doc.setFont("helvetica", "normal")
+      
+      const details = [
+        `Proposal Title: ${awardLetterContent.proposalTitle}`,
+        `Grant Program: ${awardLetterContent.grantTitle}`,
+        `Award Amount: $${awardLetterContent.funding.toLocaleString()}`,
+        `Submission Date: ${awardLetterContent.submissionDate}`,
+        `Approval Date: ${awardLetterContent.approvalDate}`
+      ]
+      
+      details.forEach(detail => {
+        doc.text(detail, 20, yPosition)
+        yPosition += 7
+      })
+      
+      // // Budget Breakdown
+      // yPosition += 10
+      // doc.setFont("helvetica", "bold")
+      // doc.text("Budget Breakdown:", 20, yPosition)
+      // yPosition += 10
+      // doc.setFont("helvetica", "normal")
+      
+      // const budgetItems = [
+      //   `Personnel Costs: $${awardLetterContent.budget.personnel.toLocaleString()}`,
+      //   `Equipment: $${awardLetterContent.budget.equipment.toLocaleString()}`,
+      //   `Materials & Supplies: $${awardLetterContent.budget.materials.toLocaleString()}`,
+      //   `Travel: $${awardLetterContent.budget.travel.toLocaleString()}`,
+      //   `Other Costs: $${awardLetterContent.budget.other.toLocaleString()}`,
+      //   `Total Award: $${awardLetterContent.budget.total.toLocaleString()}`
+      // ]
+      
+      // budgetItems.forEach(item => {
+      //   doc.text(item, 20, yPosition)
+      //   yPosition += 7
+      // })
+      
+      // Check if we need a new page for next steps
+      if (yPosition > 250) {
+        doc.addPage()
+        yPosition = 20
+      }
+      
+      // Next Steps
+      yPosition += 10
+      doc.setFont("helvetica", "bold")
+      doc.text("Next Steps:", 20, yPosition)
+      yPosition += 10
+      doc.setFont("helvetica", "normal")
+      
+      const nextSteps = [
+        "1. You will receive detailed instructions for fund disbursement within 5-7 business days.",
+        "2. Please ensure all required documentation is submitted promptly.",
+        "3. Regular progress reports will be required as outlined in the grant terms.",
+        "4. Contact our support team if you have any questions about the award process."
+      ]
+      
+      nextSteps.forEach(step => {
+        const lines = doc.splitTextToSize(step, 170)
+        lines.forEach(splitLine => {
+          doc.text(splitLine, 20, yPosition)
+          yPosition += 7
+        })
+      })
+      
+      // Check if we need a new page for signature
+      if (yPosition > 250) {
+        doc.addPage()
+        yPosition = 20
+      }
+      
+      // Footer with signature
+      yPosition += 15
+      doc.setFont("helvetica", "bold")
+      doc.text("Best regards,", 20, yPosition)
+      yPosition += 15
+      
+      // Add signature line
+      doc.line(20, yPosition, 80, yPosition)
+      yPosition += 5
+      doc.text("Moha", 20, yPosition)
+      yPosition += 7
+      doc.setFont("helvetica", "normal")
+      doc.text("Grant Award Committee", 20, yPosition)
+      yPosition += 7
+      doc.text("Grant Award System", 20, yPosition)
+      
+      // Save the PDF
+      const fileName = `Award_Letter_${proposal.title.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
+      doc.save(fileName)
+      
+      toast({
+        title: "Award Letter Generated!",
+        description: "Your award letter has been downloaded successfully.",
+        duration: 3000
+      })
+      
+    } catch (error) {
+      console.error('Error generating award letter:', error)
+      toast({
+        title: "Error",
+        description: "Failed to generate award letter. Please try again.",
+        variant: "destructive",
+        duration: 4000
+      })
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold text-center text-blue-600">
+            🎉 Grant Award Letter 🎉
+          </DialogTitle>
+          <DialogDescription className="text-center">
+            Download your official award letter with all grant details
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-6">
+          {/* Award Letter Preview */}
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-100 p-6 rounded-lg border-2 border-blue-200">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Award className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-blue-800 mb-2">CONGRATULATIONS!</h2>
+              <p className="text-blue-700 font-medium">Your proposal has been approved for funding</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <h3 className="font-semibold text-gray-800 mb-2 flex items-center">
+                    <FileTextIcon className="w-4 h-4 mr-2" />
+                    Proposal Details
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <div><span className="font-medium">Title:</span> {proposal.title}</div>
+                    <div><span className="font-medium">Grant:</span> {proposal.grantTitle || "Research Grant"}</div>
+                    <div><span className="font-medium">Status:</span> <span className="text-green-600 font-semibold">Approved</span></div>
+                  </div>
+                </div>
+                
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <h3 className="font-semibold text-gray-800 mb-2 flex items-center">
+                    <DollarSign className="w-4 h-4 mr-2" />
+                    Award Information
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <div><span className="font-medium">Award Amount:</span> <span className="text-green-600 font-bold">${proposal.funding?.toLocaleString()}</span></div>
+                    <div><span className="font-medium">Submission Date:</span> {proposal.dateSubmitted ? new Date(proposal.dateSubmitted).toLocaleDateString() : "N/A"}</div>
+                    <div><span className="font-medium">Approval Date:</span> {new Date().toLocaleDateString()}</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                                 <div className="bg-white p-4 rounded-lg shadow-sm">
+                   <h3 className="font-semibold text-gray-800 mb-2 flex items-center">
+                     <Building className="w-4 h-4 mr-2" />
+                     Researcher Information
+                   </h3>
+                   <div className="space-y-2 text-sm">
+                     <div><span className="font-medium">Name:</span> {currentUser?.firstName || proposal.researcher?.firstName} {currentUser?.lastName || proposal.researcher?.lastName}</div>
+                     <div><span className="font-medium">Institution:</span> {currentUser?.institution || proposal.researcher?.institution}</div>
+                     <div><span className="font-medium">Department:</span> {currentUser?.department || proposal.researcher?.department || "N/A"}</div>
+                   </div>
+                 </div>
+                
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <h3 className="font-semibold text-gray-800 mb-2 flex items-center">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Next Steps
+                  </h3>
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <div>• Fund disbursement instructions (5-7 days)</div>
+                    <div>• Submit required documentation</div>
+                    <div>• Regular progress reports</div>
+                    <div>• Contact support for questions</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Download Button */}
+          <div className="text-center">
+            <Button
+              onClick={generateAwardLetter}
+              disabled={generating}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-semibold"
+              size="lg"
+            >
+              {generating ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Generating PDF...
+                </div>
+              ) : (
+                <div className="flex items-center">
+                  <Download className="w-5 h-5 mr-2" />
+                  Download Award Letter (PDF)
+                </div>
+              )}
+            </Button>
+            <p className="text-sm text-gray-500 mt-2">
+              The PDF will include all grant details, congratulations message, and official letterhead
+            </p>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 // function ResearcherSidebar() {
 //   return (
@@ -373,10 +712,16 @@ export default function ResearcherProposalsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedProposal, setSelectedProposal] = useState(null)
+  const [awardLetterProposal, setAwardLetterProposal] = useState<any>(null)
+  const [currentUser, setCurrentUser] = useState<any>(null)
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
+    // Get current user from auth storage
+    const user = authStorage.getUser()
+    setCurrentUser(user)
+
     const fetchProposals = async () => {
       setLoading(true)
       setError("")
@@ -527,6 +872,14 @@ export default function ResearcherProposalsPage() {
                           <span className="font-medium">Congratulations! Your proposal has been approved for funding.</span>
                         </div>
                         <p className="text-sm text-green-700 mb-2">You will receive an official award letter and next steps soon.</p>
+                        <Button
+                          onClick={() => setAwardLetterProposal(proposal)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white mt-2"
+                          size="sm"
+                        >
+                          <Download className="w-4 h-4 mr-1" />
+                          Download Award Letter
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -554,6 +907,14 @@ export default function ResearcherProposalsPage() {
               </Button>
             )}
           </div>
+        )}
+
+        {/* Award Letter Modal */}
+        {awardLetterProposal && (
+          <AwardLetterModal
+            proposal={awardLetterProposal}
+            onClose={() => setAwardLetterProposal(null)}
+          />
         )}
       </main>
     </ResearcherLayout>

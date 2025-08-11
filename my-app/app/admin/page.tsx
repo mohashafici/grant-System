@@ -28,6 +28,7 @@ import {
   UserPlus,
   ChevronDown,
   ChevronUp,
+  Download,
 } from "lucide-react"
 import AdminLayout from "@/components/layouts/AdminLayout"
 import { useAuthRedirect } from "@/hooks/use-auth-redirect"
@@ -35,6 +36,26 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 import { authStorage } from "@/lib/auth"
 
 function ProposalViewModal({ proposal, onClose, reviewer }: { proposal: any; onClose: () => void; reviewer?: any }) {
+  const handleDownload = async (fileUrl: string, fileName: string) => {
+    try {
+      const response = await fetch(fileUrl);
+      if (!response.ok) throw new Error('Failed to download file');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Failed to download file. Please try again.');
+    }
+  };
+
   return (
     <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-2 sm:p-3 md:p-4 lg:p-6">
       <DialogHeader className="space-y-2 sm:space-y-3">
@@ -44,6 +65,7 @@ function ProposalViewModal({ proposal, onClose, reviewer }: { proposal: any; onC
         </DialogDescription>
       </DialogHeader>
       <div className="space-y-3 sm:space-y-4 md:space-y-6">
+        {/* Basic Information */}
         <Card className="overflow-hidden">
           <CardHeader className="pb-2 sm:pb-3 md:pb-4 px-2 sm:px-3 md:px-4 lg:px-6">
             <CardTitle className="text-sm sm:text-base md:text-lg">Proposal Information</CardTitle>
@@ -77,14 +99,150 @@ function ProposalViewModal({ proposal, onClose, reviewer }: { proposal: any; onC
             </div>
           </CardContent>
         </Card>
+
+        {/* Abstract */}
         <Card className="overflow-hidden">
           <CardHeader className="pb-2 sm:pb-3 md:pb-4 px-2 sm:px-3 md:px-4 lg:px-6">
             <CardTitle className="text-sm sm:text-base md:text-lg">Abstract</CardTitle>
           </CardHeader>
           <CardContent className="px-2 sm:px-3 md:px-4 lg:px-6 pb-3 sm:pb-4 md:pb-6">
-            <p className="text-gray-700 leading-relaxed text-xs sm:text-sm md:text-base break-words max-h-32 sm:max-h-40 md:max-h-48 overflow-y-auto">{proposal.abstract}</p>
+            <p className="text-gray-700 leading-relaxed text-xs sm:text-sm md:text-base break-words max-h-40 sm:max-h-48 overflow-y-auto">{proposal.abstract}</p>
           </CardContent>
         </Card>
+
+        {/* Budget Breakdown */}
+        {(proposal.personnelCosts || proposal.equipmentCosts || proposal.materialsCosts || proposal.travelCosts || proposal.otherCosts) && (
+          <Card className="overflow-hidden">
+            <CardHeader className="pb-2 sm:pb-3 md:pb-4 px-2 sm:px-3 md:px-4 lg:px-6">
+              <CardTitle className="text-sm sm:text-base md:text-lg">Budget Breakdown</CardTitle>
+            </CardHeader>
+            <CardContent className="px-2 sm:px-3 md:px-4 lg:px-6 pb-3 sm:pb-4 md:pb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                  <Label className="font-medium text-xs sm:text-sm md:text-base">Personnel Costs</Label>
+                  <p className="mt-1 text-xs sm:text-sm md:text-base">${proposal.personnelCosts?.toLocaleString() || "0"}</p>
+                </div>
+                <div>
+                  <Label className="font-medium text-xs sm:text-sm md:text-base">Equipment</Label>
+                  <p className="mt-1 text-xs sm:text-sm md:text-base">${proposal.equipmentCosts?.toLocaleString() || "0"}</p>
+                </div>
+                <div>
+                  <Label className="font-medium text-xs sm:text-sm md:text-base">Materials & Supplies</Label>
+                  <p className="mt-1 text-xs sm:text-sm md:text-base">${proposal.materialsCosts?.toLocaleString() || "0"}</p>
+                </div>
+                <div>
+                  <Label className="font-medium text-xs sm:text-sm md:text-base">Travel</Label>
+                  <p className="mt-1 text-xs sm:text-sm md:text-base">${proposal.travelCosts?.toLocaleString() || "0"}</p>
+                </div>
+                <div>
+                  <Label className="font-medium text-xs sm:text-sm md:text-base">Other Costs</Label>
+                  <p className="mt-1 text-xs sm:text-sm md:text-base">${proposal.otherCosts?.toLocaleString() || "0"}</p>
+                </div>
+                <div className="font-medium text-blue-600">
+                  <Label className="text-xs sm:text-sm md:text-base">Total Budget</Label>
+                  <p className="mt-1 text-sm sm:text-base md:text-lg">${proposal.funding?.toLocaleString()}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Uploaded Documents */}
+        {(proposal.proposalDocument || proposal.cvResume || (proposal.additionalDocuments && proposal.additionalDocuments.length > 0)) && (
+          <Card className="overflow-hidden">
+            <CardHeader className="pb-2 sm:pb-3 md:pb-4 px-2 sm:px-3 md:px-4 lg:px-6">
+              <CardTitle className="text-sm sm:text-base md:text-lg">Uploaded Documents</CardTitle>
+            </CardHeader>
+            <CardContent className="px-2 sm:px-3 md:px-4 lg:px-6 pb-3 sm:pb-4 md:pb-6">
+              <div className="space-y-2 sm:space-y-3">
+                {proposal.proposalDocument && (
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-2 sm:p-3 border rounded-lg gap-2">
+                    <div className="flex items-center space-x-2 sm:space-x-3">
+                      <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+                      <span className="font-medium text-xs sm:text-sm md:text-base">Proposal Document</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDownload(proposal.proposalDocument, 'Proposal Document')}
+                      className="w-full sm:w-auto h-8 sm:h-9 text-xs"
+                    >
+                      <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                      Download
+                    </Button>
+                  </div>
+                )}
+                {proposal.cvResume && (
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-2 sm:p-3 border rounded-lg gap-2">
+                    <div className="flex items-center space-x-2 sm:space-x-3">
+                      <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
+                      <span className="font-medium text-xs sm:text-sm md:text-base">CV/Resume</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDownload(proposal.cvResume, 'CV Resume')}
+                      className="w-full sm:w-auto h-8 sm:h-9 text-xs"
+                    >
+                      <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                      Download
+                    </Button>
+                  </div>
+                )}
+                {proposal.additionalDocuments && proposal.additionalDocuments.length > 0 && (
+                  proposal.additionalDocuments.map((doc: string, index: number) => (
+                    <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-2 sm:p-3 border rounded-lg gap-2">
+                      <div className="flex items-center space-x-2 sm:space-x-3">
+                        <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 flex-shrink-0" />
+                        <span className="font-medium text-xs sm:text-sm md:text-base">Additional Document {index + 1}</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDownload(doc, `Additional Document ${index + 1}`)}
+                        className="w-full sm:w-auto h-8 sm:h-9 text-xs"
+                      >
+                        <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                        Download
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Legacy Attachments (keeping for backward compatibility) */}
+        {proposal.attachments && proposal.attachments.length > 0 && (
+          <Card className="overflow-hidden">
+            <CardHeader className="pb-2 sm:pb-3 md:pb-4 px-2 sm:px-3 md:px-4 lg:px-6">
+              <CardTitle className="text-sm sm:text-base md:text-lg">Legacy Attachments</CardTitle>
+            </CardHeader>
+            <CardContent className="px-2 sm:px-3 md:px-4 lg:px-6 pb-3 sm:pb-4 md:pb-6">
+              <div className="space-y-2">
+                {proposal.attachments.map((attachment: string, index: number) => (
+                  <div key={index} className="flex items-center justify-between p-2 border rounded">
+                    <div className="flex items-center space-x-2">
+                      <FileText className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm">{attachment.split('/').pop()}</span>
+                    </div>
+                    <Button 
+                      size="sm"
+                      variant="outline" 
+                      onClick={() => handleDownload(attachment, attachment.split('/').pop() || 'file')}
+                      className="h-7 w-7 sm:h-8 sm:w-auto sm:px-2 sm:px-3 p-0"
+                    >
+                      <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline sm:ml-1">Download</span>
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="flex justify-end pt-2">
           <Button variant="outline" onClick={onClose} className="w-full sm:w-auto h-9 sm:h-10 text-xs sm:text-sm">Close</Button>
         </div>
@@ -450,34 +608,38 @@ export default function AdminDashboard() {
               </div>
             ) : (
               /* Desktop Table View */
-              <div className="w-full overflow-x-auto">
+              <div className="w-full">
                 <Table className="w-full">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[25%] sm:w-[20%]">Title</TableHead>
-                      <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[20%] sm:w-[15%]">Researcher</TableHead>
+                      <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[20%]">Title</TableHead>
+                      <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[15%]">Researcher</TableHead>
                       <TableHead className="hidden sm:table-cell text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[15%]">Institution</TableHead>
-                      <TableHead className="hidden md:table-cell text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[10%]">Date</TableHead>
-                      <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[15%] sm:w-[20%]">Funding</TableHead>
-                      <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[15%] sm:w-[10%]">Status</TableHead>
-                      <TableHead className="hidden lg:table-cell text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[10%]">Reviewer</TableHead>
-                      <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[10%] sm:w-[15%]">Actions</TableHead>
+                      <TableHead className="hidden md:table-cell text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[12%]">Date</TableHead>
+                      <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[12%]">Funding</TableHead>
+                      <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[12%]">Status</TableHead>
+                      <TableHead className="hidden lg:table-cell text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[12%]">Reviewer</TableHead>
+                      <TableHead className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 w-[12%]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {proposals.map((submission) => (
                       <TableRow key={submission._id}>
-                        <TableCell className="font-medium text-xs md:text-sm truncate px-2 md:px-4 py-2 md:py-3">
+                        <TableCell className="font-medium text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 max-w-0">
+                          <div className="truncate" title={submission.title}>
                           {submission.title}
+                          </div>
                         </TableCell>
                         <TableCell className="text-xs md:text-sm px-2 md:px-4 py-2 md:py-3">
-                          <div className="flex flex-col">
+                          <div className="flex flex-col min-w-0">
                             <span className="truncate">{submission.researcher?.firstName}</span>
                             <span className="truncate">{submission.researcher?.lastName}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="hidden sm:table-cell text-xs md:text-sm truncate px-2 md:px-4 py-2 md:py-3">
+                        <TableCell className="hidden sm:table-cell text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 max-w-0">
+                          <div className="truncate" title={submission.researcher?.institution}>
                           {submission.researcher?.institution}
+                          </div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-xs md:text-sm whitespace-nowrap px-2 md:px-4 py-2 md:py-3">
                           {submission.dateSubmitted ? new Date(submission.dateSubmitted).toLocaleDateString() : ''}
@@ -490,10 +652,12 @@ export default function AdminDashboard() {
                             {submission.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="hidden lg:table-cell text-xs md:text-sm truncate px-2 md:px-4 py-2 md:py-3">
+                        <TableCell className="hidden lg:table-cell text-xs md:text-sm px-2 md:px-4 py-2 md:py-3 max-w-0">
+                          <div className="truncate">
                           {submission.reviewer
                             ? reviewers.find((r) => r._id === submission.reviewer)?.firstName + ' ' + reviewers.find((r) => r._id === submission.reviewer)?.lastName
                             : "Not assigned"}
+                          </div>
                         </TableCell>
                         <TableCell className="px-2 md:px-4 py-2 md:py-3">
                           <div className="flex flex-col gap-1">

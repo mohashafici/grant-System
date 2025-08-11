@@ -393,7 +393,7 @@ export default function ManageGrantsPage() {
               <div className="flex items-center">
                 <Users className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 text-purple-600" />
                 <div className="ml-2 sm:ml-3 md:ml-4">
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Total Applicants</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Total proposals</p>
                   <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900">
                     {Object.values(grantStats).reduce((sum: number, stat: any) => sum + stat.applicants, 0)}
                   </p>
