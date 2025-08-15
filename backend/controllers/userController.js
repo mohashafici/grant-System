@@ -54,13 +54,18 @@ exports.createUser = async (req, res, next) => {
 
     // Return user data without password
     const userResponse = {
-      id: user._id,
+      _id: user._id,
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
       role: user.role,
       institution: user.institution,
       department: user.department,
+      status: user.status || 'active',
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      isEmailVerified: user.isEmailVerified,
+      lastModifiedBy: user.lastModifiedBy
     };
 
     res.status(201).json({

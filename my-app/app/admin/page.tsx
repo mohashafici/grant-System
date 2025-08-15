@@ -335,7 +335,7 @@ function MobileProposalCard({ submission, onView, onAssign, reviewers }: {
 }
 
 export default function AdminDashboard() {
-  useAuthRedirect()
+  useAuthRedirect(["admin"])
   const [selectedSubmission, setSelectedSubmission] = useState<any | null>(null)
   const [viewProposal, setViewProposal] = useState<any | null>(null)
   const [proposals, setProposals] = useState<any[]>([])

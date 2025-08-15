@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { BookOpen, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 
@@ -21,16 +21,14 @@ export default function PublicNavbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
   return (
-    <header className="border-b border-blue-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+    <header className="border-b border-blue-800/30 bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white sticky top-0 z-50 shadow-xl backdrop-blur-sm">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <BookOpen className="w-6 h-6 text-white" />
-            </div>
+            <img src="/logoss.png" alt="Mubarak Grant Portal Logo" className="w-16 h-16 rounded-xl object-cover shadow-lg" />
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">Innovation Grant Portal</h1>
-              <p className="text-sm text-gray-600">Find and secure grants for your research</p>
+              <h1 className="text-xl font-bold text-white tracking-wide">Mubarak Grant Portal</h1>
+              <p className="text-sm text-blue-100 font-medium">Find and secure grants for your research</p>
             </div>
           </div>
           {/* Desktop Navigation */}
@@ -43,8 +41,8 @@ export default function PublicNavbar() {
                   href={item.href}
                   className={
                     (isActive
-                      ? "text-blue-700 font-bold underline bg-blue-100 rounded-md px-3 py-2"
-                      : "text-gray-600 hover:text-blue-600 transition-colors")
+                      ? "text-blue-900 font-bold bg-white rounded-lg px-4 py-2 shadow-md"
+                      : "text-blue-100 hover:text-white hover:bg-blue-800/50 rounded-lg px-4 py-2 transition-all duration-200")
                   }
                 >
                   {item.label}
@@ -52,19 +50,19 @@ export default function PublicNavbar() {
               );
             })}
             <Link href="/login">
-              <Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-transparent">
+              <Button variant="outline" className="border-blue-200 text-white hover:bg-blue-700 hover:border-blue-300 bg-transparent font-semibold px-6">
                 Sign In
               </Button>
             </Link>
           </nav>
           {/* Mobile Menu Button */}
-          <button className="lg:hidden p-2" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu">
+          <button className="lg:hidden p-2 hover:bg-blue-800/50 rounded-lg transition-colors" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu">
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="lg:hidden mt-4 pb-4 border-t border-gray-200">
+          <div className="lg:hidden mt-4 pb-4 border-t border-blue-700/50">
             <nav className="flex flex-col space-y-3 pt-4">
               {menuItems.map((item) => {
                 const isActive = pathname === item.href;
@@ -74,8 +72,8 @@ export default function PublicNavbar() {
                     href={item.href}
                     className={
                       (isActive
-                        ? "text-blue-700 font-bold underline bg-blue-100 rounded-md px-3 py-2"
-                        : "text-gray-600 hover:text-blue-600 transition-colors py-2")
+                        ? "text-blue-900 font-bold bg-white rounded-lg px-4 py-2 shadow-md"
+                        : "text-blue-100 hover:text-white hover:bg-blue-800/50 rounded-lg px-4 py-2 transition-all duration-200")
                     }
                     onClick={() => setIsMenuOpen(false)}
                   >
@@ -86,7 +84,7 @@ export default function PublicNavbar() {
               <Link href="/login" onClick={() => setIsMenuOpen(false)}>
                 <Button
                   variant="outline"
-                  className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-transparent w-full mt-2"
+                  className="border-blue-200 text-white hover:bg-blue-700 hover:border-blue-300 bg-transparent w-full mt-2 font-semibold"
                 >
                   Sign In
                 </Button>

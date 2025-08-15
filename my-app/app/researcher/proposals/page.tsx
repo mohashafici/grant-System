@@ -65,200 +65,21 @@ function AwardLetterModal({ proposal, onClose }: { proposal: any; onClose: () =>
   const generateAwardLetter = async () => {
     setGenerating(true)
     try {
-      // Create award letter content with current user data
-      const awardLetterContent = {
-        proposalTitle: proposal.title,
-        grantTitle: proposal.grantTitle || "Research Grant",
-        funding: proposal.funding,
-        researcherName: `${currentUser?.firstName || proposal.researcher?.firstName || "Researcher"} ${currentUser?.lastName || proposal.researcher?.lastName || "Name"}`,
-        institution: currentUser?.institution || proposal.researcher?.institution || "Research Institution",
-        department: currentUser?.department || proposal.researcher?.department || "Research Department",
-        submissionDate: proposal.dateSubmitted ? new Date(proposal.dateSubmitted).toLocaleDateString() : "N/A",
-        approvalDate: new Date().toLocaleDateString(),
-        abstract: proposal.abstract,
-        objectives: proposal.objectives,
-        methodology: proposal.methodology,
-        timeline: proposal.timeline,
-        expectedOutcomes: proposal.expectedOutcomes,
-        budget: {
-          personnel: proposal.personnelCosts || 0,
-          equipment: proposal.equipmentCosts || 0,
-          materials: proposal.materialsCosts || 0,
-          travel: proposal.travelCosts || 0,
-          other: proposal.otherCosts || 0,
-          total: proposal.funding
-        }
-      }
-
-      // Generate PDF using jsPDF
-      const { jsPDF } = await import('jspdf')
-      const doc = new jsPDF()
+      const token = authStorage.getToken()
       
-      // Set up the document
-      doc.setFont("helvetica")
-      doc.setFontSize(12)
+      // Create direct download link for award letter
+      const downloadUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/proposals/${proposal._id}/award-letter?token=${encodeURIComponent(token)}`
       
-      // Add header with logo and institution name
-      doc.setFillColor(59, 130, 246) // Blue background
-      doc.rect(0, 0, 210, 40, "F")
+      // Create a temporary link element and trigger download
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.download = `Award_Letter_${proposal.title.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
+      link.target = '_blank'
       
-      // Institution name
-      doc.setTextColor(255, 255, 255)
-      doc.setFontSize(18)
-      doc.setFont("helvetica", "bold")
-      doc.text("Grant Award System", 105, 20, { align: "center" })
-      doc.setFontSize(12)
-      doc.text("Official Award Letter", 105, 30, { align: "center" })
-      
-      // Reset text color
-      doc.setTextColor(0, 0, 0)
-      doc.setFontSize(12)
-      doc.setFont("helvetica", "normal")
-      
-      // Date
-      doc.text(`Date: ${awardLetterContent.approvalDate}`, 20, 60)
-      
-      // Recipient
-      doc.setFont("helvetica", "bold")
-      doc.text("To:", 20, 80)
-      doc.setFont("helvetica", "normal")
-      doc.text(awardLetterContent.researcherName, 20, 90)
-      doc.text(awardLetterContent.institution, 20, 100)
-      if (awardLetterContent.department) {
-        doc.text(awardLetterContent.department, 20, 110)
-      }
-      
-      // Subject
-      doc.setFont("helvetica", "bold")
-      doc.text("Subject: Grant Award Notification", 20, 130)
-      
-      // Congratulations message
-      doc.setFont("helvetica", "normal")
-      doc.setFontSize(14)
-      doc.text("CONGRATULATIONS!", 105, 150, { align: "center" })
-      doc.setFontSize(12)
-      
-      const congratulationsText = [
-        "We are pleased to inform you that your research proposal has been approved for funding.",
-        "",
-        `Your proposal titled "${awardLetterContent.proposalTitle}" submitted under the ${awardLetterContent.grantTitle} has been selected for an award of $${awardLetterContent.funding.toLocaleString()}.`,
-        "",
-        "This recognition reflects the exceptional quality and innovation of your research work. Your proposal demonstrated outstanding merit and aligns perfectly with our mission to advance knowledge and create positive impact."
-      ]
-      
-      let yPosition = 170
-      congratulationsText.forEach(line => {
-        if (line === "") {
-          yPosition += 5
-        } else {
-          const lines = doc.splitTextToSize(line, 170)
-          lines.forEach(splitLine => {
-            doc.text(splitLine, 20, yPosition)
-            yPosition += 7
-          })
-        }
-      })
-      
-      // Check if we need a new page
-      if (yPosition > 250) {
-        doc.addPage()
-        yPosition = 20
-      }
-      
-      // Project Details
-      yPosition += 10
-      doc.setFont("helvetica", "bold")
-      doc.text("Project Details:", 20, yPosition)
-      yPosition += 10
-      doc.setFont("helvetica", "normal")
-      
-      const details = [
-        `Proposal Title: ${awardLetterContent.proposalTitle}`,
-        `Grant Program: ${awardLetterContent.grantTitle}`,
-        `Award Amount: $${awardLetterContent.funding.toLocaleString()}`,
-        `Submission Date: ${awardLetterContent.submissionDate}`,
-        `Approval Date: ${awardLetterContent.approvalDate}`
-      ]
-      
-      details.forEach(detail => {
-        doc.text(detail, 20, yPosition)
-        yPosition += 7
-      })
-      
-      // // Budget Breakdown
-      // yPosition += 10
-      // doc.setFont("helvetica", "bold")
-      // doc.text("Budget Breakdown:", 20, yPosition)
-      // yPosition += 10
-      // doc.setFont("helvetica", "normal")
-      
-      // const budgetItems = [
-      //   `Personnel Costs: $${awardLetterContent.budget.personnel.toLocaleString()}`,
-      //   `Equipment: $${awardLetterContent.budget.equipment.toLocaleString()}`,
-      //   `Materials & Supplies: $${awardLetterContent.budget.materials.toLocaleString()}`,
-      //   `Travel: $${awardLetterContent.budget.travel.toLocaleString()}`,
-      //   `Other Costs: $${awardLetterContent.budget.other.toLocaleString()}`,
-      //   `Total Award: $${awardLetterContent.budget.total.toLocaleString()}`
-      // ]
-      
-      // budgetItems.forEach(item => {
-      //   doc.text(item, 20, yPosition)
-      //   yPosition += 7
-      // })
-      
-      // Check if we need a new page for next steps
-      if (yPosition > 250) {
-        doc.addPage()
-        yPosition = 20
-      }
-      
-      // Next Steps
-      yPosition += 10
-      doc.setFont("helvetica", "bold")
-      doc.text("Next Steps:", 20, yPosition)
-      yPosition += 10
-      doc.setFont("helvetica", "normal")
-      
-      const nextSteps = [
-        "1. You will receive detailed instructions for fund disbursement within 5-7 business days.",
-        "2. Please ensure all required documentation is submitted promptly.",
-        "3. Regular progress reports will be required as outlined in the grant terms.",
-        "4. Contact our support team if you have any questions about the award process."
-      ]
-      
-      nextSteps.forEach(step => {
-        const lines = doc.splitTextToSize(step, 170)
-        lines.forEach(splitLine => {
-          doc.text(splitLine, 20, yPosition)
-          yPosition += 7
-        })
-      })
-      
-      // Check if we need a new page for signature
-      if (yPosition > 250) {
-        doc.addPage()
-        yPosition = 20
-      }
-      
-      // Footer with signature
-      yPosition += 15
-      doc.setFont("helvetica", "bold")
-      doc.text("Best regards,", 20, yPosition)
-      yPosition += 15
-      
-      // Add signature line
-      doc.line(20, yPosition, 80, yPosition)
-      yPosition += 5
-      doc.text("Moha", 20, yPosition)
-      yPosition += 7
-      doc.setFont("helvetica", "normal")
-      doc.text("Grant Award Committee", 20, yPosition)
-      yPosition += 7
-      doc.text("Grant Award System", 20, yPosition)
-      
-      // Save the PDF
-      const fileName = `Award_Letter_${proposal.title.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
-      doc.save(fileName)
+      // Append to document, click, and remove
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
       
       toast({
         title: "Award Letter Generated!",

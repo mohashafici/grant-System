@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Award, Eye, EyeOff, AlertCircle, CheckCircle, Mail, Home } from "lucide-react"
+import { Eye, EyeOff, AlertCircle, CheckCircle, Mail, Home } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
 import { authStorage } from "@/lib/auth"
@@ -197,62 +197,67 @@ function RegisterContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
+    <div className="h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center p-2 sm:p-3">
+      <div className="w-full max-w-md">
         {/* Back Home Button */}
-        <div className="mb-6">
+        <div className="mb-3">
           <Link href="/">
-            <Button variant="ghost" className="flex items-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100">
-              <Home className="w-4 h-4" />
+            <Button variant="ghost" className="flex items-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 text-sm py-1 px-2">
+              <Home className="w-3 h-3" />
               Back to Home
             </Button>
           </Link>
         </div>
         
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Award className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Grant Portal</h1>
-            </div>
+        <div className="text-center mb-4">
+          {/* Logo - Centered above text */}
+          <div className="flex justify-center mb-3">
+            <img 
+              src="/logoss.png" 
+              alt="Mubarak Grant Portal Logo" 
+              className="w-16 h-16 md:w-20 md:h-20 rounded-lg object-cover shadow-md" 
+            />
           </div>
-          <p className="text-gray-600">Join our research funding community</p>
+          
+          {/* Text below logo */}
+          <div className="space-y-1">
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900">Mubarak Grant Portal</h1>
+            <p className="text-gray-600 text-xs md:text-sm">Join our research funding community</p>
+          </div>
         </div>
 
         {verificationSent ? (
           <Card className="shadow-lg">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="w-8 h-8 text-green-600" />
+            <CardHeader className="text-center pb-3">
+              <div className="mx-auto mb-2 w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-green-600" />
               </div>
-              <CardTitle className="text-xl text-green-600">Check Your Email!</CardTitle>
-              <CardDescription>We've sent a verification link to your email address</CardDescription>
+              <CardTitle className="text-lg text-green-600">Check Your Email!</CardTitle>
+              <CardDescription className="text-sm">We've sent a verification link to your email address</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Mail className="w-5 h-5 text-blue-600" />
-                  <span className="font-medium text-blue-800">Verification Email Sent</span>
+            <CardContent className="space-y-3">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="flex items-center space-x-2 mb-1">
+                  <Mail className="w-4 h-4 text-blue-600" />
+                  <span className="font-medium text-blue-800 text-sm">Verification Email Sent</span>
                 </div>
-                <p className="text-blue-700 text-sm">
+                <p className="text-blue-700 text-xs">
                   We've sent a verification link to <strong>{registeredEmail}</strong>
                 </p>
               </div>
               
-              <div className="space-y-3">
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-800 mb-2">Next Steps:</h4>
-                  <ul className="text-sm text-gray-600 space-y-1">
+              <div className="space-y-2">
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  <h4 className="font-medium text-gray-800 mb-1 text-sm">Next Steps:</h4>
+                  <ul className="text-xs text-gray-600 space-y-0.5">
                     <li>• Check your email inbox (and spam folder)</li>
                     <li>• Click the verification link in the email</li>
                     <li>• You'll be automatically logged in after verification</li>
                   </ul>
                 </div>
                 
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                   <Button 
                     onClick={() => {
                       setVerificationSent(false);
@@ -268,12 +273,12 @@ function RegisterContent() {
                       });
                     }}
                     variant="outline"
-                    className="flex-1"
+                    className="flex-1 text-sm py-2"
                   >
                     Register Another Account
                   </Button>
                   <Link href="/login" className="flex-1">
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-sm py-2">
                       Go to Login
                     </Button>
                   </Link>
@@ -283,52 +288,52 @@ function RegisterContent() {
           </Card>
         ) : (
           <Card className="shadow-lg">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl text-center">Get Started</CardTitle>
-              <CardDescription className="text-center">Create your account</CardDescription>
+            <CardHeader className="space-y-1 pb-3">
+              <CardTitle className="text-xl text-center">Get Started</CardTitle>
+              <CardDescription className="text-center text-sm">Create your account</CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleRegister} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="first-name">First Name *</Label>
+              <form onSubmit={handleRegister} className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="first-name" className="text-sm">First Name *</Label>
                     <Input
                       id="first-name"
                       placeholder="Mohamed"
                       value={registerData.firstName}
                       onChange={(e) => handleInputChange('firstName', e.target.value)}
                       onBlur={() => handleBlur('firstName')}
-                      className={errors.firstName && touched.firstName ? "border-red-500 focus:border-red-500" : ""}
+                      className={`h-8 text-sm ${errors.firstName && touched.firstName ? "border-red-500 focus:border-red-500" : ""}`}
                       required
                     />
                     {errors.firstName && touched.firstName && (
-                      <div className="flex items-center gap-1 mt-1 text-red-500 text-sm">
-                        <AlertCircle className="w-4 h-4" />
+                      <div className="flex items-center gap-1 mt-0.5 text-red-500 text-xs">
+                        <AlertCircle className="w-3 h-3" />
                         <span>{errors.firstName}</span>
                       </div>
                     )}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="last-name">Last Name *</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="last-name" className="text-sm">Last Name *</Label>
                     <Input
                       id="last-name"
                       placeholder="Shafici"
                       value={registerData.lastName}
                       onChange={(e) => handleInputChange('lastName', e.target.value)}
                       onBlur={() => handleBlur('lastName')}
-                      className={errors.lastName && touched.lastName ? "border-red-500 focus:border-red-500" : ""}
+                      className={`h-8 text-sm ${errors.lastName && touched.lastName ? "border-red-500 focus:border-red-500" : ""}`}
                       required
                     />
                     {errors.lastName && touched.lastName && (
-                      <div className="flex items-center gap-1 mt-1 text-red-500 text-sm">
-                        <AlertCircle className="w-4 h-4" />
+                      <div className="flex items-center gap-1 mt-0.5 text-red-500 text-xs">
+                        <AlertCircle className="w-3 h-3" />
                         <span>{errors.lastName}</span>
                       </div>
                     )}
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-email">Email Address *</Label>
+                <div className="space-y-1">
+                  <Label htmlFor="register-email" className="text-sm">Email Address *</Label>
                   <Input
                     id="register-email"
                     type="email"
@@ -336,47 +341,48 @@ function RegisterContent() {
                     value={registerData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     onBlur={() => handleBlur('email')}
-                    className={errors.email && touched.email ? "border-red-500 focus:border-red-500" : ""}
+                    className={`h-8 text-sm ${errors.email && touched.email ? "border-red-500 focus:border-red-500" : ""}`}
                     required
                   />
                   {errors.email && touched.email && (
-                    <div className="flex items-center gap-1 mt-1 text-red-500 text-sm">
-                      <AlertCircle className="w-4 h-4" />
+                    <div className="flex items-center gap-1 mt-0.5 text-red-500 text-xs">
+                      <AlertCircle className="w-3 h-3" />
                       <span>{errors.email}</span>
                     </div>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="institution">Institution *</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="institution" className="text-sm">Institution *</Label>
                     <Input
                       id="institution"
                       placeholder="institution Name"
                       value={registerData.institution}
                       onChange={(e) => handleInputChange('institution', e.target.value)}
                       onBlur={() => handleBlur('institution')}
-                      className={errors.institution && touched.institution ? "border-red-500 focus:border-red-500" : ""}
+                      className={`h-8 text-sm ${errors.institution && touched.institution ? "border-red-500 focus:border-red-500" : ""}`}
                       required
                     />
                     {errors.institution && touched.institution && (
-                      <div className="flex items-center gap-1 mt-1 text-red-500 text-sm">
-                        <AlertCircle className="w-4 h-4" />
+                      <div className="flex items-center gap-1 mt-0.5 text-red-500 text-xs">
+                        <AlertCircle className="w-3 h-3" />
                         <span>{errors.institution}</span>
                       </div>
                     )}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="department">Department</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="department" className="text-sm">Department</Label>
                     <Input
                       id="department"
                       placeholder="Computer Science"
                       value={registerData.department}
                       onChange={(e) => handleInputChange('department', e.target.value)}
+                      className="h-8 text-sm"
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-password">Password *</Label>
+                <div className="space-y-1">
+                  <Label htmlFor="register-password" className="text-sm">Password *</Label>
                   <div className="relative">
                     <Input
                       id="register-password"
@@ -385,28 +391,28 @@ function RegisterContent() {
                       value={registerData.password}
                       onChange={(e) => handleInputChange('password', e.target.value)}
                       onBlur={() => handleBlur('password')}
-                      className={errors.password && touched.password ? "border-red-500 focus:border-red-500" : ""}
+                      className={`h-8 text-sm pr-10 ${errors.password && touched.password ? "border-red-500 focus:border-red-500" : ""}`}
                       required
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      className="absolute right-0 top-0 h-full px-2 py-1 hover:bg-transparent"
                       onClick={() => setShowPassword(!showPassword)}
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                     </Button>
                     {errors.password && touched.password && (
-                      <div className="flex items-center gap-1 mt-1 text-red-500 text-sm">
-                        <AlertCircle className="w-4 h-4" />
+                      <div className="flex items-center gap-1 mt-0.5 text-red-500 text-xs">
+                        <AlertCircle className="w-3 h-3" />
                         <span>{errors.password}</span>
                       </div>
                     )}
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirm Password *</Label>
+                <div className="space-y-1">
+                  <Label htmlFor="confirm-password" className="text-sm">Confirm Password *</Label>
                   <div className="relative">
                     <Input
                       id="confirm-password"
@@ -415,21 +421,21 @@ function RegisterContent() {
                       value={registerData.confirmPassword}
                       onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                       onBlur={() => handleBlur('confirmPassword')}
-                      className={errors.confirmPassword && touched.confirmPassword ? "border-red-500 focus:border-red-500" : ""}
+                      className={`h-8 text-sm pr-10 ${errors.confirmPassword && touched.confirmPassword ? "border-red-500 focus:border-red-500" : ""}`}
                       required
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      className="absolute right-0 top-0 h-full px-2 py-1 hover:bg-transparent"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     >
-                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showConfirmPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                     </Button>
                     {errors.confirmPassword && touched.confirmPassword && (
-                      <div className="flex items-center gap-1 mt-1 text-red-500 text-sm">
-                        <AlertCircle className="w-4 h-4" />
+                      <div className="flex items-center gap-1 mt-0.5 text-red-500 text-xs">
+                        <AlertCircle className="w-3 h-3" />
                         <span>{errors.confirmPassword}</span>
                       </div>
                     )}
@@ -437,13 +443,13 @@ function RegisterContent() {
                 </div>
                 <Button 
                   type="submit" 
-                  className="w-full bg-blue-600 hover:bg-blue-700" 
+                  className="w-full bg-blue-600 hover:bg-blue-700 h-8 text-sm" 
                   disabled={loading || !isFormValid()}
                 >
                   {loading ? (
                     <>
                       <span className="animate-spin mr-2">
-                        <svg className="w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
@@ -454,8 +460,8 @@ function RegisterContent() {
                     "Create Account"
                   )}
                 </Button>
-                <div className="text-center">
-                  <p className="text-sm text-gray-600">
+                <div className="text-center pt-1">
+                  <p className="text-xs text-gray-600">
                     Already have an account?{" "}
                     <Link href="/login" className="text-blue-600 hover:underline font-medium">
                       Sign in

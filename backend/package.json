@@ -26,6 +26,8 @@
     "multer": "^2.0.1",
     "nodemailer": "^7.0.5",
     "openai": "^5.10.2",
-    "spellchecker": "^3.7.1"
+    "pdfkit": "^0.17.1",
+    "spellchecker": "^3.7.1",
+    "xlsx": "^0.18.5"
   }
 }

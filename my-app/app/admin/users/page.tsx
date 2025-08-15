@@ -309,6 +309,19 @@ function CreateUserModal({ onClose, onUserCreated }: { onClose: () => void; onUs
       }
 
       const data = await res.json()
+      console.log('API response for user creation:', data)
+      
+      // Validate the response structure
+      if (!data.user) {
+        console.error('API response missing user data:', data)
+        throw new Error('Invalid response format from server')
+      }
+      
+      if (!data.user._id && !data.user.id) {
+        console.error('User object missing ID:', data.user)
+        throw new Error('User created but missing ID')
+      }
+      
       toast({
         title: "User Created Successfully",
         description: "The user has been created successfully",
@@ -945,7 +958,7 @@ const getStatusColor = (status: string) => {
 }
 
 export default function ManageUsersPage() {
-  useAuthRedirect()
+  useAuthRedirect(["admin"])
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -1029,8 +1042,37 @@ export default function ManageUsersPage() {
     setDeleteUserId(null)
   }
 
-  const handleUserCreated = (user: any) => {
-    setUsers((prev: User[]) => [user, ...prev])
+  const handleUserCreated = async (user: any) => {
+    console.log('handleUserCreated called with:', user)
+    
+    if (!user) {
+      console.error('No user data received in handleUserCreated')
+      toast({
+        title: "Warning",
+        description: "User created but data may be incomplete. Refreshing...",
+        variant: "destructive",
+        duration: 3000
+      })
+    }
+    
+    // Always refresh the data to ensure we have the most up-to-date information
+    // This is the most reliable way to ensure all actions work properly
+    try {
+      await fetchUsers()
+      toast({
+        title: "Success",
+        description: "User list refreshed successfully",
+        duration: 2000
+      })
+    } catch (error) {
+      console.error('Failed to refresh users after creation:', error)
+      toast({
+        title: "Warning",
+        description: "User created but failed to refresh list. Please refresh the page.",
+        variant: "destructive",
+        duration: 4000
+      })
+    }
   }
 
   const handleUserUpdated = async (updated: any) => {
@@ -1199,12 +1241,46 @@ export default function ManageUsersPage() {
                       <MobileUserCard
                         key={user._id}
                         user={user}
-                        onView={setSelectedUserId}
+                        onView={(userId) => {
+                          console.log('View clicked for user:', userId)
+                          if (!userId) {
+                            console.error('No user ID provided for view action')
+                            toast({
+                              title: "Error",
+                              description: "Cannot view user: missing user ID",
+                              variant: "destructive",
+                            })
+                            return
+                          }
+                          setSelectedUserId(userId)
+                        }}
                         onEdit={(userId) => {
+                          console.log('Edit clicked for user:', userId)
+                          if (!userId) {
+                            console.error('No user ID provided for edit action')
+                            toast({
+                              title: "Error",
+                              description: "Cannot edit user: missing user ID",
+                              variant: "destructive",
+                            })
+                            return
+                          }
                           setSelectedUserId(userId)
                           setEditModalOpen(true)
                         }}
-                        onDelete={setDeleteUserId}
+                        onDelete={(userId) => {
+                          console.log('Delete clicked for user:', userId)
+                          if (!userId) {
+                            console.error('No user ID provided for delete action')
+                            toast({
+                              title: "Error",
+                              description: "Cannot delete user: missing user ID",
+                              variant: "destructive",
+                            })
+                            return
+                          }
+                          setDeleteUserId(userId)
+                        }}
                         getRoleColor={getRoleColor}
                         getStatusColor={getStatusColor}
                       />
@@ -1258,29 +1334,63 @@ export default function ManageUsersPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => setSelectedUserId(user._id)}
+                                  onClick={() => {
+                                    console.log('View clicked for user:', user._id)
+                                    if (!user._id) {
+                                      console.error('No user ID provided for view action')
+                                      toast({
+                                        title: "Error",
+                                        description: "Cannot view user: missing user ID",
+                                        variant: "destructive",
+                                      })
+                                      return
+                                    }
+                                    setSelectedUserId(user._id)
+                                  }}
                                   className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                                 >
-                                  <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                                  <Eye className="h-3 w-3 sm:h-4 sm:h-4" />
                                 </Button>
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => {
+                                    console.log('Edit clicked for user:', user._id)
+                                    if (!user._id) {
+                                      console.error('No user ID provided for edit action')
+                                      toast({
+                                        title: "Error",
+                                        description: "Cannot edit user: missing user ID",
+                                        variant: "destructive",
+                                      })
+                                      return
+                                    }
                                     setSelectedUserId(user._id)
                                     setEditModalOpen(true)
                                   }}
                                   className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                                 >
-                                  <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                                  <Edit className="h-3 w-3 sm:h-4 sm:h-4" />
                                 </Button>
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => setDeleteUserId(user._id)}
+                                  onClick={() => {
+                                    console.log('Delete clicked for user:', user._id)
+                                    if (!user._id) {
+                                      console.error('No user ID provided for delete action')
+                                      toast({
+                                        title: "Error",
+                                        description: "Cannot delete user: missing user ID",
+                                        variant: "destructive",
+                                      })
+                                      return
+                                    }
+                                    setDeleteUserId(user._id)
+                                  }}
                                   className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                                 >
-                                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                                  <Trash2 className="h-3 w-3 sm:h-4 sm:h-4" />
                                 </Button>
                               </div>
                             </TableCell>
@@ -1308,6 +1418,7 @@ export default function ManageUsersPage() {
           <EditUserModal
             userId={selectedUserId}
             onClose={() => {
+              console.log('Closing edit modal for user:', selectedUserId)
               setEditModalOpen(false)
               setSelectedUserId(null)
             }}
@@ -1319,7 +1430,10 @@ export default function ManageUsersPage() {
         {selectedUserId && !editModalOpen && (
           <UserDetailsModal
             userId={selectedUserId}
-            onClose={() => setSelectedUserId(null)}
+            onClose={() => {
+              console.log('Closing user details modal for user:', selectedUserId)
+              setSelectedUserId(null)
+            }}
           />
         )}
 

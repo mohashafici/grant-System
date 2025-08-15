@@ -155,23 +155,12 @@ function MobileProposalCard({ proposal, onView, onAssign, getReviewerName, revie
 
 // Proposal View Modal Component
 function ProposalViewModal({ proposal, onClose }: { proposal: Proposal; onClose: () => void }) {
-  const handleDownload = async (fileUrl: string, fileName: string) => {
+  const handleDownload = (fileUrl: string, fileName: string) => {
     try {
-      const response = await fetch(fileUrl);
-      if (!response.ok) throw new Error('Failed to download file');
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      window.open(fileUrl, '_blank');
     } catch (error) {
-      console.error('Download failed:', error);
-      alert('Failed to download file. Please try again.');
+      console.error('Failed to open file:', error);
+      alert('Failed to open file. Please try again.');
     }
   };
 
@@ -374,7 +363,7 @@ function ProposalViewModal({ proposal, onClose }: { proposal: Proposal; onClose:
 }
 
 export default function AdminProposalsPage() {
-  useAuthRedirect()
+  useAuthRedirect(["admin"])
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

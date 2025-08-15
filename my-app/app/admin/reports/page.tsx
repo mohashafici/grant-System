@@ -207,7 +207,7 @@ function ReportDetailsModal({ report, onClose }: { report: Report; onClose: () =
 }
 
 export default function AdminReportsPage() {
-  useAuthRedirect()
+  useAuthRedirect(["admin"])
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedReport, setSelectedReport] = useState<Report | null>(null)
@@ -236,6 +236,7 @@ export default function AdminReportsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [exportLoading, setExportLoading] = useState(false)
+  const [exportFormat, setExportFormat] = useState('csv')
   const [userStats, setUserStats] = useState<UserStats[]>([]);
   const [grantStats, setGrantStats] = useState<GrantStats[]>([]);
   const [statsLoading, setStatsLoading] = useState(false);
@@ -368,30 +369,30 @@ export default function AdminReportsPage() {
     setExportLoading(true)
     try {
       const token = authStorage.getToken()
-      const res = await fetch(`${API_BASE_URL}/reports/export?year=${year}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error("Failed to export report")
       
-      // Create blob and download
-      const blob = await res.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `grant-report-${year}.csv`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
+      // Create a direct download link with the token and format
+      const downloadUrl = `${API_BASE_URL}/reports/export?year=${year}&token=${encodeURIComponent(token)}&format=${exportFormat}`
+      
+      // Create a temporary link element and trigger download
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.download = `grant-report-${year}.${exportFormat === 'excel' ? 'xlsx' : 'csv'}`
+      link.target = '_blank'
+      
+      // Append to document, click, and remove
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
       
       toast({
         title: "Report exported",
-        description: `Grant report for ${year} has been downloaded.`,
+        description: `Grant report for ${year} download started.`,
       })
     } catch (err: any) {
       toast({
         title: "Export failed",
         description: err.message || "Failed to export report",
+        variant: "destructive",
       })
     } finally {
       setExportLoading(false)
@@ -478,6 +479,16 @@ export default function AdminReportsPage() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <Select value={exportFormat} onValueChange={setExportFormat}>
+                <SelectTrigger className="w-24 sm:w-32 text-xs sm:text-sm h-9 sm:h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="csv">CSV</SelectItem>
+                  <SelectItem value="excel">Excel</SelectItem>
+                </SelectContent>
+              </Select>
             <Button 
               variant="outline" 
               onClick={handleExportReport}
@@ -485,8 +496,9 @@ export default function AdminReportsPage() {
               className="w-full sm:w-auto h-9 sm:h-10 text-xs sm:text-sm"
             >
               <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              {exportLoading ? "Exporting..." : "Export Report"}
+                {exportLoading ? "Exporting..." : `Export ${exportFormat.toUpperCase()}`}
             </Button>
+            </div>
           </div>
         </div>
 

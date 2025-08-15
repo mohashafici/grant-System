@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Award, Eye, EyeOff, AlertCircle } from "lucide-react"
+import { Eye, EyeOff, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { useRedirectIfAuthenticated } from "@/hooks/use-redirect-if-authenticated"
@@ -155,15 +155,20 @@ function LoginContent() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Award className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Grant Portal</h1>
-            </div>
+          {/* Logo - Centered above text */}
+          <div className="flex justify-center mb-6">
+            <img 
+              src="/logos.jpeg" 
+              alt="Mubarak Grant Portal Logo" 
+              className="w-24 h-24 md:w-28 md:h-28 rounded-xl object-cover shadow-lg" 
+            />
           </div>
-          <p className="text-gray-600">Access your research funding dashboard</p>
+          
+          {/* Text below logo */}
+          <div className="space-y-2">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Mubarak Grant Portal</h1>
+            <p className="text-gray-600 text-sm md:text-base">Access your research funding dashboard</p>
+          </div>
         </div>
 
         <Card className="shadow-lg">

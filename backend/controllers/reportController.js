@@ -3,6 +3,7 @@ const Review = require('../models/Review');
 const User = require('../models/User');
 const Grant = require('../models/Grant');
 const Report = require('../models/Report');
+const XLSX = require('xlsx');
 
 // GET /api/reports/evaluation - Evaluation reports summary
 exports.getEvaluationReports = async (req, res, next) => {
@@ -238,16 +239,19 @@ exports.getReviewerPerformance = async (req, res, next) => {
   }
 }; 
 
-// GET /api/reports/export - Export comprehensive report as CSV
+// GET /api/reports/export - Export comprehensive report as CSV or Excel
 exports.exportReport = async (req, res, next) => {
   try {
-    const { year = new Date().getFullYear() } = req.query;
+    const { year = new Date().getFullYear(), format = 'csv' } = req.query;
     
     // Get all proposals for the year
     const startDate = new Date(year, 0, 1);
     const endDate = new Date(year + 1, 0, 1);
     const proposals = await Proposal.find({
-      dateSubmitted: { $gte: startDate, $lt: endDate }
+      $or: [
+        { dateSubmitted: { $gte: startDate, $lt: endDate } },
+        { createdAt: { $gte: startDate, $lt: endDate } }
+      ]
     }).populate('researcher', 'firstName lastName email institution');
     
     // Get all reviews for the year
@@ -267,44 +271,118 @@ exports.exportReport = async (req, res, next) => {
       .filter(p => p.status === 'Approved')
       .reduce((sum, p) => sum + (p.funding || 0), 0);
     
-    // Generate CSV content
-    let csvContent = `Grant Management System Report - ${year}\n`;
-    csvContent += `Generated on: ${new Date().toISOString().split('T')[0]}\n\n`;
-    
-    // Summary section
-    csvContent += `SUMMARY STATISTICS\n`;
-    csvContent += `Total Proposals,${totalProposals}\n`;
-    csvContent += `Approved Proposals,${approvedProposals}\n`;
-    csvContent += `Rejected Proposals,${rejectedProposals}\n`;
-    csvContent += `Pending Proposals,${pendingProposals}\n`;
-    csvContent += `Total Funding Awarded,$${totalFunding.toLocaleString()}\n`;
-    csvContent += `Approval Rate,${totalProposals > 0 ? Math.round((approvedProposals / totalProposals) * 100) : 0}%\n\n`;
-    
-    // Proposals detail section
-    csvContent += `PROPOSALS DETAIL\n`;
-    csvContent += `ID,Title,Researcher,Institution,Category,Status,Funding Requested,Date Submitted,Review Score\n`;
-    proposals.forEach(proposal => {
-      const researcher = proposal.researcher ? `${proposal.researcher.firstName} ${proposal.researcher.lastName}` : 'N/A';
-      const institution = proposal.researcher?.institution || 'N/A';
-      const review = reviews.find(r => r.proposal && r.proposal._id.toString() === proposal._id.toString());
-      const score = review ? review.score : 'N/A';
-      csvContent += `${proposal._id},"${proposal.title}",${researcher},${institution},${proposal.category},${proposal.status},$${proposal.funding || 0},${proposal.dateSubmitted?.toISOString().split('T')[0] || 'N/A'},${score}\n`;
-    });
-    
-    csvContent += `\nREVIEWS DETAIL\n`;
-    csvContent += `Proposal ID,Reviewer,Score,Comments,Review Date,On Time\n`;
-    reviews.forEach(review => {
-      const reviewer = review.reviewer ? `${review.reviewer.firstName} ${review.reviewer.lastName}` : 'N/A';
-      const proposal = review.proposal;
-      const onTime = proposal && proposal.deadline && review.reviewDate ? 
-        (review.reviewDate <= proposal.deadline ? 'Yes' : 'No') : 'N/A';
-      csvContent += `${review.proposal?._id || 'N/A'},${reviewer},${review.score || 'N/A'},"${review.comments || ''}",${review.reviewDate?.toISOString().split('T')[0] || 'N/A'},${onTime}\n`;
-    });
-    
-    // Set response headers for file download
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename="grant-report-${year}.csv"`);
-    res.send(csvContent);
+    if (format === 'excel') {
+      // Generate Excel file
+      const workbook = XLSX.utils.book_new();
+      
+      // Summary sheet
+      const summaryData = [
+        ['Grant Management System Report', year],
+        ['Generated on:', new Date().toISOString().split('T')[0]],
+        [''],
+        ['SUMMARY STATISTICS'],
+        ['Total Proposals', totalProposals],
+        ['Approved Proposals', approvedProposals],
+        ['Rejected Proposals', rejectedProposals],
+        ['Pending Proposals', pendingProposals],
+        ['Total Funding Awarded', `$${totalFunding.toLocaleString()}`],
+        ['Approval Rate', `${totalProposals > 0 ? Math.round((approvedProposals / totalProposals) * 100) : 0}%`]
+      ];
+      const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+      XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
+      
+      // Proposals sheet
+      const proposalsData = [
+        ['ID', 'Title', 'Researcher', 'Institution', 'Category', 'Status', 'Funding Requested', 'Date Submitted', 'Review Score']
+      ];
+      proposals.forEach(proposal => {
+        const researcher = proposal.researcher ? `${proposal.researcher.firstName} ${proposal.researcher.lastName}` : 'N/A';
+        const institution = proposal.researcher?.institution || 'N/A';
+        const review = reviews.find(r => r.proposal && r.proposal._id.toString() === proposal._id.toString());
+        const score = review ? review.score : 'N/A';
+        proposalsData.push([
+          proposal._id.toString(),
+          proposal.title,
+          researcher,
+          institution,
+          proposal.category,
+          proposal.status,
+          proposal.funding || 0,
+          proposal.dateSubmitted?.toISOString().split('T')[0] || 'N/A',
+          score
+        ]);
+      });
+      const proposalsSheet = XLSX.utils.aoa_to_sheet(proposalsData);
+      XLSX.utils.book_append_sheet(workbook, proposalsSheet, 'Proposals');
+      
+      // Reviews sheet
+      const reviewsData = [
+        ['Proposal ID', 'Reviewer', 'Score', 'Comments', 'Review Date', 'On Time']
+      ];
+      reviews.forEach(review => {
+        const reviewer = review.reviewer ? `${review.reviewer.firstName} ${review.reviewer.lastName}` : 'N/A';
+        const proposal = review.proposal;
+        const onTime = proposal && proposal.deadline && review.reviewDate ? 
+          (review.reviewDate <= proposal.deadline ? 'Yes' : 'No') : 'N/A';
+        reviewsData.push([
+          review.proposal?._id?.toString() || 'N/A',
+          reviewer,
+          review.score || 'N/A',
+          review.comments || '',
+          review.reviewDate?.toISOString().split('T')[0] || 'N/A',
+          onTime
+        ]);
+      });
+      const reviewsSheet = XLSX.utils.aoa_to_sheet(reviewsData);
+      XLSX.utils.book_append_sheet(workbook, reviewsSheet, 'Reviews');
+      
+      // Generate Excel buffer
+      const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      
+      // Set response headers for Excel download
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="grant-report-${year}.xlsx"`);
+      res.send(excelBuffer);
+    } else {
+      // Generate CSV content
+      let csvContent = `Grant Management System Report - ${year}\n`;
+      csvContent += `Generated on: ${new Date().toISOString().split('T')[0]}\n\n`;
+      
+      // Summary section
+      csvContent += `SUMMARY STATISTICS\n`;
+      csvContent += `Total Proposals,${totalProposals}\n`;
+      csvContent += `Approved Proposals,${approvedProposals}\n`;
+      csvContent += `Rejected Proposals,${rejectedProposals}\n`;
+      csvContent += `Pending Proposals,${pendingProposals}\n`;
+      csvContent += `Total Funding Awarded,$${totalFunding.toLocaleString()}\n`;
+      csvContent += `Approval Rate,${totalProposals > 0 ? Math.round((approvedProposals / totalProposals) * 100) : 0}%\n\n`;
+      
+      // Proposals detail section
+      csvContent += `PROPOSALS DETAIL\n`;
+      csvContent += `ID,Title,Researcher,Institution,Category,Status,Funding Requested,Date Submitted,Review Score\n`;
+      proposals.forEach(proposal => {
+        const researcher = proposal.researcher ? `${proposal.researcher.firstName} ${proposal.researcher.lastName}` : 'N/A';
+        const institution = proposal.researcher?.institution || 'N/A';
+        const review = reviews.find(r => r.proposal && r.proposal._id.toString() === proposal._id.toString());
+        const score = review ? review.score : 'N/A';
+        csvContent += `${proposal._id},"${proposal.title}",${researcher},${institution},${proposal.category},${proposal.status},$${proposal.funding || 0},${proposal.dateSubmitted?.toISOString().split('T')[0] || 'N/A'},${score}\n`;
+      });
+      
+      csvContent += `\nREVIEWS DETAIL\n`;
+      csvContent += `Proposal ID,Reviewer,Score,Comments,Review Date,On Time\n`;
+      reviews.forEach(review => {
+        const reviewer = review.reviewer ? `${review.reviewer.firstName} ${review.reviewer.lastName}` : 'N/A';
+        const proposal = review.proposal;
+        const onTime = proposal && proposal.deadline && review.reviewDate ? 
+          (review.reviewDate <= proposal.deadline ? 'Yes' : 'No') : 'N/A';
+        csvContent += `${review.proposal?._id || 'N/A'},${reviewer},${review.score || 'N/A'},"${review.comments || ''}",${review.reviewDate?.toISOString().split('T')[0] || 'N/A'},${onTime}\n`;
+      });
+      
+      // Set response headers for CSV download
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="grant-report-${year}.csv"`);
+      res.send(csvContent);
+    }
   } catch (err) {
     next(err);
   }

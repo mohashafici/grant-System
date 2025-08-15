@@ -586,10 +586,8 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-white" />
-                </div>
-                <span className="font-semibold">Innovation Grant Portal</span>
+                <img src="/logos.jpeg" alt="Mubarak Grant Portal Logo" className="w-8 h-8 rounded-lg object-cover" />
+                <span className="font-semibold">Mubarak Grant Portal</span>
               </div>
               <p className="text-gray-400 text-sm">
                 Your comprehensive guide to successful grant funding and research excellence.
@@ -672,7 +670,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
-            <p>&copy; 2025 Innovation Grant Portal. All rights reserved.</p>
+            <p>&copy; 2025 Mubarak Grant Portal. All rights reserved.</p>
           </div>
         </div>
       </footer>
